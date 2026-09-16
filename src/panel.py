@@ -217,6 +217,10 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
         # 位置改放年化波動——它持續（前後半期 r=+0.65）、與 P漲 幾乎無關（R²=10%），
         # 而且正是它決定了獲利點與停損點拉多開。
         vol = float(r["vol_20"]) * (252 ** 0.5) if pd.notna(r.get("vol_20")) else float("nan")
+        # 一定要先算成字串再放進 f-string 鏈。把 `A if c else B` 直接寫在
+        # 隱式字串串接裡，Python 會把條件套用到「整條鏈」而不是那一格 ——
+        # 條件成立時整張卡在這裡截斷、div 不閉合，版面全垮。已中招一次。
+        voltxt = f"{vol * 100:.0f}%" if vol == vol else "—"
         dec = 2 if close < 100 else (1 if close < 1000 else 0)
         conf = {"high": "高", "medium": "中", "low": "低"}.get(str(r["conviction"]), "低")
         # 該檔的歷史準確率。樣本不足時顯示「—」而不是拿 1/1=100% 誤導。
@@ -244,7 +248,7 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<div class="c"><b>P漲</b><i>{r["prob_up"]*100:.0f}%</i></div>'
             f'<div class="c u"><b>漲幅</b><i>{up*100:+.1f}%</i></div>'
             f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
-            f'<div class="c"><b>年化波動</b><i>{vol*100:.0f}%</i></div>' if vol==vol else '<div class="c"><b>年化波動</b><i>—</i></div>'
+            f'<div class="c"><b>年化波動</b><i>{voltxt}</i></div>'
             f'<div class="c"><b>收盤價</b><i>{cur}{close:,.{dec}f}</i></div>'
             f'<div class="c u"><b>{"目標價" if horizon >= 250 else "獲利點"}</b>'
             f'<i>{cur}{tp:,.{dec}f}</i></div>'
