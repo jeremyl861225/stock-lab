@@ -199,7 +199,14 @@ def as_of(d: pd.Timestamp | str) -> pd.DataFrame:
     if f.empty:
         return f
     f = f[f["avail_date"] <= d]
-    return f.sort_values("date").groupby("code", as_index=False).last()
+    # 必須取「最後一列」，不能用 groupby().last() ——
+    # pandas 的 .last() 是逐欄取最後一個非空值，會把不同季的數字拼成同一列。
+    # 實測 1303（南亞）被拼成「2026Q2 的毛利率 18.9% ＋ 2025Q2 的 EPS 年增 −143%」，
+    # 而它的 EPS TTM 其實是 −0.41 → +6.20 強勁轉正，方向完全相反。
+    # 缺值就該是缺值，用舊季度填補等於憑空造出一個不存在的季報。
+    return (f.sort_values(["code", "date"])
+             .drop_duplicates("code", keep="last")
+             .reset_index(drop=True))
 
 
 if __name__ == "__main__":

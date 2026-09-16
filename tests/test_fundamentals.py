@@ -45,3 +45,30 @@ def test_eps_yoy_guards_tiny_base():
     if "eps_ttm" in f.columns:
         base = f.groupby("code")["eps_ttm"].shift(4)
         assert f.loc[base.abs() < 0.5, "eps_yoy"].notna().sum() == 0
+
+
+def test_as_of_row_is_a_single_quarter():
+    """as_of() 回傳的每一列必須全部來自同一季。
+
+    起因：原本用 groupby().last()，而 pandas 的 .last() 是逐欄取最後一個
+    非空值 —— 它會把不同季的數字拼成同一列。實測 1303（南亞）被拼成
+    「2026Q2 的毛利率 18.9% ＋ 2025Q2 的 EPS 年增 −143%」，
+    而它的 EPS TTM 其實是 −0.41 → +6.20 強勁轉正，方向完全相反。
+    照拼出來的數字會寫出「毛利率改善但 EPS 大幅衰退」這種與事實相反的判斷。
+    """
+    d = pd.Timestamp("2026-09-17")
+    snap = F.as_of(d)
+    if snap.empty:
+        return
+    full = F.build()
+    for _, row in snap.iterrows():
+        g = full[(full["code"] == row["code"]) & (full["avail_date"] <= d)]
+        if g.empty:
+            continue
+        last = g.sort_values("date").iloc[-1]
+        assert row["date"] == last["date"], (
+            f"{row['code']} 的 as_of 列是 {row['date']}，但最新已公告季是 {last['date']}")
+        for c in F.FUND_COLS:
+            a, b = row[c], last[c]
+            same = (pd.isna(a) and pd.isna(b)) or (not pd.isna(a) and not pd.isna(b) and abs(a - b) < 1e-9)
+            assert same, f"{row['code']} 的 {c} 來自別季（{a} vs {b}）"
