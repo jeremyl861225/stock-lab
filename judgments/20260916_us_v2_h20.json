@@ -1,0 +1,1017 @@
+{
+ "as_of": "20260916",
+ "horizon": 20,
+ "analyst": "claude-opus-5",
+ "market": "US",
+ "version": "v2",
+ "market_context": "美股最強的訊號是廣泛超賣：53 檔中有 15 檔以上 RSI 落在 30–41（BAC 30.2、AMGN 34.2、AXP 34.8、RTX 34.9、LIN 35.2、HD 35.6、GE 36.8、GS 37.7、UNH 39.1、MS 40.4、CAT 41.3），而強勢的只有少數（META 20日+24.5%、CRM +27.8%、QCOM +17.8%）。背後主題是『AI 放緩疑慮』：費半近期重挫、科技巨擘公開呼籲放緩，Broadcom CEO 須出面重申 2,300 億美元 AI 晶片營收目標。最大的背離在記憶體與 AI 硬體：Micron 營收年增 345.7%、NVIDIA +105.9%、Broadcom +85.5%，股價卻分別 -1.1%／-1.8%／-10.3%。這與台股的南亞科 +561%、華邦電 +289% 是同一個循環。反向的極端是 QCOM：營收年減 4.0%，股價 20 日卻漲 17.8%、RSI 70.2。注意：美股無每日法人與融資公告，本判斷只有三個面向，信心普遍低於台股同類判斷。",
+ "judgments": [
+  {
+   "code": "MU",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.57,
+   "exp_ret": 0.03166,
+   "ret_q10": -0.14848,
+   "ret_q90": 0.20088,
+   "up_magnitude": 0.1256,
+   "dn_magnitude": -0.0928,
+   "reward_risk": 1.35,
+   "asymmetry": "正偏（上檔大）",
+   "thesis": "營收年增345.7%為全場最強、20日僅-1.1%、距高-23.3%；與台股南亞科同一記憶體循環",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收年增345.7%為全場最強、20日僅-1.1%、距高-23.3%；與台股南亞科同一記憶體循環",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "AVGO",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.55,
+   "exp_ret": 0.01718,
+   "ret_q10": -0.10995,
+   "ret_q90": 0.13994,
+   "up_magnitude": 0.0875,
+   "dn_magnitude": -0.0687,
+   "reward_risk": 1.27,
+   "asymmetry": "正偏（上檔大）",
+   "thesis": "營收+85.5%但RSI33.6、距高-20.3%；CEO公開重申2300億AI營收目標，跌深源於情緒",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+85.5%但RSI33.6、距高-20.3%；CEO公開重申2300億AI營收目標，跌深源於情緒",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "NVDA",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.01238,
+   "ret_q10": -0.15519,
+   "ret_q90": 0.17501,
+   "up_magnitude": 0.1094,
+   "dn_magnitude": -0.097,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "營收+105.9%而PER僅27.3，成長與估值相稱；惟為AI放緩疑慮的核心標的，雙向風險大",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+105.9%而PER僅27.3，成長與估值相稱；惟為AI放緩疑慮的核心標的，雙向風險大",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "TSM",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.0036,
+   "ret_q10": -0.09401,
+   "ret_q90": 0.09784,
+   "up_magnitude": 0.0612,
+   "dn_magnitude": -0.0588,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "營收+36%、距高-12.5%；與台股2330同一公司，ADR溢價約一成，收斂時ADR較弱",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+36%、距高-12.5%；與台股2330同一公司，ADR溢價約一成，收斂時ADR較弱",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "ANET",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00439,
+   "ret_q10": -0.17201,
+   "ret_q90": 0.17903,
+   "up_magnitude": 0.1119,
+   "dn_magnitude": -0.1075,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "營收+37.7%但PER63、20日+3.0%；AI網通需求真實，估值已反映多數",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+37.7%但PER63、20日+3.0%；AI網通需求真實，估值已反映多數",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "TXN",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00423,
+   "ret_q10": -0.0938,
+   "ret_q90": 0.09961,
+   "up_magnitude": 0.0623,
+   "dn_magnitude": -0.0586,
+   "reward_risk": 1.06,
+   "asymmetry": "對稱",
+   "thesis": "距高-14.7%、PER40.2、營收+22.8%；類比半導體循環落後於邏輯IC",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "距高-14.7%、PER40.2、營收+22.8%；類比半導體循環落後於邏輯IC",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "QCOM",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.45,
+   "exp_ret": -0.01258,
+   "ret_q10": -0.11074,
+   "ret_q90": 0.09061,
+   "up_magnitude": 0.0566,
+   "dn_magnitude": -0.0692,
+   "reward_risk": 0.82,
+   "asymmetry": "對稱",
+   "thesis": "營收年減4.0%為全場少數衰退，股價20日卻漲17.8%、RSI70.2；價格與基本面反向背離",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收年減4.0%為全場少數衰退，股價20日卻漲17.8%、RSI70.2；價格與基本面反向背離",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "AMD",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.00886,
+   "ret_q10": -0.18419,
+   "ret_q90": 0.17002,
+   "up_magnitude": 0.1063,
+   "dn_magnitude": -0.1151,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "營收+50.1%但PER133偏高、20日已漲7.9%；成長需更高增速才撐得住評價",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+50.1%但PER133偏高、20日已漲7.9%；成長需更高增速才撐得住評價",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "GOOGL",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.55,
+   "exp_ret": 0.01037,
+   "ret_q10": -0.07463,
+   "ret_q90": 0.09122,
+   "up_magnitude": 0.057,
+   "dn_magnitude": -0.0466,
+   "reward_risk": 1.22,
+   "asymmetry": "對稱",
+   "thesis": "PER17.3為大型科技股最低、營收+24.2%、距高-8.6%；AI放緩對平台衝擊小於硬體",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER17.3為大型科技股最低、營收+24.2%、距高-8.6%；AI放緩對平台衝擊小於硬體",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "AMZN",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.54,
+   "exp_ret": 0.00978,
+   "ret_q10": -0.08997,
+   "ret_q90": 0.10562,
+   "up_magnitude": 0.066,
+   "dn_magnitude": -0.0562,
+   "reward_risk": 1.17,
+   "asymmetry": "對稱",
+   "thesis": "RSI40.7、20日-4.6%、距高-12.9%；PER19.9相對營收+19.6%不貴",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI40.7、20日-4.6%、距高-12.9%；PER19.9相對營收+19.6%不貴",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "MSFT",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00188,
+   "ret_q10": -0.0737,
+   "ret_q90": 0.07671,
+   "up_magnitude": 0.0479,
+   "dn_magnitude": -0.0461,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "RSI53.7、PER27.5、營收+17.7%；體質穩健但缺即期催化",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI53.7、PER27.5、營收+17.7%；體質穩健但缺即期催化",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "META",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.00879,
+   "ret_q10": -0.10854,
+   "ret_q90": 0.09246,
+   "up_magnitude": 0.0578,
+   "dn_magnitude": -0.0678,
+   "reward_risk": 0.85,
+   "asymmetry": "對稱",
+   "thesis": "20日+24.5%全場最強、RSI72.9最高；PER25.5尚稱相稱，但漲幅已充分反映",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "20日+24.5%全場最強、RSI72.9最高；PER25.5尚稱相稱，但漲幅已充分反映",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "AAPL",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.00428,
+   "ret_q10": -0.08897,
+   "ret_q90": 0.08212,
+   "up_magnitude": 0.0513,
+   "dn_magnitude": -0.0556,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "PER38.2偏高而營收僅+16.4%為大型科技最弱；5日再漲7.4%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER38.2偏高而營收僅+16.4%為大型科技最弱；5日再漲7.4%",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "NFLX",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00321,
+   "ret_q10": -0.12581,
+   "ret_q90": 0.13094,
+   "up_magnitude": 0.0818,
+   "dn_magnitude": -0.0786,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "PER24.3、營收+13.4%、距高-6.6%；無明確方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER24.3、營收+13.4%、距高-6.6%；無明確方向",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "ORCL",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00883,
+   "ret_q10": -0.16945,
+   "ret_q90": 0.18358,
+   "up_magnitude": 0.1147,
+   "dn_magnitude": -0.1059,
+   "reward_risk": 1.08,
+   "asymmetry": "對稱",
+   "thesis": "距高-12.8%、PER22.5、營收+29.6%；雲端轉型的營收動能仍在",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "距高-12.8%、PER22.5、營收+29.6%；雲端轉型的營收動能仍在",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "CRM",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.46,
+   "exp_ret": -0.0314,
+   "ret_q10": -0.33911,
+   "ret_q90": 0.28887,
+   "up_magnitude": 0.1805,
+   "dn_magnitude": -0.2119,
+   "reward_risk": 0.85,
+   "asymmetry": "對稱",
+   "thesis": "20日+27.8%為全場最強之一但營收僅+10.8%、日波動5.5%；漲幅遠超基本面",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "20日+27.8%為全場最強之一但營收僅+10.8%、日波動5.5%；漲幅遠超基本面",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "PANW",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.44,
+   "exp_ret": -0.04484,
+   "ret_q10": -0.33478,
+   "ret_q90": 0.26304,
+   "up_magnitude": 0.1644,
+   "dn_magnitude": -0.2092,
+   "reward_risk": 0.79,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "PER923.7為全場極端值、5日再漲13.0%、日波動5.2%；任何財測落差都會劇烈修正",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER923.7為全場極端值、5日再漲13.0%、日波動5.2%；任何財測落差都會劇烈修正",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "PLTR",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.0094,
+   "ret_q10": -0.19561,
+   "ret_q90": 0.18057,
+   "up_magnitude": 0.1129,
+   "dn_magnitude": -0.1223,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "營收+92.8%強勁但PER147.1；成長已被高度定價",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+92.8%強勁但PER147.1；成長已被高度定價",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "CSCO",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00201,
+   "ret_q10": -0.07876,
+   "ret_q90": 0.08197,
+   "up_magnitude": 0.0512,
+   "dn_magnitude": -0.0492,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "距高-10.8%、PER33.1、營收+17.6%；網通受惠AI但幅度有限",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "距高-10.8%、PER33.1、營收+17.6%；網通受惠AI但幅度有限",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "IBM",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00304,
+   "ret_q10": -0.11934,
+   "ret_q90": 0.12421,
+   "up_magnitude": 0.0776,
+   "dn_magnitude": -0.0746,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "距高-20.9%但營收僅+1.1%；跌深與基本面疲弱相抵",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "距高-20.9%但營收僅+1.1%；跌深與基本面疲弱相抵",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "BAC",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.55,
+   "exp_ret": 0.01089,
+   "ret_q10": -0.07838,
+   "ret_q90": 0.0958,
+   "up_magnitude": 0.0599,
+   "dn_magnitude": -0.049,
+   "reward_risk": 1.22,
+   "asymmetry": "對稱",
+   "thesis": "RSI30.2為全場最低、20日-8.9%、PER13.5；超賣程度最極端且估值有支撐",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI30.2為全場最低、20日-8.9%、PER13.5；超賣程度最極端且估值有支撐",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "GS",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.54,
+   "exp_ret": 0.01035,
+   "ret_q10": -0.0952,
+   "ret_q90": 0.11175,
+   "up_magnitude": 0.0698,
+   "dn_magnitude": -0.0595,
+   "reward_risk": 1.17,
+   "asymmetry": "對稱",
+   "thesis": "RSI37.7、營收+42.5%為金融最強、PER15.1；跌深與基本面背離",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI37.7、營收+42.5%為金融最強、PER15.1；跌深與基本面背離",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "MS",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00693,
+   "ret_q10": -0.08689,
+   "ret_q90": 0.09799,
+   "up_magnitude": 0.0612,
+   "dn_magnitude": -0.0543,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "RSI40.4、營收+28.0%、PER16.7；與GS同一邏輯但超賣程度較輕",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI40.4、營收+28.0%、PER16.7；與GS同一邏輯但超賣程度較輕",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "JPM",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00388,
+   "ret_q10": -0.05357,
+   "ret_q90": 0.05921,
+   "up_magnitude": 0.037,
+   "dn_magnitude": -0.0335,
+   "reward_risk": 1.11,
+   "asymmetry": "對稱",
+   "thesis": "PER15.0、營收+30.4%、20日-3.5%；金融龍頭估值合理",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER15.0、營收+30.4%、20日-3.5%；金融龍頭估值合理",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "AXP",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00512,
+   "ret_q10": -0.06416,
+   "ret_q90": 0.07235,
+   "up_magnitude": 0.0452,
+   "dn_magnitude": -0.0401,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "RSI34.8明顯超賣、PER19.2、營收+12.8%、距高-12.4%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI34.8明顯超賣、PER19.2、營收+12.8%、距高-12.4%",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "C",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00359,
+   "ret_q10": -0.07952,
+   "ret_q90": 0.08444,
+   "up_magnitude": 0.0528,
+   "dn_magnitude": -0.0497,
+   "reward_risk": 1.06,
+   "asymmetry": "對稱",
+   "thesis": "PER14.5、營收+15.5%；估值低但缺催化劑",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER14.5、營收+15.5%；估值低但缺催化劑",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "WFC",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00157,
+   "ret_q10": -0.08277,
+   "ret_q90": 0.08444,
+   "up_magnitude": 0.0528,
+   "dn_magnitude": -0.0517,
+   "reward_risk": 1.02,
+   "asymmetry": "對稱",
+   "thesis": "PER12.8為金融最低但營收僅+9.5%、20日已回穩",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER12.8為金融最低但營收僅+9.5%、20日已回穩",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "BRK-B",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.03222,
+   "ret_q90": 0.03222,
+   "up_magnitude": 0.0201,
+   "dn_magnitude": -0.0201,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "PER13.1、日波動0.6%最小；RSI67.1偏高但防禦屬性明確，無方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER13.1、日波動0.6%最小；RSI67.1偏高但防禦屬性明確，無方向",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "V",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00127,
+   "ret_q10": -0.06713,
+   "ret_q90": 0.06849,
+   "up_magnitude": 0.0428,
+   "dn_magnitude": -0.042,
+   "reward_risk": 1.02,
+   "asymmetry": "對稱",
+   "thesis": "PER31.6、營收+14.4%；支付雙雄估值偏高但現金流穩",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER31.6、營收+14.4%；支付雙雄估值偏高但現金流穩",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "MA",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00121,
+   "ret_q10": -0.06384,
+   "ret_q90": 0.06513,
+   "up_magnitude": 0.0407,
+   "dn_magnitude": -0.0399,
+   "reward_risk": 1.02,
+   "asymmetry": "對稱",
+   "thesis": "PER31.4、營收+14.1%、RSI47.4；同V的邏輯",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER31.4、營收+14.1%、RSI47.4；同V的邏輯",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "AMGN",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.54,
+   "exp_ret": 0.0156,
+   "ret_q10": -0.14355,
+   "ret_q90": 0.16852,
+   "up_magnitude": 0.1053,
+   "dn_magnitude": -0.0897,
+   "reward_risk": 1.17,
+   "asymmetry": "對稱",
+   "thesis": "RSI34.2明顯超賣、20日-10.7%、PER23.8、營收+9.5%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI34.2明顯超賣、20日-10.7%、PER23.8、營收+9.5%",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "LLY",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00668,
+   "ret_q10": -0.09229,
+   "ret_q90": 0.102,
+   "up_magnitude": 0.0638,
+   "dn_magnitude": -0.0577,
+   "reward_risk": 1.11,
+   "asymmetry": "對稱",
+   "thesis": "20日-6.9%、RSI43.6，營收+47.7%為醫療最強；PER38.3偏高但成長支撐",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "20日-6.9%、RSI43.6，營收+47.7%為醫療最強；PER38.3偏高但成長支撐",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "UNH",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00404,
+   "ret_q10": -0.07756,
+   "ret_q90": 0.08402,
+   "up_magnitude": 0.0525,
+   "dn_magnitude": -0.0485,
+   "reward_risk": 1.08,
+   "asymmetry": "對稱",
+   "thesis": "RSI39.1、距高-12.9%；惟營收僅+0.4%為全場最弱，跌深未必是錯殺",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI39.1、距高-12.9%；惟營收僅+0.4%為全場最弱，跌深未必是錯殺",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "ABBV",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.0061,
+   "ret_q10": -0.08622,
+   "ret_q90": 0.07646,
+   "up_magnitude": 0.0478,
+   "dn_magnitude": -0.0539,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "PER74.1偏高而營收僅+10.2%、RSI58.2；估值與成長不相稱",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER74.1偏高而營收僅+10.2%、RSI58.2；估值與成長不相稱",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "JNJ",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.06955,
+   "ret_q90": 0.06955,
+   "up_magnitude": 0.0435,
+   "dn_magnitude": -0.0435,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "PER31.0、營收+6.6%、RSI51.9；防禦型無明確方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER31.0、營收+6.6%、RSI51.9；防禦型無明確方向",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "MRK",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.01409,
+   "ret_q10": -0.19908,
+   "ret_q90": 0.17654,
+   "up_magnitude": 0.1103,
+   "dn_magnitude": -0.1244,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "PER115.4極高而營收僅+5.1%、20日已漲7.4%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER115.4極高而營收僅+5.1%、20日已漲7.4%",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "GE",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.54,
+   "exp_ret": 0.01241,
+   "ret_q10": -0.11421,
+   "ret_q90": 0.13408,
+   "up_magnitude": 0.0838,
+   "dn_magnitude": -0.0714,
+   "reward_risk": 1.17,
+   "asymmetry": "對稱",
+   "thesis": "RSI36.8、20日-15.3%、距高-16.7%，營收+21.1%仍強；跌幅與基本面背離",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI36.8、20日-15.3%、距高-16.7%，營收+21.1%仍強；跌幅與基本面背離",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "RTX",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00506,
+   "ret_q10": -0.06338,
+   "ret_q90": 0.07147,
+   "up_magnitude": 0.0447,
+   "dn_magnitude": -0.0396,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "RSI34.9超賣、距高-12.5%、營收+14.5%；國防需求結構性支撐",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI34.9超賣、距高-12.5%、營收+14.5%；國防需求結構性支撐",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "CAT",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00679,
+   "ret_q10": -0.0938,
+   "ret_q90": 0.10367,
+   "up_magnitude": 0.0648,
+   "dn_magnitude": -0.0586,
+   "reward_risk": 1.11,
+   "asymmetry": "對稱",
+   "thesis": "距高-25.7%為全場最深、RSI41.3、營收+24.0%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "距高-25.7%為全場最深、RSI41.3、營收+24.0%",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "LIN",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00233,
+   "ret_q10": -0.04475,
+   "ret_q90": 0.04848,
+   "up_magnitude": 0.0303,
+   "dn_magnitude": -0.028,
+   "reward_risk": 1.08,
+   "asymmetry": "對稱",
+   "thesis": "RSI35.2超賣、日波動僅0.8%；工業氣體需求穩定",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI35.2超賣、日波動僅0.8%；工業氣體需求穩定",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "XOM",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00168,
+   "ret_q10": -0.08883,
+   "ret_q90": 0.09062,
+   "up_magnitude": 0.0566,
+   "dn_magnitude": -0.0555,
+   "reward_risk": 1.02,
+   "asymmetry": "對稱",
+   "thesis": "營收+44.1%、PER21.2；油價高檔但煉油利差未必同步",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+44.1%、PER21.2；油價高檔但煉油利差未必同步",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "CVX",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.07708,
+   "ret_q90": 0.07708,
+   "up_magnitude": 0.0482,
+   "dn_magnitude": -0.0482,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "營收+53.5%但RSI60.9已回升、20日+4.3%；漲幅已反映",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收+53.5%但RSI60.9已回升、20日+4.3%；漲幅已反映",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "HD",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00584,
+   "ret_q10": -0.07316,
+   "ret_q90": 0.08249,
+   "up_magnitude": 0.0516,
+   "dn_magnitude": -0.0457,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "RSI35.6超賣、距高-13.5%、PER21.5；惟營收僅+5.7%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI35.6超賣、距高-13.5%、PER21.5；惟營收僅+5.7%",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "COST",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00182,
+   "ret_q10": -0.07144,
+   "ret_q90": 0.07435,
+   "up_magnitude": 0.0465,
+   "dn_magnitude": -0.0446,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "RSI37.2、20日-6.3%；但PER45.2仍高，跌深不等於便宜",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI37.2、20日-6.3%；但PER45.2仍高，跌深不等於便宜",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "WMT",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.13922,
+   "ret_q90": 0.13922,
+   "up_magnitude": 0.087,
+   "dn_magnitude": -0.087,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "20日-5.7%但PER39.3而營收僅+5.9%；跌幅與估值相抵",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "20日-5.7%但PER39.3而營收僅+5.9%；跌幅與估值相抵",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "KO",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.05093,
+   "ret_q90": 0.05093,
+   "up_magnitude": 0.0318,
+   "dn_magnitude": -0.0318,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "PER26.5、營收+6.7%、日波動0.9%；典型防禦股，無方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER26.5、營收+6.7%、日波動0.9%；典型防禦股，無方向",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "PG",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00137,
+   "ret_q10": -0.05593,
+   "ret_q90": 0.05373,
+   "up_magnitude": 0.0336,
+   "dn_magnitude": -0.035,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "營收僅+1.5%為全場最弱、5日已漲3.5%、RSI56.8",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收僅+1.5%為全場最弱、5日已漲3.5%、RSI56.8",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "PM",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00195,
+   "ret_q10": -0.07936,
+   "ret_q90": 0.07625,
+   "up_magnitude": 0.0477,
+   "dn_magnitude": -0.0496,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "5日+4.2%、RSI57.0、PER26.6而營收+10.4%；短線已反映",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "5日+4.2%、RSI57.0、PER26.6而營收+10.4%；短線已反映",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "TSLA",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.01387,
+   "ret_q10": -0.19601,
+   "ret_q90": 0.17382,
+   "up_magnitude": 0.1086,
+   "dn_magnitude": -0.1225,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "PER337.9為全場極端、日波動3.2%；20日+7.3%後估值風險大於成長",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER337.9為全場極端、日波動3.2%；20日+7.3%後估值風險大於成長",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "VZ",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00147,
+   "ret_q10": -0.06014,
+   "ret_q90": 0.05778,
+   "up_magnitude": 0.0361,
+   "dn_magnitude": -0.0376,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "營收年減0.7%、20日已漲3.9%、RSI57.8；電信避險買盤已推高",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收年減0.7%、20日已漲3.9%、RSI57.8；電信避險買盤已推高",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "VOO",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00077,
+   "ret_q10": -0.03027,
+   "ret_q90": 0.03151,
+   "up_magnitude": 0.0197,
+   "dn_magnitude": -0.0189,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "S&P500代理、日波動0.5%最低；廣泛超賣下接近市場中性",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "S&P500代理、日波動0.5%最低；廣泛超賣下接近市場中性",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "QQQ",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00109,
+   "ret_q10": -0.04264,
+   "ret_q90": 0.04438,
+   "up_magnitude": 0.0277,
+   "dn_magnitude": -0.0267,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "那斯達克100代理、RSI47.8；科技分化使其接近中性",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "那斯達克100代理、RSI47.8；科技分化使其接近中性",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  },
+  {
+   "code": "BTCO",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.17802,
+   "ret_q90": 0.17802,
+   "up_magnitude": 0.1113,
+   "dn_magnitude": -0.1113,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "比特幣ETF，20日已漲17.2%、日波動3.1%；驅動邏輯獨立於股市，明確表示無觀點",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "比特幣ETF，20日已漲17.2%、日波動3.1%；驅動邏輯獨立於股市，明確表示無觀點",
+   "falsifier": "若雲端業者實際下修 AI capex，記憶體與 AI 硬體的『跌深錯殺』論點失效；若廣泛超賣的傳統股續跌逾 8%，則本輪是系統性去槓桿而非輪動，所有『超賣反彈』的判斷都會錯。"
+  }
+ ]
+}
