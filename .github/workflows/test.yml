@@ -1,0 +1,42 @@
+# 每次 push 都跑測試。
+#
+# 為什麼要獨立於 daily.yml：daily.yml 是排程的資料收集＋發佈流程，
+# 每次 push 都跑它等於重抓資料、重寫帳本。這支只跑測試，不碰任何資料。
+#
+# 起因：曾把渲染壞掉的 docs/index.html 推上線（f-string 串接鏈裡的條件
+# 運算式截斷整張卡），使用者看到的 app 只剩第一列。當時 CI 只在排程跑，
+# 沒有任何東西擋得住。
+name: 測試
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 跑測試
+        run: python -m pytest tests/ -q
+      - name: 驗發佈中的 HTML 沒有被截斷
+        run: |
+          python - <<'PY'
+          import re, sys
+          h = open("docs/index.html", encoding="utf-8").read()
+          o, c = h.count("<div"), h.count("</div>")
+          assert o == c, f"docs/index.html 的 div 不平衡：開 {o} / 合 {c}"
+          cards = re.findall(r'<div class="det">.*?</div></div>', h, re.S)
+          assert cards, "docs/index.html 沒有任何卡片"
+          need = ["P漲", "漲幅", "跌幅", "收盤價", "信心"]
+          bad = [x for x in cards if not all(k in x for k in need)]
+          assert not bad, f"{len(bad)}/{len(cards)} 張卡欄位不完整"
+          print(f"✓ {len(cards)} 張卡完整，div 平衡")
+          PY
