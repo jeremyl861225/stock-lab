@@ -24,7 +24,41 @@ DATASETS = {
     "div": "TaiwanStockDividendResult",
     "per": "TaiwanStockPER",
     "rev": "TaiwanStockMonthRevenue",
+    # 一年期判斷用的基本面三表。免費層可取，回溯到 2016 年（42 季）。
+    # 短期（5／20 日）判斷用不到這些 —— 季報一季才換一次值，
+    # 在 20 日尺度上是常數，放進去只會增加共線性而不增加資訊。
+    "fin": "TaiwanStockFinancialStatements",
+    "bs": "TaiwanStockBalanceSheet",
+    "cf": "TaiwanStockCashFlowsStatement",
 }
+
+
+# 各資料集的資料頻率。快取新鮮度要按頻率判斷 ——
+# 季報的最後一筆永遠是上一季季末，不可能「≥ 昨天」，
+# 用日頻的標準去比，快取永遠不命中、每輪重抓全部、額度瞬間燒光。
+FREQ = {"fin": "Q", "bs": "Q", "cf": "Q", "rev": "M"}
+
+
+def _expected_quarterly(end: str) -> str:
+    """end 當天應該已公告的最新季末。用法定期限，寧可低估也不高估。"""
+    d = dt.date.fromisoformat(end)
+    # (公告上限月, 日) → 對應季末
+    for pub_m, pub_d, q_off, q_m, q_d in [
+            (3, 31, -1, 12, 31), (5, 15, 0, 3, 31),
+            (8, 14, 0, 6, 30), (11, 14, 0, 9, 30)][::-1]:
+        if (d.month, d.day) >= (pub_m, pub_d):
+            return dt.date(d.year + q_off, q_m, q_d).isoformat()
+    return dt.date(d.year - 1, 9, 30).isoformat()
+
+
+def _expected_monthly(end: str) -> str:
+    """end 當天應該已公告的最新月份。月營收次月 10 日前公告。"""
+    d = dt.date.fromisoformat(end)
+    m = d.month - (1 if d.day >= 10 else 2)
+    y = d.year
+    while m < 1:
+        m += 12; y -= 1
+    return dt.date(y, m, 1).isoformat()
 
 
 def _last_expected(end: str) -> str:
@@ -52,7 +86,10 @@ def fetch(kind: str, code: str, start: str, end: str, refresh: bool = False) -> 
         # 正好撞上 FinMind 免費版的每小時上限。
         rows = c.get("payload") or []
         last = max((r.get("date", "") for r in rows), default="")
-        if c.get("start", "9999") <= start and last and last >= _last_expected(end):
+        freq = FREQ.get(kind, "D")
+        want = (_expected_quarterly(end) if freq == "Q" else
+                _expected_monthly(end) if freq == "M" else _last_expected(end))
+        if c.get("start", "9999") <= start and last and last >= want:
             return c["payload"]
 
     params = {"dataset": DATASETS[kind], "data_id": code,
@@ -74,9 +111,13 @@ def fetch(kind: str, code: str, start: str, end: str, refresh: bool = False) -> 
                     return rows
                 last = j.get("msg")
             elif r.status_code == 402:
-                last = "FinMind 額度用盡（每小時上限）"
-                time.sleep(20)
-                continue
+                # 免費層是「每小時」上限，睡 20 秒重試 4 次救不了 ——
+                # 只會把剩下的請求全部燒成失敗。額度是整點附近才回補，
+                # 所以直接拋出，讓呼叫端決定是要等下個整點還是改天再跑。
+                # （落盤快取讓重跑只補缺口，不會重抓已完成的部分。）
+                raise RuntimeError(
+                    f"FinMind 額度用盡（每小時上限），{kind}/{code} 未取得。"
+                    "等下一個整點再跑，已完成的部分會由快取略過。")
             else:
                 last = f"HTTP {r.status_code}"
         except Exception as e:  # noqa: BLE001

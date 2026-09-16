@@ -137,7 +137,7 @@ def _wt(w: float, mxw: float) -> str:
             f'<span style="width:{pct:.1f}%"></span></span>')
 
 
-def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None) -> str:
+def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 20) -> str:
     if t.empty:
         return '<p class="sub">（尚無判斷）</p>'
     hist = hist or {}
@@ -188,8 +188,12 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None) -> str:
             f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
             f'<div class="c"><b>年化波動</b><i>{vol*100:.0f}%</i></div>' if vol==vol else '<div class="c"><b>年化波動</b><i>—</i></div>'
             f'<div class="c"><b>收盤價</b><i>{cur}{close:,.{dec}f}</i></div>'
-            f'<div class="c u"><b>獲利點</b><i>{cur}{tp:,.{dec}f}</i></div>'
-            f'<div class="c d"><b>停損點</b><i>{cur}{sl:,.{dec}f}</i></div>'
+            f'<div class="c u"><b>{"目標價" if horizon >= 250 else "獲利點"}</b>'
+            f'<i>{cur}{tp:,.{dec}f}</i></div>'
+            # 一年尺度不存在「停損」—— 沒有人抱一年還設日內出場價。
+            # 同一個 q10 在這裡的意思是「悲觀情境下的價位」，所以換名字。
+            f'<div class="c d"><b>{"保守價" if horizon >= 250 else "停損點"}</b>'
+            f'<i>{cur}{sl:,.{dec}f}</i></div>'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
             f'</div><div class="why">{why}</div></div></div>')
     return "".join(out)
@@ -218,7 +222,7 @@ def _acc_block(a: dict) -> str:
 def build() -> Path:
     views = {}
     for mk, cur in (("TW", "NT$"), ("US", "US$")):
-        for h in (20, 5):
+        for h in (20, 5, 250):
             t = ranking_mod.table(h, market=mk)
             views[f"{mk}{h}"] = (t, cur)
     if all(v[0].empty for v in views.values()):
@@ -283,8 +287,9 @@ def build() -> Path:
 <button role="tab" aria-selected="false" onclick="m(this,'US')">美股</button>
 </div>
 <div class="tabs h" role="tablist">
-<button role="tab" aria-selected="true" onclick="z(this,20)">20 個交易日</button>
-<button role="tab" aria-selected="false" onclick="z(this,5)">5 個交易日</button>
+<button role="tab" aria-selected="true" onclick="z(this,20)">20 日</button>
+<button role="tab" aria-selected="false" onclick="z(this,5)">5 日</button>
+<button role="tab" aria-selected="false" onclick="z(this,250)">一年</button>
 </div>
 
 {body}
