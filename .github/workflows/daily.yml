@@ -61,6 +61,7 @@ jobs:
           git config user.name  "stock-lab-bot"
           git config user.email "bot@users.noreply.github.com"
           git add data/predictions.jsonl data/settlements.jsonl data/reasoning.jsonl \
-                  data/revisions.jsonl docs/ config/universe_latest.json judgments/ || true
+                  data/revisions.jsonl docs/ config/universe_latest.json \
+                  config/universe/ config/universe_us_latest.json judgments/ || true
           git diff --staged --quiet || git commit -m "daily: $(date -u +%Y-%m-%d)"
           git push

@@ -166,17 +166,23 @@ def test_models_emit_return_distribution():
                 f"{name} 方向與期望報酬不一致"
 
 
-def test_panel_button_inherits_color():
-    """面板的每一列是 <button>，必須顯式繼承文字顏色。
+def test_panel_buttons_have_explicit_color():
+    """面板裡每個 <button> 都必須明確指定顏色，不能依賴瀏覽器預設。
 
-    button 的預設 color 是瀏覽器的 buttontext（純黑），不繼承 body。
-    只寫 font-family:inherit 會讓整個列表在深色模式下變成黑字黑底 —— 實際踩過。
+    button 的預設 color 是 buttontext（純黑），不繼承 body。
+    早期版本的列用 <button> 且只寫 font-family:inherit，
+    結果整份清單在深色模式下變成黑字黑底 —— 實際踩過，故留此測試。
     """
+    import re
     from pathlib import Path
-    css = (Path(__file__).resolve().parent.parent / "src/panel.py").read_text(encoding="utf-8")
-    i = css.index(".row{{")
-    block = css[i:i + 240]
-    assert "color:inherit" in block, "面板 .row 未繼承顏色，深色模式會變黑字黑底"
+    src = (Path(__file__).resolve().parent.parent / "src/panel.py").read_text(encoding="utf-8")
+    css = src[src.index("CSS = "):src.index("def _cards")]
+    rules = re.findall(r"([^{}]*button[^{}]*)\{([^}]*)\}", css)
+    assert rules, "面板 CSS 找不到任何 button 規則"
+    # 只要有一條基礎規則為 button 指定顏色即可 —— 後續規則（如 .tabs.h button
+    # 只調字級）會繼承它。逐條都要求反而是誤判。
+    has_color = any("color:" in body.replace("background", "") for _, body in rules)
+    assert has_color, "面板所有 button 規則都沒指定顏色，深色模式會變黑字黑底"
 
 
 def test_share_columns_adjusted_for_splits():

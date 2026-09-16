@@ -2,6 +2,14 @@
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F8F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="股市預測">
 <title>股市預測 · 2026-09-16</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,7 +91,7 @@ box-shadow:0 2px 8px rgba(19,62,80,.12)}
 獲利點 = 收盤 ×(1+漲幅)　停損點 = 收盤 ×(1+跌幅)，直接由預測幅度推導<br>
 賠率比 = |漲幅 ÷ 跌幅|，偏離 1 代表報酬與風險不對稱<br>
 排序依期望值 = P(漲)×漲幅 + P(跌)×跌幅<br>
-產生於 2026-09-17 01:02 台北 · 研究與紀律工具，不構成投資建議</div>
+產生於 2026-09-17 01:05 台北 · 研究與紀律工具，不構成投資建議</div>
 </div>
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>
 <script>
@@ -103,4 +111,6 @@ function k(){const r=document.documentElement;
  try{localStorage.setItem('t',n)}catch(e){}}
 try{const v=localStorage.getItem('t');if(v)document.documentElement.setAttribute('data-t',v)}catch(e){}
 show();
+if('serviceWorker' in navigator)
+ navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(()=>{});
 </script></body></html>

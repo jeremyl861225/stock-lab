@@ -161,6 +161,14 @@ def build() -> Path:
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F8F7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="股市預測">
 <title>股市預測 · {d}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -208,6 +216,8 @@ function k(){{const r=document.documentElement;
  try{{localStorage.setItem('t',n)}}catch(e){{}}}}
 try{{const v=localStorage.getItem('t');if(v)document.documentElement.setAttribute('data-t',v)}}catch(e){{}}
 show();
+if('serviceWorker' in navigator)
+ navigator.serviceWorker.register('sw.js',{{scope:'./'}}).catch(()=>{{}});
 </script></body></html>"""
     DOCS.mkdir(parents=True, exist_ok=True)
     out = DOCS / "index.html"
