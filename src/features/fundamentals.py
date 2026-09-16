@@ -52,6 +52,60 @@ def _load(kind: str) -> pd.DataFrame:
     return df.rename(columns={"stock_id": "code"})
 
 
+QMON = {(3, 31): ("01", "02", "03"), (6, 30): ("04", "05", "06"),
+        (9, 30): ("07", "08", "09"), (12, 31): ("10", "11", "12")}
+
+
+def _reconcile() -> set[tuple[str, str]]:
+    """季報營收 vs 同期月營收加總，回傳對不起來的 (code, 季末日)。
+
+    為什麼需要：實測 2059（川湖）2026Q2 的季報營收是月營收加總的 1.30 倍，
+    而它其他六季都穩定在 1.00–1.07 —— 那一筆壞了。毛利率因此從常態的
+    76% 跳到 87%，EPS 跳成 74.38（單季兩倍）。這種錯不會讓程式當掉，
+    只會讓判斷建立在假數字上。
+
+    判準用「相對該檔自己的中位數」而不是絕對 1.0：合併報表涵蓋子公司，
+    月營收揭露有的是母公司單體，比值本來就可能穩定偏離 1.0。
+    偏離自身常態才是訊號。
+
+    金控除外：金融業的「營業收入」與月營收揭露基礎不同，本來就不可比，
+    拿來對帳只會產生大量假警報（實測 151 個異常裡最嚴重的六個全是金控）。
+    """
+    import json as _json
+    mrev: dict[str, dict[str, float]] = {}
+    for f in (RAW / "finmind" / "rev").glob("*.json"):
+        for x in _json.loads(f.read_text(encoding="utf-8")).get("payload", []):
+            mrev.setdefault(x["stock_id"], {})[x["date"][:7]] = x.get("revenue")
+
+    bad: set[tuple[str, str]] = set()
+    for f in (RAW / "finmind" / "fin").glob("*.json"):
+        code = f.stem
+        if code.startswith("28"):          # 金控／銀行／保險
+            continue
+        m = mrev.get(code)
+        if not m:
+            continue
+        qrev = {x["date"]: x["value"] for x in
+                _json.loads(f.read_text(encoding="utf-8")).get("payload", [])
+                if x["type"] == "Revenue"}
+        ratios = {}
+        for d, v in qrev.items():
+            key = (int(d[5:7]), int(d[8:10]))
+            if key not in QMON or not v:
+                continue
+            ms = [m.get(f"{d[:4]}-{mm}") for mm in QMON[key]]
+            if any(x is None for x in ms) or not sum(ms):
+                continue
+            ratios[d] = v / sum(ms)
+        if len(ratios) < 4:                 # 樣本太少，沒有可靠的自身常態
+            continue
+        med = sorted(ratios.values())[len(ratios) // 2]
+        for d, r in ratios.items():
+            if med and abs(r / med - 1) > 0.15:
+                bad.add((code, d))
+    return bad
+
+
 def build() -> pd.DataFrame:
     """回傳 [code, avail_date, <FUND_COLS>]。avail_date 是「這天起才看得到」。"""
     fin, bs, cf = _load("fin"), _load("bs"), _load("cf")
@@ -84,7 +138,15 @@ def build() -> pd.DataFrame:
         lambda s: s / s.shift(4).abs().replace(0, np.nan) - 1)
 
     ni = col("IncomeAfterTaxes")
-    eq = col("EquityAttributableToOwnersOfParent")
+    # 陷阱：EquityAttributableToOwnersOfParent 這個名字在損益表與資產負債表
+    # 都有，意思完全不同 —— 損益表那個是「綜合損益歸屬母公司」（流量），
+    # 資產負債表那個才是「權益餘額」（存量）。merge 之後同名欄位保留損益表版本，
+    # 直接取會算出 ROE 200–600% 這種不可能的數字（實測全部 33 檔都中）。
+    # 這裡明確取資產負債表側：merge 的 suffix 是 _y，退路用只存在於
+    # 資產負債表的 Equity（權益總額，含非控制權益，會略微低估 ROE，是保守側）。
+    eq = col("EquityAttributableToOwnersOfParent_y")
+    if eq.isna().all():
+        eq = col("Equity")
     ni_ttm = df.assign(x=ni).groupby("code")["x"].transform(lambda s: s.rolling(4).sum())
     # 權益用期初期末平均，避免當期增資把 ROE 壓低成假訊號
     eq_avg = df.assign(x=eq).groupby("code")["x"].transform(lambda s: s.rolling(2).mean())
@@ -113,6 +175,20 @@ def build() -> pd.DataFrame:
 
     out["avail_date"] = out["date"].map(_pub_date)
     out = out.replace([np.inf, -np.inf], np.nan)
+
+    # 對不起來的季別整列作廢。寧可少一季，不要拿壞數字做一年期判斷。
+    bad = _reconcile()
+    if bad:
+        key = list(zip(out["code"], out["date"].dt.strftime("%Y-%m-%d")))
+        mask = pd.Series([k in bad for k in key], index=out.index)
+        out.loc[mask, FUND_COLS] = np.nan
+        out.attrs["rejected"] = len(bad)
+
+    # eps_yoy 的基期若接近零，比值會爆成幾百倍（南亞 +1412%、華邦電 +1232%）。
+    # 那不是成長，是除以零。基期絕對值小於 0.5 元就不給數字。
+    base = out.groupby("code")["eps_ttm"].shift(4)
+    out.loc[base.abs() < 0.5, "eps_yoy"] = np.nan
+
     return out[["code", "date", "avail_date", *FUND_COLS]].reset_index(drop=True)
 
 

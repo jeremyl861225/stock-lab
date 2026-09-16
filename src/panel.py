@@ -70,6 +70,17 @@ text-align:right}
 .wt{display:inline-block;width:26px;height:4px;border-radius:2px;background:var(--line);
 overflow:hidden;flex-shrink:0}
 .wt>span{display:block;height:100%;background:var(--mut);border-radius:2px}
+.cps{margin:6px 0 0;display:flex;flex-direction:column;gap:3px}
+.cp{display:flex;gap:6px;align-items:baseline;font-size:10.5px;line-height:1.45}
+.cp s{text-decoration:none;flex:0 0 11px;font-weight:800}
+.cp.ok s{color:var(--up)} .cp.no s{color:var(--dn)} .cp.pd s{color:var(--faint)}
+.cp.no em{font-style:normal;color:var(--dn);font-weight:700}
+.cp b{font-weight:400;color:var(--mut)} .cp em{font-style:normal;color:var(--faint);
+font-variant-numeric:tabular-nums}
+.vd{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:99px;
+font-size:9px;font-weight:700;letter-spacing:.02em}
+.vd.v0{background:var(--up);color:#fff} .vd.v1{background:var(--dn);color:#fff}
+.vd.v2{background:var(--line);color:var(--mut)}
 .wp{font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:26px}
 .bar{margin-left:auto;flex-shrink:0}
 .ev{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
@@ -137,7 +148,53 @@ def _wt(w: float, mxw: float) -> str:
             f'<span style="width:{pct:.1f}%"></span></span>')
 
 
-def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 20) -> str:
+def _score_checkpoints(jdir: Path) -> dict:
+    """讀最新的一年期判斷檔，逐檔重評檢查點。評分失敗不能讓整張面板倒 ——
+    一年期是附加分頁，5／20 日才是每天要看的東西。"""
+    out = {}
+    fs = sorted(jdir.glob("*_1y*.json"))
+    if not fs:
+        return out
+    try:
+        import checkpoints as CP
+        today = pd.Timestamp.today()
+        for j in json.loads(fs[-1].read_text(encoding="utf-8")).get("judgments", []):
+            try:
+                out[str(j["code"])] = CP.score_all(j, today)
+            except Exception:  # noqa: BLE001
+                continue
+    except Exception:  # noqa: BLE001
+        return {}
+    return out
+
+
+def _vd(r: dict | None) -> str:
+    """論點判定徽章。過半前提被推翻就標失效 —— 該重寫判斷，不是等到期。"""
+    if not r:
+        return ""
+    cls = {"成立": "v0", "失效": "v1", "動搖": "v1"}.get(r["verdict"], "v2")
+    return f'<span class="vd {cls}">{r["verdict"]}</span>'
+
+
+def _cp_html(r: dict | None) -> str:
+    """一年期的論點檢查點。沒有檢查點的一年期判斷等於「押方向然後等一年」，
+    在這套系統裡沒有價值 —— 所以缺的時候明講，不留白。"""
+    if not r:
+        return ('<div class="cps"><div class="cp pd"><s>·</s>'
+                '<b>此判斷未寫檢查點，一年內無法驗證對錯</b></div></div>')
+    mark = {"holding": ("ok", "✓"), "broken": ("no", "✗"), "pending": ("pd", "·")}
+    rows = []
+    for c in r["checkpoints"]:
+        cls, sym = mark[c["status"]]
+        act = "待公告" if c["actual"] is None else f'{c["actual"]:+.3f}'
+        rows.append(f'<div class="cp {cls}"><s>{sym}</s>'
+                    f'<b>{html.escape(str(c["claim"]))}</b>'
+                    f'<em>{act}</em></div>')
+    return f'<div class="cps">{"".join(rows)}</div>'
+
+
+def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 20,
+           cps: dict | None = None) -> str:
     if t.empty:
         return '<p class="sub">（尚無判斷）</p>'
     hist = hist or {}
@@ -179,6 +236,7 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<span class="rk">{i+1}</span>'
             f'<span class="nm">{html.escape(str(r["名稱"]))}</span>'
             f'<span class="cd">{r["code"]}</span>'
+            f'{_vd((cps or {}).get(str(r["code"])))}'
             f'{_wt(wt, mxw)}{wtxt}'
             f'{_bar(ev, mx, str(r["conviction"]))}'
             f'<span class="ev {"p" if ev>1e-9 else ("n" if ev<-1e-9 else "z")}">{ev*100:+.2f}%</span></div>'
@@ -195,7 +253,9 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<div class="c d"><b>{"保守價" if horizon >= 250 else "停損點"}</b>'
             f'<i>{cur}{sl:,.{dec}f}</i></div>'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
-            f'</div><div class="why">{why}</div></div></div>')
+            f'</div><div class="why">{why}</div>'
+            f'{_cp_html((cps or {}).get(str(r["code"]))) if horizon >= 250 else ""}'
+            f'</div></div>')
     return "".join(out)
 
 
@@ -245,13 +305,20 @@ def build() -> Path:
         if j.get("as_of") == as_of and j.get("market_context"):
             ctx[j.get("market", "TW")] = j["market_context"]
 
+    # 一年期的論點檢查點。每次建面板都重評 —— 前提可能昨天還成立、
+    # 今天月營收一出就翻掉，這正是這套機制存在的理由。
+    cps = _score_checkpoints(jd)
+
     body = ""
     for key, (t, cur) in views.items():
-        mk = key[:2]
+        mk, hz = key[:2], int(key[2:])
+        hint = ('點任一列展開詳細數字　·　點 ✦ 釘選置頂　·　細條＝市值權重　·　橫桿＝期望值'
+                if hz < 250 else
+                '點任一列展開　·　✓＝前提成立　✗＝已被資料推翻　·＝該期尚未公告')
         body += (f'<div class="view" id="v{key}" hidden>'
                  f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
-                 f'<p class="hint">點任一列展開詳細數字　·　點 ✦ 釘選置頂　·　細條＝市值權重　·　橫桿＝期望值</p>'
-                 f'<div class="list">{_cards(t, cur, hist)}</div></div>')
+                 f'<p class="hint">{hint}</p>'
+                 f'<div class="list">{_cards(t, cur, hist, hz, cps)}</div></div>')
 
     gen = dt.datetime.now(dt.UTC).astimezone(dt.timezone(dt.timedelta(hours=8)))
     doc = f"""<!doctype html>
