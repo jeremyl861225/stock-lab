@@ -39,6 +39,11 @@ def summary(model: str = "claude") -> dict:
 
     if not preds.empty:
         p = preds[preds["model"] == model]
+        # 必須與 settle 用同一套去重，否則會把永遠不會被結算的舊版本也算進來
+        # ——實測 306 筆裡有 100 筆是舊版，虛胖 49%。
+        if not p.empty:
+            p = p.sort_values("created_at_utc").drop_duplicates(
+                ["as_of", "horizon", "code"], keep="last")
         out["pending"] = int(len(p))
     if s.empty or model not in set(s.get("model", [])):
         return out
@@ -77,3 +82,33 @@ def summary(model: str = "claude") -> dict:
 
 if __name__ == "__main__":
     print(json.dumps(summary(), ensure_ascii=False, indent=2))
+
+
+def by_code(model: str = "claude") -> dict[str, dict]:
+    """每檔股票的歷史預測成績。
+
+    個股層級的樣本本來就少（一檔一天最多兩筆），所以這個數字要很久才有意義。
+    未達門檻時回傳 None，讓面板顯示「—」而不是拿 1/1 = 100% 去誤導。
+    """
+    s = _jsonl(SETTLEMENTS)
+    if s.empty or "model" not in s.columns:
+        return {}
+    d = s[s["model"] == model].copy()
+    if d.empty:
+        return {}
+    d = d.sort_values("settled_at_utc").drop_duplicates(
+        ["as_of", "horizon", "code"], keep="last")
+    d["exp_ret"] = pd.to_numeric(d.get("exp_ret"), errors="coerce")
+    out = {}
+    for code, g in d.groupby("code"):
+        n = len(g)
+        w = g["exp_ret"].abs()
+        out[str(code)] = {
+            "n": int(n),
+            "hit": float(g["correct"].mean()),
+            "weighted": (float((w * g["correct"]).sum() / w.sum())
+                         if w.notna().any() and w.sum() else None),
+            # 樣本太少時不給數字 —— 3 筆裡對 2 筆不代表 67% 的準確率
+            "reliable": bool(n >= 8),
+        }
+    return out

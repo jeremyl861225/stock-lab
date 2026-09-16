@@ -248,3 +248,55 @@ def test_price_times_shares_is_conserved():
             if win.max() / win.min() > 3.0:
                 bad.append((code, str(d.date()), round(win.max() / win.min(), 2)))
     assert not bad, f"除權息日前後價格×股數跳變逾 3 倍，還原不完整：{bad[:5]}"
+
+
+def test_each_market_uses_its_own_as_of():
+    """兩個市場的交易時段不同，各自取自己的最新交易日。
+
+    台股 13:30 收盤、美股 21:30 才開盤（台北時間），所以台北 15:30 執行時
+    台股已有當天資料、美股仍是前一交易日。統一取 as_of == max 會讓美股
+    整個消失 —— 實測 50 檔台股、0 檔美股。
+    """
+    from features.build import build
+    p = _panel()
+    if "market" not in p.columns or p["market"].nunique() < 2:
+        return
+    # 模擬台股多一個交易日、美股尚未更新
+    tw = p[p["market"] == "TW"]
+    last = tw[tw["date"] == tw["date"].max()].copy()
+    last["date"] = last["date"] + pd.Timedelta(days=1)
+    sim = pd.concat([p, last], ignore_index=True)
+    f = build(sim, sim["date"].max())
+    for m in ("TW", "US"):
+        n = (f["market"] == m).sum()
+        assert n > 0, f"{m} 在跨市場時點消失（共 {len(f)} 檔）"
+
+
+def test_universe_is_not_empty():
+    """universe 必須有完整檔數。
+
+    曾經在台股尚未開盤時執行 universe.py，TWSE 回空資料卻照樣寫檔，
+    產生 size=0 的 universe，下游 panel 於是把台股整批濾掉、只剩美股，
+    而且全程不拋任何錯誤。這種靜默失效最危險。
+    """
+    import json
+    from pathlib import Path as _P
+    root = _P(__file__).resolve().parent.parent
+    for f, expect in (("config/universe_latest.json", 50),
+                      ("config/universe_us_latest.json", 53)):
+        p = root / f
+        if not p.exists():
+            continue
+        d = json.loads(p.read_text(encoding="utf-8"))
+        n = len(d.get("constituents", []))
+        assert n >= expect * 0.9, f"{f} 只有 {n} 檔（應約 {expect}）"
+
+
+def test_panel_covers_both_markets():
+    """panel 必須同時涵蓋兩個市場，且檔數接近 universe 大小。"""
+    p = _panel()
+    if "market" not in p.columns:
+        return
+    for m, lo in (("TW", 45), ("US", 48)):
+        n = p[p["market"] == m]["code"].nunique()
+        assert n >= lo, f"{m} 只有 {n} 檔在 panel 中（疑似 universe 失效）"

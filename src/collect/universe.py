@@ -56,6 +56,13 @@ def build(date: str, size: int = 50) -> dict:
 
     rows.sort(key=lambda r: r["mcap"], reverse=True)
     top = rows[:size]
+    if len(top) < size:
+        # 當日尚未開盤、非交易日、或 TWSE 端點異常時，quotes 會是空的。
+        # 若照樣寫檔，universe 會變成 size=0，下游 panel 會把台股整批濾掉
+        # ——實測發生過：panel 只剩美股 53 檔、台股 0 檔，而且不會拋任何錯誤。
+        raise RuntimeError(
+            f"{date} 只取得 {len(top)}/{size} 檔，拒絕覆寫既有 universe "
+            f"（多半是當日尚未開盤或非交易日）")
     total = sum(r["mcap"] for r in top)
 
     uni = {

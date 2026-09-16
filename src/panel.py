@@ -6,8 +6,10 @@
 
 每檔顯示八個數字，各自以色塊承載：
   P漲／漲幅／跌幅／賠率比／收盤價／獲利點／停損點／信心
-獲利點 = 收盤 ×(1+漲幅)、停損點 = 收盤 ×(1+跌幅) —— 直接由預測推導，
-不是另外設定的目標價，看到的價位就是模型自己說的那個幅度。
+獲利點 = 收盤 ×(1+漲幅)，漲幅是「上漲情境下的平均幅度」，合理可達。
+停損點 = 收盤 ×(1+下檔10%分位)，設在正常波動之外，跌破才代表判斷錯了。
+賠率比量的是這兩個價位的實際比值，因此通常小於 1 —— 這是兩者取不同基準的必然結果，
+不是模型在虧損。
 """
 from __future__ import annotations
 import datetime as dt, html, json, sys
@@ -68,7 +70,7 @@ overflow:hidden;flex-shrink:0}
 .bar{margin-left:auto;flex-shrink:0}
 .ev{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
 min-width:52px;text-align:right}
-.ev.p{color:var(--up)}.ev.n{color:var(--dn)}
+.ev.p{color:var(--up)}.ev.n{color:var(--dn)}.ev.z{color:var(--mut)}
 .det{display:none;padding:0 11px 11px}
 .row[aria-expanded="true"] .det{display:block}
 .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
@@ -108,7 +110,11 @@ def _bar(ev: float, mx: float, conf: str) -> str:
     W, H, C = 74, 15, 37
     w = min(abs(ev) / mx * 34, 34) if mx > 0 else 0
     op = {"high": 1.0, "medium": .74, "low": .5}.get(conf, .5)
-    col = "var(--up)" if ev >= 0 else "var(--dn)"
+    # 期望值恰為 0 代表「不做方向判斷」，不該畫成微幅看多的紅色。
+    if abs(ev) < 1e-9:
+        col, op = "var(--mut)", .35
+    else:
+        col = "var(--up)" if ev > 0 else "var(--dn)"
     x = C if ev >= 0 else C - w
     o = "left" if ev >= 0 else "right"
     return (f'<svg class="bar" width="{W}" height="{H}" viewBox="0 0 {W} {H}" aria-hidden="true">'
@@ -127,9 +133,10 @@ def _wt(w: float, mxw: float) -> str:
             f'<span style="width:{pct:.1f}%"></span></span>')
 
 
-def _cards(t: pd.DataFrame, cur: str) -> str:
+def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None) -> str:
     if t.empty:
         return '<p class="sub">（尚無判斷）</p>'
+    hist = hist or {}
     mx = t["exp_ret"].abs().max()
     mxw = t["權重"].max() if "權重" in t.columns else 0
     out = []
@@ -142,8 +149,17 @@ def _cards(t: pd.DataFrame, cur: str) -> str:
         # 拿來當停損會被反覆洗出場。
         q10 = float(r["ret_q10"]) if pd.notna(r.get("ret_q10")) else dn * 1.6
         tp, sl = close * (1 + up), close * (1 + q10)
+        # 賠率比必須量卡片上「這兩個價位」，不能沿用判斷檔的 |漲幅/跌幅|。
+        # 停損改用 q10（= 跌幅×1.6）之後，兩者恆差 1.6 倍：
+        # 原本 52/103 檔顯示 >1（看似報酬大於風險），實際沒有一檔 ≥1。
+        payoff = abs(up / q10) if q10 else float("inf")
         dec = 2 if close < 100 else (1 if close < 1000 else 0)
         conf = {"high": "高", "medium": "中", "low": "低"}.get(str(r["conviction"]), "低")
+        # 該檔的歷史準確率。樣本不足時顯示「—」而不是拿 1/1=100% 誤導。
+        hc = hist.get(str(r["code"]))
+        acc = (f'{hc["weighted"]*100:.0f}%' if hc and hc.get("reliable")
+               and hc.get("weighted") is not None else "—")
+        accn = f'（{hc["n"]}）' if hc else ""
         why = html.escape(str(r["rationale"]).split(": ", 1)[-1])
         wt = float(r["權重"]) if "權重" in t.columns and pd.notna(r["權重"]) else float("nan")
         wtxt = "" if pd.isna(wt) else f'<span class="wp">{wt*100:.1f}%</span>'
@@ -154,16 +170,16 @@ def _cards(t: pd.DataFrame, cur: str) -> str:
             f'<span class="cd">{r["code"]}</span>'
             f'{_wt(wt, mxw)}{wtxt}'
             f'{_bar(ev, mx, str(r["conviction"]))}'
-            f'<span class="ev {"p" if ev>=0 else "n"}">{ev*100:+.2f}%</span></div>'
+            f'<span class="ev {"p" if ev>1e-9 else ("n" if ev<-1e-9 else "z")}">{ev*100:+.2f}%</span></div>'
             f'<div class="det"><div class="chips">'
             f'<div class="c"><b>P漲</b><i>{r["prob_up"]*100:.0f}%</i></div>'
             f'<div class="c u"><b>漲幅</b><i>{up*100:+.1f}%</i></div>'
             f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
-            f'<div class="c"><b>賠率比</b><i>{r["reward_risk"]:.2f}</i></div>'
+            f'<div class="c"><b>賠率比</b><i>{payoff:.2f}</i></div>'
             f'<div class="c"><b>收盤價</b><i>{cur}{close:,.{dec}f}</i></div>'
             f'<div class="c u"><b>獲利點</b><i>{cur}{tp:,.{dec}f}</i></div>'
             f'<div class="c d"><b>停損點</b><i>{cur}{sl:,.{dec}f}</i></div>'
-            f'<div class="c h"><b>信心</b><i>{conf}</i></div>'
+            f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
             f'</div><div class="why">{why}</div></div></button>')
     return "".join(out)
 
@@ -197,6 +213,7 @@ def build() -> Path:
     if all(v[0].empty for v in views.values()):
         raise RuntimeError("尚無判斷可呈現")
 
+    hist = acc_mod.by_code()
     any_t = next(v[0] for v in views.values() if not v[0].empty)
     as_of = any_t["as_of"].iloc[0]
     d = f"{as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
@@ -219,7 +236,7 @@ def build() -> Path:
         body += (f'<div class="view" id="v{key}" hidden>'
                  f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
                  f'<p class="hint">點任一列展開詳細數字　·　細條＝市值權重　·　橫桿＝期望值</p>'
-                 f'<div class="list">{_cards(t, cur)}</div></div>')
+                 f'<div class="list">{_cards(t, cur, hist)}</div></div>')
 
     gen = dt.datetime.now(dt.UTC).astimezone(dt.timezone(dt.timedelta(hours=8)))
     doc = f"""<!doctype html>
@@ -260,9 +277,12 @@ def build() -> Path:
 <div class="foot" data-gen="{gen:%Y-%m-%d %H:%M}">
 <span class="dot" style="background:#A83F17"></span>上漲　
 <span class="dot" style="background:#2A7574"></span>下跌　（台股慣例紅漲綠跌）<br>
+信心是判斷當下的把握，準確率是該檔過去預測的期望值加權命中率<br>
+（樣本未達 8 筆顯示「—」，因為 3 筆對 2 筆不代表 67% 的準確率）<br>
 獲利點 = 收盤 ×(1+漲幅)，漲幅為「上漲情境下的平均幅度」<br>
 停損點 = 收盤 ×(1+下檔10%分位)，設在正常波動之外，跌破才代表判斷錯了<br>
-賠率比 = |漲幅 ÷ 跌幅|，偏離 1 代表報酬與風險不對稱<br>
+賠率比 =（獲利點−收盤）÷（收盤−停損點），量的就是卡片上這兩個價位<br>
+它通常小於 1，因為獲利點用「合理可達」的條件期望、停損點用「正常波動之外」的分位數<br>
 排序依期望值 = P(漲)×漲幅 + P(跌)×跌幅<br>
 產生於 {gen:%Y-%m-%d %H:%M} 台北 · 研究與紀律工具，不構成投資建議</div>
 </div>

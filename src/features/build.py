@@ -89,7 +89,14 @@ def build(panel: pd.DataFrame, as_of: pd.Timestamp | str) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame()
     out = _compute(df)
-    out = out[out["as_of"] == out["as_of"].max()]
+    # 每個市場取「自己的」最新交易日。
+    # 台股 13:30 收盤、美股 21:30 才開盤（台北時間），所以台北 15:30 跑的時候
+    # 台股已有當天資料、美股還停在前一交易日。若統一取 as_of == max，
+    # 美股會整個消失（實測：50 檔台股 + 0 檔美股）。
+    if "market" in out.columns:
+        out = out[out["as_of"] == out.groupby("market")["as_of"].transform("max")]
+    else:
+        out = out[out["as_of"] == out["as_of"].max()]
     return out.reset_index(drop=True)
 
 
