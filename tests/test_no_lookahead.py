@@ -150,3 +150,16 @@ def test_models_emit_return_distribution():
         if name != "always_up":
             assert ((out["exp_ret"] >= 0) == (out["direction"] == 1)).all(), \
                 f"{name} 方向與期望報酬不一致"
+
+
+def test_panel_button_inherits_color():
+    """面板的每一列是 <button>，必須顯式繼承文字顏色。
+
+    button 的預設 color 是瀏覽器的 buttontext（純黑），不繼承 body。
+    只寫 font-family:inherit 會讓整個列表在深色模式下變成黑字黑底 —— 實際踩過。
+    """
+    from pathlib import Path
+    css = (Path(__file__).resolve().parent.parent / "src/panel.py").read_text(encoding="utf-8")
+    i = css.index(".row{{")
+    block = css[i:i + 240]
+    assert "color:inherit" in block, "面板 .row 未繼承顏色，深色模式會變黑字黑底"
