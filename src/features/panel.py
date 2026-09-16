@@ -24,6 +24,40 @@ def _read(kind: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _attach_revenue(px: pd.DataFrame) -> pd.DataFrame:
+    """把月營收年增率併進 panel，使統計模型也能用到。
+
+    此前它只在 briefing 給判斷者看，統計模型完全看不到 —— 但在多變量
+    Fama-MacBeth 裡它的係數是 +3.28%（t=5.26），與最強的價格特徵同量級，
+    而且是台股獨有、免費、統計模型卻完全沒用到的資訊源。
+    point-in-time：以法定公告期限（次月 10 日）為可用日，向後填補。
+    """
+    d = RAW / "finmind" / "rev"
+    if not d.exists():
+        px["rev_yoy"] = np.nan
+        return px
+    rows = []
+    for f in sorted(d.glob("*.json")):
+        rows += json.loads(f.read_text(encoding="utf-8"))["payload"]
+    if not rows:
+        px["rev_yoy"] = np.nan
+        return px
+    r = pd.DataFrame(rows)
+    r["ym"] = r["revenue_year"].astype(int) * 12 + r["revenue_month"].astype(int)
+    r = r.sort_values(["stock_id", "ym"]).drop_duplicates(["stock_id", "ym"], keep="last")
+    r["prev"] = r.groupby("stock_id")["revenue"].shift(12)
+    r["rev_yoy"] = r["revenue"] / r["prev"] - 1
+    # 可用日 = 次月 10 日（法定公告期限），比實際公告日保守
+    r["pub"] = pd.to_datetime([
+        f"{y + (1 if m == 12 else 0)}-{(1 if m == 12 else m + 1):02d}-10"
+        for y, m in zip(r["revenue_year"].astype(int), r["revenue_month"].astype(int))])
+    r = r.dropna(subset=["rev_yoy"])[["stock_id", "pub", "rev_yoy"]]
+    r = r.rename(columns={"stock_id": "code", "pub": "date"}).sort_values("date")
+    px = px.sort_values("date")
+    out = pd.merge_asof(px, r, on="date", by="code", direction="backward")
+    return out.sort_values(["code", "date"]).reset_index(drop=True)
+
+
 def adjust_for_corporate_actions(px: pd.DataFrame) -> pd.DataFrame:
     """除權息還原（backward adjustment）。
 
@@ -194,6 +228,7 @@ def build(codes: set[str] | None = None) -> pd.DataFrame:
             px[c] = pd.to_numeric(px[c], errors="coerce")
     px = (px[px["close"] > 0].sort_values(["code", "date"])
             .drop_duplicates(["code", "date"]).reset_index(drop=True))
+    px = _attach_revenue(px)
     px = adjust_for_corporate_actions(px)
     px = repair_unexplained_splits(px)
     px["market"] = "TW"

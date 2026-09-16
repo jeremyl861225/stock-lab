@@ -88,13 +88,22 @@ def predict(feats: pd.DataFrame, horizon: int, as_of, panel: pd.DataFrame,
 
     Xp = feats[FEATURE_COLS]
     prob = _clf(kind, X, y_dir).predict_proba(Xp)[:, 1]
-    exp_ret = _reg(kind, X, y_ret).predict(Xp)
+    exp_ret = _reg(kind, X, y_ret).predict(Xp) if kind != "logit" else None
 
     if kind == "logit":
-        # 線性家族不做分位數回歸，改用殘差標準差的常態近似
-        resid = y_ret - _reg(kind, X, y_ret).predict(X)
-        s = float(resid.std())
-        q10, q90 = exp_ret - 1.2816 * s, exp_ret + 1.2816 * s
+        # 線性家族不做分位數回歸，用殘差標準差的常態近似 ——
+        # 但必須按各股波動度縮放。原本用單一純量 σ，導致中華電（日波動 0.48%）
+        # 與大立光（5.91%）拿到完全相同的 35.2% 區間，
+        # 條件覆蓋率從最低波動組 99% 到最高波動組 65%（名目 80%）。
+        reg = _reg(kind, X, y_ret)                      # 只擬合一次，原本擬合了兩次
+        exp_ret = reg.predict(Xp)
+        resid = y_ret - reg.predict(X)
+        # 殘差除以各自的波動度 → 得到無單位的殘差尺度，再乘回每檔自己的波動度
+        train_vol = X["vol_20"].replace(0, np.nan)
+        z = (resid / (train_vol * np.sqrt(horizon))).replace([np.inf, -np.inf], np.nan).dropna()
+        k = float(z.std()) if len(z) > 30 and z.std() > 0 else 1.0
+        sig = feats["vol_20"].fillna(feats["vol_20"].median()).to_numpy() * np.sqrt(horizon) * k
+        q10, q90 = exp_ret - 1.2816 * sig, exp_ret + 1.2816 * sig
     else:
         q10 = _reg(kind, X, y_ret, 0.10).predict(Xp)
         q90 = _reg(kind, X, y_ret, 0.90).predict(Xp)
