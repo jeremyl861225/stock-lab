@@ -73,6 +73,12 @@ def run() -> dict:
             "predicted_direction": int(p["direction"]), "prob_up": prob,
             "correct": int(p["direction"] == actual),
             "brier": round((prob - y) ** 2, 6),
+            # 幅度面：方向對但幅度錯的模型一樣沒有用
+            "exp_ret": p.get("exp_ret"),
+            "ret_error": (None if p.get("exp_ret") is None
+                          else round(ret - float(p["exp_ret"]), 6)),
+            "in_interval": (None if p.get("ret_q10") is None or p.get("ret_q90") is None
+                            else int(float(p["ret_q10"]) <= ret <= float(p["ret_q90"]))),
         })
 
     if recs:

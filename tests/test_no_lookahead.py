@@ -89,8 +89,9 @@ def test_training_set_excludes_unrealised_labels():
     p = _panel()
     as_of = sorted(p["date"].unique())[-1]
     for h in (5, 20):
-        X, y = _training_set(p, as_of, h)
+        X, y_dir, y_ret = _training_set(p, as_of, h)
         assert len(X) > 0, f"h={h} 訓練集為空"
+        assert len(X) == len(y_dir) == len(y_ret), f"h={h} 特徵與標籤長度不符"
         from features.build import build_all, labels_all
         labs = labels_all(p[p["date"] <= as_of], h)
         dates = sorted(p[p["date"] <= as_of]["date"].unique())
@@ -109,3 +110,43 @@ def test_features_are_finite():
            for c in FEATURE_COLS
            if np.isinf(f[c].to_numpy(dtype="float64")).any()}
     assert not bad, f"特徵含 inf：{bad}"
+
+
+def test_no_impossible_daily_moves():
+    """還原後不得有超過漲跌停（±10%）太多的單日變動。
+
+    門檻設 30%：台股漲跌停 ±10%，但新上市／興櫃轉上市股確實會有 11~30% 的
+    真實波動，把它們「修正」掉是製造假資料。>30% 則幾乎必然是分割或減資。
+    若這條測試失敗，代表還原漏了某個公司行動，而它會讓動能特徵與標籤
+    同時中毒 —— 這是靜默的、不會拋錯的致命污染。
+    """
+    p = _panel()
+    p = p.sort_values(["code", "date"])
+    p["chg"] = p.groupby("code")["close"].pct_change()
+    bad = p[p["chg"].abs() > 0.30]
+    detail = [(r.code, str(r.date.date()), f"{r.chg:+.1%}") for r in bad.itertuples()]
+    assert not detail, f"仍有不可能的單日變動（公司行動還原不完整）：{detail[:10]}"
+
+
+def test_models_emit_return_distribution():
+    """每個模型都必須給出期望報酬與區間，否則無法做幅度加權比較。
+
+    只預測方向會系統性誤導：P(up)=0.60 但上漲 +1%、下跌 -3% 的標的，
+    期望報酬是 -0.6%，方向準確率漂亮卻賠錢。
+    """
+    import pandas as pd
+    from features.build import build
+    from models import baselines, statistical
+    p = _panel()
+    d = p["date"].max()
+    f = build(p, d)
+    required = {"prob_up", "exp_ret", "ret_q10", "ret_q90", "direction"}
+    for name, fn in {**baselines.ALL, **statistical.ALL}.items():
+        out = fn(f, 5, d, p)
+        assert not out.empty, f"{name} 未出手"
+        assert required <= set(out.columns), f"{name} 缺欄位：{required - set(out.columns)}"
+        assert (out["ret_q10"] <= out["ret_q90"]).all(), f"{name} 分位數顛倒"
+        # 方向必須與期望報酬一致，否則排序與下注邏輯會自相矛盾
+        if name != "always_up":
+            assert ((out["exp_ret"] >= 0) == (out["direction"] == 1)).all(), \
+                f"{name} 方向與期望報酬不一致"

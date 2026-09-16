@@ -28,8 +28,11 @@ jobs:
           python src/collect/universe.py || echo "universe 更新失敗，沿用既有"
           python src/collect/finmind.py
 
-      - name: 建 panel
+      - name: 建 panel（含除權息還原）
         run: python src/features/panel.py
+
+      - name: 建四面向簡報（基本面／籌碼／技術／新聞）
+        run: python src/briefing.py
 
       - name: 產生預測（append-only）
         env:
@@ -44,6 +47,9 @@ jobs:
       - name: 驗證未來函數防線
         run: python -m pytest tests/ -q
 
+      - name: 產生期望值排序
+        run: python src/ranking.py
+
       - name: 產生報表
         run: python src/report.py
 
@@ -51,6 +57,7 @@ jobs:
         run: |
           git config user.name  "stock-lab-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add data/predictions.jsonl data/settlements.jsonl docs/ config/universe_latest.json
+          git add data/predictions.jsonl data/settlements.jsonl data/reasoning.jsonl \
+                  data/revisions.jsonl docs/ config/universe_latest.json judgments/ || true
           git diff --staged --quiet || git commit -m "daily: $(date -u +%Y-%m-%d)"
           git push

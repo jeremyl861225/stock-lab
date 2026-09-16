@@ -9,6 +9,7 @@
 from __future__ import annotations
 import datetime as dt, hashlib, json, sys
 from pathlib import Path
+import numpy as np
 import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import PREDICTIONS, HORIZONS, FEATURES
@@ -75,12 +76,10 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
         }
         for name, (fn, ver, family) in model_fns.items():
             try:
-                if family == "stat":
-                    out = fn(feats, h, as_of_ts, pnl)
-                elif family == "llm":
+                if family == "llm":
                     out = fn(feats, h, as_of_ts, pnl, uni)
                 else:
-                    out = fn(feats, h, as_of_ts)
+                    out = fn(feats, h, as_of_ts, pnl)
             except Exception as e:  # noqa: BLE001
                 print(f"  [{name} h={h}] 失敗：{e}")
                 continue
@@ -101,6 +100,11 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
                     "as_of": as_of_str, "code": code, "horizon": h,
                     "model": name, "model_family": family, "model_version": ver,
                     "prob_up": round(float(r["prob_up"]), 6),
+                    "exp_ret": round(float(r.get("exp_ret", 0.0)), 6),
+                    "ret_q10": round(float(r.get("ret_q10", np.nan)), 6)
+                               if pd.notna(r.get("ret_q10")) else None,
+                    "ret_q90": round(float(r.get("ret_q90", np.nan)), 6)
+                               if pd.notna(r.get("ret_q90")) else None,
                     "direction": int(r["direction"]),
                     "rationale": str(r.get("rationale", ""))[:200],
                     "feature_hash": hashes.get(code, ""),

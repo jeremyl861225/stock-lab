@@ -21,6 +21,9 @@ DATASETS = {
     "price": "TaiwanStockPrice",
     "inst": "TaiwanStockInstitutionalInvestorsBuySell",
     "margin": "TaiwanStockMarginPurchaseShortSale",
+    "div": "TaiwanStockDividendResult",
+    "per": "TaiwanStockPER",
+    "rev": "TaiwanStockMonthRevenue",
 }
 
 
@@ -68,7 +71,7 @@ def backfill(codes: list[str], start: str, end: str, refresh: bool = False) -> d
     stat = {"ok": 0, "fail": 0, "errors": []}
     t0 = time.time()
     for n, c in enumerate(codes, 1):
-        for kind in ("price", "inst", "margin"):
+        for kind in ("price", "inst", "margin", "div", "per", "rev"):
             try:
                 fetch(kind, c, start, end, refresh)
                 stat["ok"] += 1

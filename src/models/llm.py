@@ -15,8 +15,13 @@ import numpy as np
 import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from collect import news
+from briefing import fundamentals
 
-VERSION = "1.0.0"
+
+def _pct(v):
+    return "n/a" if v is None or pd.isna(v) else f"{v*100:+.1f}%"
+
+VERSION = "1.2.0"
 BATCH = 10
 
 def _provider():
@@ -51,25 +56,37 @@ def _call(prompt: str) -> str:
 
 def _prompt(rows: list[dict], horizon: int, as_of: str, base_rate: float,
             mkt: list[str]) -> str:
+    """分析框架與 2026-09-16 人工判斷所用的完全一致，確保自動化後可重現。"""
     lines = []
     for r in rows:
         n = r["news"][:5]
         news_txt = "\n".join(f"      - {x}" for x in n) if n else "      （無近期財經新聞）"
         lines.append(
-            f"""  {r['code']} {r['name']}
-      收盤 {r['close']:.1f}｜近5日 {r['ret_5']:+.2%}｜近20日 {r['ret_20']:+.2%}｜近60日 {r['ret_60']:+.2%}
-      20日波動 {r['vol_20']:.2%}｜距20日均線 {r['ma_gap_20']:+.2%}｜RSI {r['rsi_14']:.0f}｜距60日高點 {r['dist_high_60']:+.2%}
-      外資近5日買賣超(佔均量) {r['foreign_5']:+.2f}｜投信 {r['trust_5']:+.2f}
-      近期新聞：
+            f"""  {r['code']} {r['name']}（{r.get('industry','')}）收盤 {r['close']:.1f}
+      基本面：PER {r.get('per','n/a')}｜PBR {r.get('pbr','n/a')}｜殖利率 {r.get('yield','n/a')}%
+              月營收 {r.get('rev_month','n/a')} 年增 {r.get('rev_yoy','n/a')}｜近3月年增 {r.get('rev_yoy3m','n/a')}｜月增 {r.get('rev_mom','n/a')}
+      籌碼面：外資5日 {r['foreign_5']:+.2f}／20日 {r.get('foreign_20',0):+.2f} 倍日均量｜投信5日 {r['trust_5']:+.2f}
+              融資餘額5日 {r.get('margin_chg_5',0):+.1%}｜20日 {r.get('margin_chg_20',0):+.1%}
+      技術面：RSI {r['rsi_14']:.0f}｜5日 {r['ret_5']:+.2%}｜20日 {r['ret_20']:+.2%}｜60日 {r['ret_60']:+.2%}
+              距60日高點 {r['dist_high_60']:+.2%}｜距20日均線 {r['ma_gap_20']:+.2%}｜日波動 {r['vol_20']:.2%}
+      新聞：
 {news_txt}""")
-    mkt_txt = "\n".join(f"  - {x}" for x in mkt[:8]) or "  （無）"
-    return f"""你是量化研究員。請為以下台股標的預測「{as_of} 收盤後、未來 {horizon} 個交易日」的漲跌。
+    mkt_txt = "\n".join(f"  - {x}" for x in mkt[:10]) or "  （無）"
+    return f"""你是量化研究員。針對以下台股標的，預測 {as_of} 收盤後、未來 {horizon} 個交易日的報酬分布。
 
-嚴格要求：
-1. 輸出「校準過的」機率。意思是：你給 0.70 的那一批標的，實際上必須有大約 70% 上漲。
-   歷史基本率（同期間上漲比例）約為 {base_rate:.1%} —— 沒有明確理由時，請貼近這個數字。
-2. 不要為了顯得有觀點而給極端值。多數個股在 {horizon} 個交易日尺度上接近隨機。
-3. 只使用下列資訊，不要引用你記憶中 {as_of} 之後發生的任何事。
+分析必須同時涵蓋四個面向，並在理由中指出是哪個面向主導你的判斷：
+  基本面：營收年增與月增動能、PER／PBR 是否與成長相稱、殖利率
+  籌碼面：外資與投信買賣超方向是否一致、融資餘額變化（融資急增常是散戶追高的反向訊號）
+  技術面：RSI 是否極端、距高點位置、動能是否已過度延伸
+  新聞面：是否有新資訊（新資訊才會推動股價；已公告並被消化的利多不算）
+
+三個必須遵守的紀律：
+1. 輸出「校準過的」機率。你給 0.60 的那批標的，實際上必須約有 60% 上漲。
+   歷史基本率約 {base_rate:.1%}，沒有明確理由時請貼近它。多數個股在 {horizon} 個交易日尺度上接近隨機。
+2. 分開給「上漲時的幅度」與「下跌時的幅度」，不要只給單一預期值。
+   兩者不同時即為報酬風險不對稱，這是判斷中最有價值的部分。
+   幅度量級請參照各股日波動 × sqrt({horizon})，勿明顯偏離。
+3. 只使用下列資訊。不得引用你記憶中 {as_of} 之後發生的任何事。
 
 大盤背景：
 {mkt_txt}
@@ -77,8 +94,10 @@ def _prompt(rows: list[dict], horizon: int, as_of: str, base_rate: float,
 標的：
 {chr(10).join(lines)}
 
-輸出 JSON 陣列，每檔一個物件，不要有其他文字：
-[{{"code":"2330","prob_up":0.55,"rationale":"20字以內的理由"}}]"""
+輸出 JSON 陣列，每檔一物件，不要有其他文字：
+[{{"code":"2330","prob_up":0.55,"up_magnitude":0.08,"dn_magnitude":-0.07,
+   "conviction":"low","rationale":"40字內，須點明主導面向"}}]"""
+
 
 def predict(feats: pd.DataFrame, horizon: int, as_of, panel, uni: dict,
             base_rate: float = 0.52) -> pd.DataFrame:
@@ -86,7 +105,11 @@ def predict(feats: pd.DataFrame, horizon: int, as_of, panel, uni: dict,
         return pd.DataFrame()
     as_of_str = pd.Timestamp(as_of).strftime("%Y%m%d")
     names = {c["code"]: c["name"] for c in uni["constituents"]}
+    inds = {c["code"]: c.get("industry", "") for c in uni["constituents"]}
     mkt = [x["title"] for x in news.market_news(as_of_str)]
+    fd = fundamentals(as_of_str)
+    fund = {r["code"]: {**r, "industry": inds.get(r["code"], "")}
+            for r in fd.to_dict("records")} if not fd.empty else {}
 
     rows = []
     for _, r in feats.iterrows():
@@ -98,6 +121,18 @@ def predict(feats: pd.DataFrame, horizon: int, as_of, panel, uni: dict,
             "ma_gap_20": r["ma_gap_20"] or 0, "rsi_14": r["rsi_14"] or 50,
             "dist_high_60": r["dist_high_60"] or 0,
             "foreign_5": r["foreign_5"] or 0, "trust_5": r["trust_5"] or 0,
+            "foreign_20": r.get("foreign_20") or 0,
+            "margin_chg_5": r.get("margin_chg_5") or 0,
+            "margin_chg_20": r.get("margin_chg_20") or 0,
+            "ret_60": r.get("ret_60") or 0, "ma_gap_20": r.get("ma_gap_20") or 0,
+            "vol_20": r.get("vol_20") or 0.02,
+            "industry": fund.get(code, {}).get("industry", ""),
+            "per": fund.get(code, {}).get("PER"), "pbr": fund.get(code, {}).get("PBR"),
+            "yield": fund.get(code, {}).get("dividend_yield"),
+            "rev_month": fund.get(code, {}).get("rev_month"),
+            "rev_yoy": _pct(fund.get(code, {}).get("rev_yoy")),
+            "rev_yoy3m": _pct(fund.get(code, {}).get("rev_yoy3m")),
+            "rev_mom": _pct(fund.get(code, {}).get("rev_mom")),
             "news": [x["title"] for x in news.stock_news(code, names.get(code, code), as_of_str)],
         })
 
@@ -109,9 +144,16 @@ def predict(feats: pd.DataFrame, horizon: int, as_of, panel, uni: dict,
             m = re.search(r"\[.*\]", txt, re.S)
             for o in json.loads(m.group(0) if m else txt):
                 p = float(np.clip(o.get("prob_up", base_rate), 0.01, 0.99))
-                out.append({"code": str(o["code"]), "prob_up": p,
-                            "direction": 1 if p >= 0.5 else -1,
-                            "rationale": f"llm: {str(o.get('rationale',''))[:60]}"})
+                up = abs(float(o.get("up_magnitude", 0.05)))
+                dn = -abs(float(o.get("dn_magnitude", -0.05)))
+                ev = p * up + (1 - p) * dn
+                out.append({"code": str(o["code"]), "prob_up": p, "exp_ret": ev,
+                            "ret_q10": dn * 1.35, "ret_q90": up * 1.35,
+                            "up_magnitude": up, "dn_magnitude": dn,
+                            "reward_risk": round(abs(up / dn), 2) if dn else None,
+                            "direction": 1 if ev >= 0 else -1,
+                            "rationale": f"llm[{o.get('conviction','?')}]: "
+                                         f"{str(o.get('rationale',''))[:70]}"})
         except Exception as e:  # noqa: BLE001
             print(f"  llm batch {i} failed: {e}")
     return pd.DataFrame(out)

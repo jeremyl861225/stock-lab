@@ -6,6 +6,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import DATA, DOCS, PREDICTIONS, SETTLEMENTS
 import score as score_mod
+import ranking as ranking_mod
 from collect import universe
 
 
@@ -32,23 +33,28 @@ def build() -> Path:
     latest = preds["as_of"].max() if not preds.empty else "—"
     today = preds[preds["as_of"] == latest] if not preds.empty else pd.DataFrame()
 
-    # 今日各模型對每檔的機率（寬表）
+    # 期望值排序（主體）
     board = ""
-    if not today.empty:
-        for h in sorted(today["horizon"].unique()):
-            t = today[today["horizon"] == h]
-            w = t.pivot_table(index="code", columns="model", values="prob_up", aggfunc="first")
-            if "always_up" in w.columns: w = w.drop(columns=["always_up"])
-            # 均值只取真實模型：baseline（random / momentum）是尺規，不是意見，
-            # 讓它們參與排序會直接污染共識分數。
-            real = [c for c in w.columns
-                    if c in set(t[t["model_family"] != "baseline"]["model"])]
-            w.insert(0, "名稱", [names.get(c, c) for c in w.index])
-            if real:
-                w["模型共識"] = w[real].mean(axis=1).round(3)
-                w = w.sort_values("模型共識", ascending=False)
-            w = w.round(3).reset_index().rename(columns={"code": "代號"})
-            board += f"<h3>期間 {h} 個交易日 · 上漲機率</h3>" + _tbl(w.head(50), "num")
+    for h in (20, 5):
+        t = ranking_mod.table(h)
+        if t.empty:
+            continue
+        v = t[["code", "名稱", "prob_up", "up_magnitude", "dn_magnitude", "exp_ret",
+               "reward_risk", "asymmetry", "conviction", "rsi_14", "rev_yoy",
+               "ret_20", "foreign_5", "rationale"]].copy()
+        v["prob_up"] = (v["prob_up"] * 100).round(0).astype(int).astype(str) + "%"
+        for c, d in (("up_magnitude", 1), ("dn_magnitude", 1), ("exp_ret", 2),
+                     ("rev_yoy", 1), ("ret_20", 1)):
+            v[c] = v[c].apply(lambda x: "n/a" if pd.isna(x) else f"{x*100:+.{d}f}%")
+        v["foreign_5"] = v["foreign_5"].apply(lambda x: "n/a" if pd.isna(x) else f"{x:+.2f}")
+        v["rsi_14"] = v["rsi_14"].round(0).astype(int)
+        v["rationale"] = v["rationale"].astype(str).str.split(": ", n=1).str[-1]
+        v.insert(0, "#", range(1, len(v) + 1))
+        v.columns = ["#", "代號", "名稱", "P(漲)", "漲幅", "跌幅", "期望值", "賠率比",
+                     "報酬風險", "信心", "RSI", "營收YoY", "20日", "外資5日", "判斷理由"]
+        pos = t[t["exp_ret"] > 0]
+        board += (f"<h3>未來 {h} 個交易日 · 正期望值 {len(pos)} 檔 / 全體均值 "
+                  f"{t['exp_ret'].mean()*100:+.2f}%</h3>" + _tbl(v, "num"))
 
     # 成績單
     sc = score_mod.summary()
@@ -128,9 +134,16 @@ color:var(--mut);font-size:12.5px}
 每日預測一旦寫入就不可修改，並與「永遠猜漲」等笨基準線並排計分。
 任何模型若贏不過基準線，它的價值就是零 —— 這件事只有事前把預測鎖死才驗證得了。</div>
 
-<h2>今日預測</h2>{board or '<p class="muted">（今日尚未產生預測）</p>'}
+<h2>期望值排序</h2>
+<div class="note"><b>期望值 = P(漲) × 上漲時幅度 + P(跌) × 下跌時幅度。</b>
+只看方向機率會漏掉幅度：一檔 P(漲)=0.6 但漲 1%／跌 3% 的標的，期望值其實是負的。
+「賠率比」= |漲幅／跌幅|，偏離 1 代表報酬與風險不對稱，已於「報酬風險」欄標註。</div>
+{board or '<p class="muted">（今日尚未產生判斷）</p>'}
 
-<h2>實際成績單（前瞻，唯一可信的分數）</h2>{grade}
+<h2>實際成績單（前瞻，唯一可信的分數）</h2>
+<div class="note">基準線（always_up／random／momentum）不是「另一個模型」，而是<b>尺規</b>。
+判斷若贏不過「無條件猜漲」，它的價值就是零 —— 沒有這把尺，三個月後無從得知判斷到底有沒有用。</div>
+{grade}
 
 <h2>歷史回測（僅供參考，不等於未來）</h2>
 <div class="note">回測有三個無法消除的限制：<b>①</b> LLM 知道歷史結果，完全無法回測；
