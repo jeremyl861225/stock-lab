@@ -237,7 +237,7 @@ def build() -> Path:
 <div id="pull"><span class="ico"></span><span id="pulltx">下拉更新</span></div>
 <div class="wrap">
 <h1>股市預測</h1>
-<p class="sub">{d} 收盤 · 台股市值前 50 大 · 美股市值前 10 大＋ETF</p>
+<p class="sub">{d} 收盤 · 台股市值前 50 大 · 美股市值前 50 大＋ETF</p>
 
 {_acc_block(acc_mod.summary())}
 

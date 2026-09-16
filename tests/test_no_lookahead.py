@@ -134,8 +134,11 @@ def test_no_impossible_daily_moves():
     若這條測試失敗，代表還原漏了某個公司行動，而它會讓動能特徵與標籤
     同時中毒 —— 這是靜默的、不會拋錯的致命污染。
     """
-    p = _panel()
-    p = p.sort_values(["code", "date"])
+    p = _panel().sort_values(["code", "date"])
+    # 只檢查台股：台股有 ±10% 漲跌停，美股沒有漲跌幅限制 ——
+    # Oracle 2025-09-10 因 AI 雲端訂單單日真實暴漲 35.9%，套用台股門檻會誤判成資料錯誤。
+    if "market" in p.columns:
+        p = p[p["market"] == "TW"]
     p["chg"] = p.groupby("code")["close"].pct_change()
     bad = p[p["chg"].abs() > 0.30]
     detail = [(r.code, str(r.date.date()), f"{r.chg:+.1%}") for r in bad.itertuples()]
@@ -217,6 +220,8 @@ def test_price_times_shares_is_conserved():
     import json
     from pathlib import Path as _P
     p = _panel().sort_values(["code", "date"])
+    if "market" in p.columns:
+        p = p[p["market"] == "TW"]      # 美股走 yfinance auto_adjust，不適用此檢查
     root = _P(__file__).resolve().parent.parent / "data/raw/finmind/div"
     if not root.exists():
         return
