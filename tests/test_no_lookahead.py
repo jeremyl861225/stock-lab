@@ -7,13 +7,24 @@
 import sys
 from pathlib import Path
 import pandas as pd
+import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from features.build import build, build_all, FEATURE_COLS, labels
 
+PANEL = Path(__file__).resolve().parent.parent / "data/features/panel.parquet"
+SAMPLE = Path(__file__).resolve().parent / "fixtures" / "panel_sample.parquet"
+
+# 真面板是收資料的產物，不進版控（每天重建、數十 MB），所以 push 觸發的
+# CI 拿不到它。但這組是全系統最重要的測試 —— 未來函數不會拋例外，
+# 只會讓回測好得不可思議 —— 讓它在 push 時整組跳過等於沒有防線。
+#
+# 所以附一份小樣本面板（12 檔 × 完整兩年時間軸，430 KB）進版控：
+# 有真面板就用真的（涵蓋全部 120 檔），沒有就用樣本。
+# 樣本刻意保留完整時間軸，因為截斷不變性與標籤測試需要足夠長的歷史。
+
 
 def _panel():
-    return pd.read_parquet(Path(__file__).resolve().parent.parent
-                           / "data/features/panel.parquet")
+    return pd.read_parquet(PANEL if PANEL.exists() else SAMPLE)
 
 
 def test_truncation_invariance():
@@ -293,7 +304,14 @@ def test_universe_is_not_empty():
 
 
 def test_panel_covers_both_markets():
-    """panel 必須同時涵蓋兩個市場，且檔數接近 universe 大小。"""
+    """panel 必須同時涵蓋兩個市場，且檔數接近 universe 大小。
+
+    這支守的是「universe 靜默變空」那個 bug（收盤前跑 prepare，
+    TWSE 還沒開，universe 寫成空的，台股整組從 panel 消失而毫無訊號）。
+    它問的是真面板的覆蓋率，在 12 檔的樣本上沒有意義，所以只跑真面板。
+    """
+    if not PANEL.exists():
+        pytest.skip("覆蓋率只對真面板有意義（樣本面板僅 12 檔）")
     p = _panel()
     if "market" not in p.columns:
         return
