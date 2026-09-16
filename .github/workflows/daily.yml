@@ -1,0 +1,56 @@
+name: daily-prediction
+
+# 台股 13:30 收盤，法人買賣超約 15:00 後才完整。
+# 排在台北 18:00（UTC 10:00），確保當日資料已齊。
+on:
+  schedule:
+    - cron: "0 10 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: 收集當日資料
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+        run: |
+          python src/collect/universe.py || echo "universe 更新失敗，沿用既有"
+          python src/collect/finmind.py
+
+      - name: 建 panel
+        run: python src/features/panel.py
+
+      - name: 產生預測（append-only）
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+        run: python src/predict.py
+
+      - name: 結算到期預測
+        run: python src/settle.py
+
+      - name: 驗證未來函數防線
+        run: python -m pytest tests/ -q
+
+      - name: 產生報表
+        run: python src/report.py
+
+      - name: 提交（git 歷史＝不可竄改的稽核軌跡）
+        run: |
+          git config user.name  "stock-lab-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/predictions.jsonl data/settlements.jsonl docs/ config/universe_latest.json
+          git diff --staged --quiet || git commit -m "daily: $(date -u +%Y-%m-%d)"
+          git push
