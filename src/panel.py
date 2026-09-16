@@ -65,8 +65,16 @@ color:var(--line);cursor:pointer;flex-shrink:0;transition:color .14s var(--e)}
 box-shadow:inset 3px 0 0 var(--hot)}
 .rk{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:16px;
 text-align:right}
-.nm{font-size:16px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
-.cd{font-size:11.5px;font-weight:600;color:var(--mut);letter-spacing:.02em}
+/* 名稱可以被壓縮並截斷；期望值不行 —— 它是整列最重要的數字。
+   原本 .nm 只有 nowrap 沒有 overflow，長名（美股 "Goldman Sachs Group, Inc. (The)"）
+   會把整列撐寬，把期望值推出螢幕右緣。台股名 2–4 字所以看不出來。 */
+.nm{font-size:16px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.cd{font-size:11.5px;font-weight:600;color:var(--mut);letter-spacing:.02em;flex:0 0 auto}
+/* 美股：代號當主體（不可壓縮），公司名當副標（可截斷） */
+.nm.tk{flex:0 0 auto;letter-spacing:0}
+.cd.sub{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+white-space:nowrap;font-weight:500}
 .wt{display:inline-block;width:26px;height:4px;border-radius:2px;background:var(--line);
 overflow:hidden;flex-shrink:0}
 .wt>span{display:block;height:100%;background:var(--mut);border-radius:2px}
@@ -81,10 +89,10 @@ font-variant-numeric:tabular-nums}
 font-size:9px;font-weight:700;letter-spacing:.02em}
 .vd.v0{background:var(--up);color:#fff} .vd.v1{background:var(--dn);color:#fff}
 .vd.v2{background:var(--line);color:var(--mut)}
-.wp{font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:26px}
+.wp{font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:26px;flex:0 0 auto}
 .bar{margin-left:auto;flex-shrink:0}
 .ev{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
-min-width:52px;text-align:right}
+min-width:52px;text-align:right;flex:0 0 auto;margin-left:auto}
 .ev.p{color:var(--up)}.ev.n{color:var(--dn)}.ev.z{color:var(--mut)}
 .det{display:none;padding:0 11px 11px}
 .row[aria-expanded="true"] .det{display:block}
@@ -122,8 +130,10 @@ box-shadow:0 2px 8px rgba(19,62,80,.12)}
 def _bar(ev: float, mx: float, conf: str) -> str:
     """G10 Diverging Bar 的編碼：零軸居中、正負分向、長度 ∝ |期望值|。
     深淺編碼信心度，顏色編碼方向（紅漲綠跌）。"""
-    W, H, C = 74, 15, 37
-    w = min(abs(ev) / mx * 34, 34) if mx > 0 else 0
+    # 橫桿從 74px 縮到 58px：390px 的手機上，固定元素原本吃掉 290px，
+    # 只剩 78px 給名稱。橫桿是相對比較用的，短一點不影響判讀。
+    W, H, C = 58, 15, 29
+    w = min(abs(ev) / mx * 26, 26) if mx > 0 else 0
     op = {"high": 1.0, "medium": .74, "low": .5}.get(conf, .5)
     # 期望值恰為 0 代表「不做方向判斷」，不該畫成微幅看多的紅色。
     if abs(ev) < 1e-9:
@@ -166,6 +176,52 @@ def _score_checkpoints(jdir: Path) -> dict:
     except Exception:  # noqa: BLE001
         return {}
     return out
+
+
+# 美股名稱帶法律後綴，在手機上佔掉一半列寬而不帶任何資訊。
+# 只改顯示，不動 briefing 裡的原始名稱。
+_SUFFIX = [" (The)", ", Inc.", " Inc.", ", Ltd.", " Ltd.", ", L.P.", " Corporation",
+           " Corp.", " Incorporated", " Holdings", " Company", " & Co.", " Co.",
+           " Group", " plc", " N.V.", " S.A.", " Class A", " Class B",
+           # 資料來源有些名稱被截斷過，句點已不見（"Philip Morris International Inc"）
+           " Inc", " Corp", " Ltd", " New", " Trust", " Series 1"]
+
+
+def _short(name: str) -> str:
+    """去掉不帶資訊的法律後綴。反覆剝除，因為常見組合是疊加的
+    （"Goldman Sachs Group, Inc. (The)" 要剝三層）。
+    剝到剩不到 3 個字就停 —— 寧可長一點也不要剝成認不出來。"""
+    n = name.strip()
+    changed = True
+    while changed:
+        changed = False
+        for suf in _SUFFIX:
+            if n.endswith(suf) and len(n) - len(suf) >= 2:   # 3M、GE、HP 都是合法的兩字名
+                n = n[: -len(suf)].rstrip(" ,&")
+                # "Eli Lilly and Company" 剝掉 Company 會留下懸空的 and
+                if n.endswith(" and"):
+                    n = n[:-4].rstrip(" ,&")
+                changed = True
+    return n or name
+
+
+def _ident(code: str, name: str) -> str:
+    """名稱與代號誰當主體，依市場而定。
+
+    台股名稱 2–4 字（台積電），名稱當主體、代號當副標最好認。
+    美股名稱長達 31 字（Taiwan Semiconductor Manufactur），
+    在 390px 的手機上只剩 78px 給它 —— 會截成「Micron…」「Broa…」，
+    反而認不出來。而美股的識別主體本來就是代號（MU／AVGO／NVDA），
+    所以對調：代號當主體，公司名當可截斷的副標。
+    判準用代號是否全為數字（台股代號一律數字）。
+    """
+    tw = code.isdigit()
+    short = html.escape(_short(name))
+    if tw:
+        return (f'<span class="nm">{short}</span>'
+                f'<span class="cd">{html.escape(code)}</span>')
+    return (f'<span class="nm tk">{html.escape(code)}</span>'
+            f'<span class="cd sub">{short}</span>')
 
 
 def _vd(r: dict | None) -> str:
@@ -235,11 +291,10 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<div class="row" data-code="{r["code"]}" role="button" tabindex="0" '
             f'aria-expanded="false" onclick="t(this)" onkeydown="kd(event,this)">'
             f'<div class="top">'
-            f'<button class="pin" aria-label="釘選 {html.escape(str(r["名稱"]))}" '
+            f'<button class="pin" aria-label="釘選 {html.escape(_short(str(r["名稱"])))}" '
             f'onclick="pin(event,this)">✦</button>'
             f'<span class="rk">{i+1}</span>'
-            f'<span class="nm">{html.escape(str(r["名稱"]))}</span>'
-            f'<span class="cd">{r["code"]}</span>'
+            f'{_ident(str(r["code"]), str(r["名稱"]))}'
             f'{_vd((cps or {}).get(str(r["code"])))}'
             f'{_wt(wt, mxw)}{wtxt}'
             f'{_bar(ev, mx, str(r["conviction"]))}'

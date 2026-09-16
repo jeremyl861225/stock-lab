@@ -37,3 +37,39 @@ def test_price_points_present_per_market():
     cards = re.findall(r'<div class="det">.*?</div></div>', h, re.S)
     bad = [c for c in cards if ("獲利點" not in c and "目標價" not in c)]
     assert not bad, f"{len(bad)} 張卡缺少獲利點／目標價"
+
+
+def test_long_names_cannot_push_ev_offscreen():
+    """期望值是整列最重要的數字，絕不能被長名稱擠出畫面。
+
+    起因：美股名稱長達 31 字（"Taiwan Semiconductor Manufactur"），
+    而 .nm 原本只有 white-space:nowrap 沒有 overflow —— 它會把整列撐寬，
+    在 390px 的手機上把期望值推出右緣。台股名 2–4 字所以看不出來。
+    """
+    h = _html()
+    css = h[h.index("<style>"):h.index("</style>")]
+    # 名稱必須可壓縮並截斷
+    assert "text-overflow:ellipsis" in css, "名稱沒有截斷機制"
+    # 期望值必須不可壓縮
+    assert "flex:0 0 auto" in css.split(".ev{")[1].split("}")[0], ".ev 可被壓縮"
+
+
+def test_us_rows_lead_with_ticker():
+    """美股用代號當識別主體 —— 公司全名在手機上會被截成認不出來。"""
+    import re
+    h = _html()
+    us = re.search(r'id="vUS20".*?(?=<div class="view"|</body>)', h, re.S)
+    assert us, "找不到美股分頁"
+    tickers = re.findall(r'<span class="nm tk">([^<]+)</span>', us.group())
+    assert len(tickers) > 20, f"美股列只有 {len(tickers)} 檔用代號當主體"
+    assert all(not t.isdigit() for t in tickers), "台股代號跑進美股分頁"
+
+
+def test_tw_rows_lead_with_name():
+    """台股名稱短，仍以名稱當主體、代號當副標。"""
+    import re
+    h = _html()
+    tw = re.search(r'id="vTW20".*?(?=<div class="view"|</body>)', h, re.S)
+    assert tw, "找不到台股分頁"
+    codes = re.findall(r'<span class="cd">(\d+)</span>', tw.group())
+    assert len(codes) > 20, f"台股列只有 {len(codes)} 檔用名稱當主體"
