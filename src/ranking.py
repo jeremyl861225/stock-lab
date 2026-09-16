@@ -26,7 +26,7 @@ def table(horizon: int = 20, market: str | None = None) -> pd.DataFrame:
         p = p[p["as_of"] == p["as_of"].max()]
     b = pd.read_parquet(DATA / "briefing.parquet")
     cols = ["code", "名稱", "產業", "PER", "dividend_yield", "rev_yoy", "rsi_14",
-            "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close",
+            "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close", "vol_20",
             "market", "權重"]
     m = p.merge(b[[c for c in cols if c in b.columns]], on="code", how="left",
                 suffixes=("", "_b"))
