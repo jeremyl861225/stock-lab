@@ -144,6 +144,17 @@ def _build_uncached() -> pd.DataFrame:
     def col(name):
         return df[name] if name in df.columns else pd.Series(np.nan, index=df.index)
 
+    def col_any(*names):
+        """欄位別名。FinMind 在不同期別用不同欄位名表達同一個東西 ——
+        NetCashInflowFromOperatingActivities 只有 43.6% 的季別有值，
+        CashFlowsFromOperatingActivities 有 100%，而兩者在重疊的 1,197 列
+        100% 相符。只取前者會讓 fcf_margin 的覆蓋率掉到 27%。
+        依序取第一個有值的。"""
+        out = col(names[0])
+        for n in names[1:]:
+            out = out.combine_first(col(n))
+        return out
+
     rev, gp, oi = col("Revenue"), col("GrossProfit"), col("OperatingIncome")
 
     # 營收趨近零時，任何以營收為分母的比值都會爆掉。
@@ -193,20 +204,26 @@ def _build_uncached() -> pd.DataFrame:
     # 兩者混用會讓 TTM 重複計算 —— 實測台積電的 capex_intensity 算成 76.2%
     # （實際約 40–45%）、fcf_margin 算成 59%，隱含營運現金流是營收的 135%，不可能。
     # 判準：2330 的 Q2/Q1 比值 = 2.12。還原成單季 = 本期累計 − 同年上期累計。
-    def _decum(name):
-        v = col(name)
+    def _decum_series(v):
         if v.isna().all():
             return v
         t = df.assign(_v=v, _y=df["date"].dt.year)
         prev = t.groupby(["code", "_y"])["_v"].shift(1)
         return v - prev.fillna(0)
 
-    ocf = _decum("NetCashInflowFromOperatingActivities")
-    capex = _decum("PropertyAndPlantAndEquipment").abs()
+    ocf = _decum_series(col_any("NetCashInflowFromOperatingActivities",
+                                "CashFlowsFromOperatingActivities"))
+    capex = _decum_series(col_any("PropertyAndPlantAndEquipment")).abs()
     ocf_ttm = df.assign(x=ocf).groupby("code")["x"].transform(lambda s: s.rolling(4).sum())
     cap_ttm = df.assign(x=capex).groupby("code")["x"].transform(lambda s: s.rolling(4).sum())
     out["fcf_margin"] = (ocf_ttm - cap_ttm) / rev_ttm.replace(0, np.nan)
-    # 資本支出強度：一年期判斷裡這是「公司自己押的注」，比任何外部預估都直接
+    # 資本支出強度：一年期判斷裡這是「公司自己押的注」，比任何外部預估都直接。
+    #
+    # 注意這是 TTM，不是全年指引，兩者會有落差且落差是對的。
+    # 2026Q2 的台積電：TTM 資本支出 = 2,874+3,569+3,508+4,960 = 1.49 兆，
+    # 除以營收 TTM 4.44 兆 = 33.6%；而 2026 全年指引 600–640 億美元
+    # ≈ 1.9–2.0 兆 ÷ 4.4 兆 = 43–45%。差別在 TTM 視窗涵蓋資本支出較低的
+    # 2025H2。不要把 33.6% 當成錯誤去「修」。
     out["capex_intensity"] = cap_ttm / rev_ttm.replace(0, np.nan)
 
     # ── 財務結構 ──────────────────────────────────────────────
