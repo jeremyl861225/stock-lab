@@ -82,6 +82,15 @@ def finalize(push: bool = True) -> None:
     if not js:
         print(f"！找不到 judgments/{as_of}*.json —— 判斷尚未產生，中止")
         sys.exit(1)
+    # 判斷進系統前先過品質查核。四輪人工審核抓到的 30+ 個錯誤，
+    # 沒有一個是「模型不夠聰明」，全部是沒查證、用錯變數、時間錯置、單邊採證。
+    # 這一關把其中可機械化的部分攔在寫入之前。
+    print("\n── 判斷品質查核")
+    vr = subprocess.run([PY, str(ROOT / "src/verify_judgment.py"), as_of], cwd=ROOT)
+    if vr.returncode != 0:
+        print("   （查核器執行失敗，繼續但請人工確認）")
+    input_note = "   ↑ 若上面有『待確認』項目，請先逐項確認再繼續\n"
+    print(input_note)
     run("ingest_judgment.py", *[str(p) for p in js])
     run("panel.py")
     run("ranking.py")
