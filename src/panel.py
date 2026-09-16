@@ -69,6 +69,16 @@ font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .why{font-size:10.5px;color:var(--mut);line-height:1.55;margin-top:7px}
 .foot{margin-top:20px;font-size:9.5px;color:var(--faint);letter-spacing:.04em;line-height:1.8}
 .dot{display:inline-block;width:7px;height:7px;border-radius:2px;vertical-align:-1px;margin-right:3px}
+#pull{position:fixed;top:0;left:0;right:0;height:56px;display:flex;
+align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:600;
+color:var(--mut);background:var(--bg);transform:translateY(-56px);z-index:50;
+pointer-events:none}
+#pull.on{transition:transform .28s var(--e)}
+#pull .ico{width:13px;height:13px;border:2px solid var(--line);
+border-top-color:var(--ink);border-radius:50%}
+#pull.go .ico{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+body{overscroll-behavior-y:none}
 .tog{position:fixed;right:13px;bottom:13px;width:37px;height:37px;border-radius:50%;
 border:none;background:var(--card);color:var(--mut);font-size:15px;cursor:pointer;
 box-shadow:0 2px 8px rgba(19,62,80,.12)}
@@ -173,7 +183,9 @@ def build() -> Path:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>{CSS}</style></head><body><div class="wrap">
+<style>{CSS}</style></head><body>
+<div id="pull"><span class="ico"></span><span id="pulltx">下拉更新</span></div>
+<div class="wrap">
 <h1>股市預測</h1>
 <p class="sub">{d} 收盤 · 台股市值前 50 大 · 美股市值前 10 大＋ETF</p>
 
@@ -190,7 +202,7 @@ def build() -> Path:
 
 {body}
 
-<div class="foot">
+<div class="foot" data-gen="{gen:%Y-%m-%d %H:%M}">
 <span class="dot" style="background:#A83F17"></span>上漲　
 <span class="dot" style="background:#2A7574"></span>下跌　（台股慣例紅漲綠跌）<br>
 獲利點 = 收盤 ×(1+漲幅)　停損點 = 收盤 ×(1+跌幅)，直接由預測幅度推導<br>
@@ -218,6 +230,68 @@ try{{const v=localStorage.getItem('t');if(v)document.documentElement.setAttribut
 show();
 if('serviceWorker' in navigator)
  navigator.serviceWorker.register('sw.js',{{scope:'./'}}).catch(()=>{{}});
+
+/* 下拉更新。
+   PWA 在 standalone 下沒有瀏覽器 UI，原生下拉刷新失效，必須自己做。
+   更關鍵的是：Service Worker 走 stale-while-revalidate，直接 reload 只會
+   再拿到同一份快取。所以要先用 cache:'reload' 繞過 HTTP 快取抓最新版、
+   寫回 SW 快取，再重載 —— 少了這一步，下拉會看起來沒反應。 */
+(function(){{
+ const bar=document.getElementById('pull'), tx=document.getElementById('pulltx');
+ const TH=62; let y0=0, dy=0, on=false, busy=false;
+ const set=d=>bar.style.transform='translateY('+(d-56)+'px)';
+ const reset=()=>{{bar.classList.add('on');set(0);
+   setTimeout(()=>{{bar.classList.remove('on');bar.classList.remove('go');
+     tx.textContent='下拉更新';}},280);}};
+
+ addEventListener('touchstart',e=>{{
+   if(busy||window.scrollY>0)return;
+   y0=e.touches[0].clientY; on=true; dy=0; bar.classList.remove('on');
+ }},{{passive:true}});
+
+ addEventListener('touchmove',e=>{{
+   if(!on||busy)return;
+   dy=e.touches[0].clientY-y0;
+   if(dy<=0||window.scrollY>0){{on=false;set(0);return;}}
+   set(Math.min(dy*0.45,72));                       // 阻尼，拉不到底
+   tx.textContent = dy*0.45>=TH ? '放開更新' : '下拉更新';
+ }},{{passive:true}});
+
+ addEventListener('touchend',async()=>{{
+   if(!on||busy){{on=false;return;}}
+   on=false;
+   if(dy*0.45<TH){{reset();return;}}
+   busy=true; bar.classList.add('on','go'); set(56); tx.textContent='更新中…';
+   const job=(async()=>{{
+     try{{
+       const r=await fetch('./index.html',{{cache:'reload'}});  // 繞過 HTTP 快取
+       if(r&&r.ok&&window.caches){{
+         const c=await caches.open('stocklab-v1');
+         await c.put('./index.html',r.clone());
+         await c.put('./',r.clone());
+       }}
+     }}catch(e){{}}
+   }})();
+   // 保險：網路慢或 caches 不可用時，最多等 3 秒仍要重載，否則會卡在「更新中…」
+   await Promise.race([job,new Promise(r=>setTimeout(r,3000))]);
+   try{{sessionStorage.setItem('refreshed','1')}}catch(e){{}}
+   location.reload();
+ }},{{passive:true}});
+
+ // 重載後給一次明確回饋 —— 當天資料沒變時，沒有回饋會讓人以為下拉壞了
+ try{{
+   if(sessionStorage.getItem('refreshed')){{
+     sessionStorage.removeItem('refreshed');
+     const stamp=document.querySelector('.foot').dataset.gen||'—';
+     bar.classList.add('on'); tx.textContent='已更新　資料時間 '+stamp;
+     bar.querySelector('.ico').style.display='none';
+     set(56);
+     setTimeout(()=>{{set(0);setTimeout(()=>{{
+       bar.classList.remove('on');bar.querySelector('.ico').style.display='';
+       tx.textContent='下拉更新';}},300);}},1800);
+   }}
+ }}catch(e){{}}
+}})();
 </script></body></html>"""
     DOCS.mkdir(parents=True, exist_ok=True)
     out = DOCS / "index.html"
