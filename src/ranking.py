@@ -38,7 +38,7 @@ def render(horizon: int = 20) -> str:
     L.append(f"{'='*136}")
     L.append(f"  {'#':>2} {'代號':<5}{'名稱':<9}{'P(漲)':>6}{'漲幅':>7}{'跌幅':>7}"
              f"{'期望值':>8}{'賠率':>6} {'不對稱':<8}{'信心':<7}"
-             f"{'RSI':>4}{'營收YoY':>9}{'20日':>7}{'外資5':>7}  理由")
+             f"{'RSI':>4}{'營收YoY':>9}{'20日':>7}{'外資5日':>8}  理由")
     L.append("  " + "─" * 132)
     for i, r in t.iterrows():
         yoy = "  n/a" if pd.isna(r["rev_yoy"]) else f"{r['rev_yoy']*100:+7.1f}%"
@@ -46,7 +46,7 @@ def render(horizon: int = 20) -> str:
         L.append(f"  {i+1:>2} {r['code']:<5}{str(r['名稱'])[:8]:<9}"
                  f"{r['prob_up']:>6.2f}{r['up_magnitude']*100:>+6.1f}%{r['dn_magnitude']*100:>+6.1f}%"
                  f"{r['exp_ret']*100:>+7.2f}%{r['reward_risk']:>6.2f} {tag:<8}{r['conviction']:<7}"
-                 f"{r['rsi_14']:>4.0f}{yoy:>9}{r['ret_20']*100:>+6.1f}%{r['foreign_5']:>+7.2f}"
+                 f"{r['rsi_14']:>4.0f}{yoy:>9}{r['ret_20']*100:>+6.1f}%{r['foreign_5']*5:>+7.1f}x"
                  f"  {str(r['rationale']).split(': ',1)[-1][:46]}")
     pos = t[t["exp_ret"] > 0]; neg = t[t["exp_ret"] < 0]
     L.append("  " + "─" * 132)

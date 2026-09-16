@@ -61,10 +61,34 @@ def adjust_for_corporate_actions(px: pd.DataFrame) -> pd.DataFrame:
             factor[dates < e.date] *= f   # 只調整除權日之前
         px.loc[mask_code, "adj_factor"] = factor.values
 
-    for c in ("open", "high", "low", "close"):
-        if c in px.columns:
-            px[c] = px[c] * px["adj_factor"]
+    _apply_factor(px, px["adj_factor"])
     return px
+
+
+# 價格類乘 factor（調降），股數類除以 factor（調增）—— 兩者相乘才守恆。
+PRICE_COLS = ("open", "high", "low", "close")
+SHARE_COLS = ("volume", "margin_bal", "short_bal", "foreign", "trust", "dealer")
+
+
+def _apply_factor(px: pd.DataFrame, factor: pd.Series, mask=None) -> None:
+    """就地套用還原因子。
+
+    只還原價格是不夠的 —— 審核實測：國巨 2025-08-25 為 1:4 分割，
+    margin_bal 由 6,542 跳到 26,429（比值 4.04），造成
+    margin_chg_5 = +2.86（全庫 99.89 百分位）、vol_ratio = 2.72（99.94 百分位），
+    汙染整整 20 個交易日。緯穎 2026-09-02 配股更是正在汙染當下的 live 特徵。
+    股數類欄位必須同步除以 factor，否則分割會被模型讀成「散戶瘋狂加槓桿」。
+    """
+    idx = px.index if mask is None else px.index[mask]
+    for c in PRICE_COLS + SHARE_COLS:
+        if c in px.columns and not pd.api.types.is_float_dtype(px[c]):
+            px[c] = px[c].astype("float64")   # 股數欄位是整數型別，不轉會拋 dtype 錯
+    for c in PRICE_COLS:
+        if c in px.columns:
+            px.loc[idx, c] = px.loc[idx, c].to_numpy() * factor.values
+    for c in SHARE_COLS:
+        if c in px.columns:
+            px.loc[idx, c] = px.loc[idx, c].to_numpy() / factor.values
 
 
 def repair_unexplained_splits(px: pd.DataFrame, threshold: float = 0.30) -> pd.DataFrame:
@@ -107,8 +131,7 @@ def repair_unexplained_splits(px: pd.DataFrame, threshold: float = 0.30) -> pd.D
             else:
                 drop_idx += list(px.index[mask & (px["date"] < d)])
                 truncated.append((code, str(pd.Timestamp(d).date()), round(f, 4)))
-        for c in ("open", "high", "low", "close"):
-            px.loc[mask, c] = px.loc[mask, c] * factor.values
+        _apply_factor(px, factor, mask)
     if fixed:
         print(f"  補上未記錄的股票分割 {len(fixed)} 筆：{fixed}")
     if truncated:

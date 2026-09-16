@@ -19,8 +19,14 @@ from features.build import build as build_feats, feature_hash, FEATURE_COLS
 from models import baselines, statistical, llm
 
 
-def _pid(as_of: str, horizon: int, model: str, code: str, ver: str) -> str:
-    return hashlib.sha256(f"{as_of}|{horizon}|{model}|{code}|{ver}".encode()).hexdigest()[:16]
+def _pid(as_of: str, horizon: int, model: str, code: str, ver: str = "") -> str:
+    """身分鍵刻意不含 model_version。
+
+    原本含版本，等於替同一組 (as_of, horizon, model, code) 重開一個槽 ——
+    違反本檔憲法 B，而且已經發生：改模型→重跑→新版本→兩筆都被結算，
+    等於同一天對同一檔下兩次注，只要有一次對就進帳。這正是系統要防的自我欺騙。
+    版本改以欄位記錄，計分時一律取每組最新的一筆。"""
+    return hashlib.sha256(f"{as_of}|{horizon}|{model}|{code}".encode()).hexdigest()[:16]
 
 
 def _existing() -> set[str]:

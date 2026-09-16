@@ -19,7 +19,14 @@ from config import SETTLEMENTS
 def _load() -> pd.DataFrame:
     if not SETTLEMENTS.exists():
         return pd.DataFrame()
-    rows = [json.loads(l) for l in SETTLEMENTS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    rows = []
+    for l in SETTLEMENTS.read_text(encoding="utf-8").splitlines():
+        if not l.strip():
+            continue
+        try:                      # 一行壞掉不該讓整份成績單掛掉
+            rows.append(json.loads(l))
+        except json.JSONDecodeError:
+            continue
     return pd.DataFrame(rows)
 
 

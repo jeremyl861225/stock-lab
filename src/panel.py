@@ -46,14 +46,6 @@ h1{{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0 0 3px}}
 .read{{background:var(--card);border-radius:var(--r);padding:15px 17px;margin:0 0 14px;
 font-size:12.5px;line-height:1.62;box-shadow:0 1px 2px rgba(19,62,80,.07)}}
 .read b{{font-weight:700;color:var(--ink)}}
-.kpi{{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}}
-.kpi div{{background:var(--card);border-radius:var(--r);padding:11px 12px;
-box-shadow:0 1px 2px rgba(19,62,80,.07)}}
-.kpi .k{{font-size:10px;color:var(--mut);letter-spacing:.02em}}
-.kpi .v{{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-top:1px;
-font-variant-numeric:tabular-nums}}
-.kpi div:nth-child(1) .v{{color:var(--pos)}}
-.kpi div:nth-child(2) .v{{color:var(--neg)}}
 .tabs{{display:flex;gap:6px;margin:0 0 12px}}
 .tabs button{{flex:1;padding:9px 0;border:none;border-radius:99px;background:var(--card);
 color:var(--mut);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
@@ -119,7 +111,8 @@ def _rows(t: pd.DataFrame) -> str:
     for i, r in t.iterrows():
         ev = float(r["exp_ret"])
         yoy = "—" if pd.isna(r["rev_yoy"]) else f"{r['rev_yoy']*100:+.0f}%"
-        fgn = "—" if pd.isna(r["foreign_5"]) else f"{r['foreign_5']:+.2f}"
+        # foreign_5 是「每日」標準化值；×5 還原成 5 日累計相當於幾倍日均量，較直覺
+        fgn = "—" if pd.isna(r["foreign_5"]) else f"{r['foreign_5']*5:+.1f}×"
         asym = str(r["asymmetry"] or "")
         tag = "上檔大" if "正偏" in asym else ("下檔大" if "負偏" in asym else "")
         why = html.escape(str(r["rationale"]).split(": ", 1)[-1])
@@ -137,7 +130,7 @@ def _rows(t: pd.DataFrame) -> str:
             f'<div><div class="k">賠率比</div><div class="v">{r["reward_risk"]:.2f}</div></div>'
             f'<div><div class="k">RSI</div><div class="v">{r["rsi_14"]:.0f}</div></div>'
             f'<div><div class="k">營收YoY</div><div class="v">{yoy}</div></div>'
-            f'<div><div class="k">外資5日</div><div class="v">{fgn}</div></div>'
+            f'<div><div class="k">外資5日買超</div><div class="v">{fgn}</div></div>'
             f'<div><div class="k">信心</div><div class="v">{r["conviction"]}</div></div>'
             f'</div><div class="why">{why}</div></div></button>')
     return "".join(out)
@@ -149,8 +142,6 @@ def build() -> Path:
         raise RuntimeError("尚無判斷可呈現")
     as_of = t20["as_of"].iloc[0]
     d = f"{as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
-    pos, neg = (t20["exp_ret"] > 0).sum(), (t20["exp_ret"] < 0).sum()
-    mean = t20["exp_ret"].mean() * 100
 
     ctx = ""
     rp = DATA / "reasoning.jsonl"
@@ -176,12 +167,6 @@ def build() -> Path:
 <h1>當日預測</h1>
 <p class="sub">{d} 收盤 · 市值前 50 大 · 期望值 = P(漲)×漲幅 + P(跌)×跌幅</p>
 
-<div class="kpi">
-<div><div class="k">正期望值</div><div class="v">{pos}</div></div>
-<div><div class="k">負期望值</div><div class="v">{neg}</div></div>
-<div><div class="k">全體均值</div><div class="v">{mean:+.2f}%</div></div>
-</div>
-
 <div class="read"><b>市場判讀</b><br>{ctx}</div>
 
 <div class="tabs" role="tablist">
@@ -196,6 +181,7 @@ def build() -> Path:
 <span class="dot" style="background:{DANGER}"></span>正期望值（預期上漲）　
 <span class="dot" style="background:{ACCENT}"></span>負期望值（預期下跌）<br>
 柱長 ∝ 期望值絕對值 · 深淺 = 信心度 · 點任一列展開四面向依據<br>
+營收YoY = 最新月營收較去年同月增減 · 外資5日買超 = 近5日累計相當於幾倍日均成交量<br>
 產生於 {gen:%Y-%m-%d %H:%M} 台北 · 研究與紀律工具，不構成投資建議</div>
 </div>
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>

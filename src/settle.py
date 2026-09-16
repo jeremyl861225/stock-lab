@@ -30,6 +30,15 @@ def run() -> dict:
     preds = _load_jsonl(PREDICTIONS)
     if not preds:
         return {"settled": 0, "reason": "尚無預測"}
+    # 同一 (as_of, horizon, model, code) 可能因早期版本留下多筆（見 revisions.jsonl）。
+    # 不去重的話每個模型的 n 會虛胖數倍、準確率變成多版本混合、
+    # 橫斷面 IC 在同一天對同一檔有多個機率而失去定義。一律只結算最新的一筆。
+    preds.sort(key=lambda r: r.get("created_at_utc", ""))
+    dedup = {}
+    for r in preds:
+        dedup[(r["as_of"], r["horizon"], r["model"], r["code"])] = r
+    n_dropped = len(preds) - len(dedup)
+    preds = list(dedup.values())
     done = {s["pid"] for s in _load_jsonl(SETTLEMENTS)}
     pnl = pd.read_parquet(FEATURES / "panel.parquet")
     pnl["ds"] = pnl["date"].dt.strftime("%Y%m%d")
@@ -86,6 +95,7 @@ def run() -> dict:
             for r in recs:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
     return {"settled": len(recs), "pending": pending, "missing": missing,
+            "superseded_dropped": n_dropped,
             "latest_data": latest.strftime("%Y%m%d")}
 
 

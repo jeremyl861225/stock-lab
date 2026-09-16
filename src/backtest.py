@@ -38,9 +38,7 @@ def run(stride: int = 5, months: int = 12) -> pd.DataFrame:
             if f.empty:
                 continue
             got = {}
-            for name, fn in baselines.ALL.items():
-                got[name] = fn(f, h, d)
-            for name, fn in statistical.ALL.items():
+            for name, fn in {**baselines.ALL, **statistical.ALL}.items():
                 try:
                     o = fn(f, h, d, pnl)
                     if o is not None and not o.empty:

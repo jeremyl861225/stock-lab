@@ -50,6 +50,10 @@ def evaluate(df: pd.DataFrame, quantile: float = 0.2, stride: int = 5) -> pd.Dat
         if not ics:
             continue
         ics, spreads, tops = np.array(ics), np.array(spreads), np.array(tops)
+        # spread 有自己的 t，與 RankIC 的 t 不同。原本表格只印 IC 的 t 卻放在
+        # spread 欄位旁，讀者（含我自己寫 README 時）會誤以為那是 spread 的顯著性。
+        t_sp = (float(spreads.mean() / (spreads.std(ddof=1) / np.sqrt(len(spreads))))
+                if len(spreads) > 1 and spreads.std(ddof=1) > 0 else np.nan)
         overlap = max(h / stride, 1.0)          # 重疊倍數
         n_eff = len(ics) / overlap               # 有效獨立樣本數
         t_raw = (float(ics.mean() / (ics.std() / np.sqrt(len(ics))))
@@ -58,6 +62,8 @@ def evaluate(df: pd.DataFrame, quantile: float = 0.2, stride: int = 5) -> pd.Dat
         out.append({
             "horizon": h, "model": m, "days": len(ics),
             "n_eff": round(n_eff, 1), "t_adj": round(t_adj, 2) if pd.notna(t_adj) else np.nan,
+            "spread_t": round(t_sp, 2) if pd.notna(t_sp) else np.nan,
+            "spread_t_adj": (round(t_sp / np.sqrt(overlap), 2) if pd.notna(t_sp) else np.nan),
             "rank_ic": round(float(ics.mean()), 4),
             "ic_ir": round(float(ics.mean() / ics.std()), 3) if ics.std() > 0 else np.nan,
             "ic_hit_rate": round(float((ics > 0).mean()), 3),
@@ -75,8 +81,8 @@ def report(res: pd.DataFrame) -> str:
         lines.append(f"  橫斷面選股能力   期間 {h} 個交易日   "
                      f"（問的是「挑得準不準」，不是「猜方向準不準」）")
         lines.append(f"{'='*86}")
-        lines.append(f"  {'模型':<12}{'RankIC':>9}{'IC>0':>8}{'前20-後20':>11}"
-                     f"{'名目t':>7}{'有效n':>7}{'調整t':>7}  判讀")
+        lines.append(f"  {'模型':<12}{'RankIC':>9}{'IC>0':>8}{'ICのt調整':>10}"
+                     f"{'前20-後20':>11}{'spread調整t':>12}  判讀")
         lines.append("  " + "-" * 82)
         for _, r in g.iterrows():
             t, ta = r["t_stat"], r["t_adj"]
@@ -89,9 +95,11 @@ def report(res: pd.DataFrame) -> str:
             else:
                 note = "顯著為負（反向指標）"
             lines.append(f"  {r['model']:<12}{r['rank_ic']:>+9.4f}{r['ic_hit_rate']:>8.0%}"
-                         f"{r['spread']:>+11.2%}{t:>7.2f}{r['n_eff']:>7.1f}"
-                         f"{ta:>7.2f}  {note}")
+                         f"{ta:>10.2f}{r['spread']:>+11.2%}"
+                         f"{r['spread_t_adj']:>12.2f}  {note}")
         lines.append("  註1：always_up 給所有標的同一機率，橫斷面無排序能力，不列入比較。")
+        lines.append("  註1b：RankIC 與 spread 各有自己的 t，兩欄不可互相代替；"
+                     "判讀欄依 RankIC 的調整 t。")
         lines.append(f"  註2：{h} 日期間每 5 天取樣一次，相鄰樣本重疊 {max(h/5,1):.0f} 倍，")
         lines.append("       名目 t 值須除以 sqrt(重疊倍數) 才是可信的。判讀一律看「調整t」。")
     return "\n".join(lines)

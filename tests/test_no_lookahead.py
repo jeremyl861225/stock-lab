@@ -18,16 +18,30 @@ def _panel():
 
 def test_truncation_invariance():
     """把未來資料整段刪掉，as_of 當天的特徵值必須一模一樣。
-    這直接證明：特徵沒有用到 as_of 之後的任何一列。"""
+
+    注意這個測試的正確寫法：不能拿 build(p,d) 去比 build(p[p.date<=d],d) ——
+    build() 第一行自己就截斷，那是 f(trunc(X)) vs f(trunc(trunc(X)))，
+    恆真、永遠不會失敗，是假的安全感（審核抓到的原始版本就是這樣寫的）。
+    有效的寫法是拿「看得到全部資料」的 _compute 當日切片，
+    去比「只看得到 as_of 之前」的結果 —— 兩者相同才真的證明沒用到未來。
+    """
+    from features.build import _compute
     p = _panel()
     dates = sorted(p["date"].unique())
+    full = _compute(p)                      # 看得到全部歷史（含未來）
     bad = []
-    for d in dates[-40::8]:
-        full = build(p, d).set_index("code")[FEATURE_COLS]
-        truncated = build(p[p["date"] <= d], d).set_index("code")[FEATURE_COLS]
-        diff = (full - truncated).abs().max().max()
+    for d in dates[120::40]:
+        a = full[full["as_of"] == d].set_index("code")[FEATURE_COLS].sort_index()
+        b = _compute(p[p["date"] <= d])     # 只看得到 as_of 之前
+        b = b[b["as_of"] == d].set_index("code")[FEATURE_COLS].sort_index()
+        if list(a.index) != list(b.index):
+            bad.append((str(d)[:10], "標的集合不同"))
+            continue
+        diff = (a - b).abs().max().max()
         if pd.notna(diff) and diff > 1e-9:
             bad.append((str(d)[:10], float(diff)))
+        if not a.isna().equals(b.isna()):
+            bad.append((str(d)[:10], "NaN 分布不同"))
     assert not bad, f"特徵受未來資料影響：{bad}"
 
 
@@ -163,3 +177,63 @@ def test_panel_button_inherits_color():
     i = css.index(".row{{")
     block = css[i:i + 240]
     assert "color:inherit" in block, "面板 .row 未繼承顏色，深色模式會變黑字黑底"
+
+
+def test_share_columns_adjusted_for_splits():
+    """分割後股數類欄位必須同步還原，否則會被讀成「散戶瘋狂加槓桿」。
+
+    用已知案例驗證，而不是掃描極端值 —— 掃描會誤判基數效應：
+    台灣大的融資餘額只有幾十到上千張，小額變動就是十倍百分比，
+    那是真實的（也正是審核指出 v1「融資暴增1151%」論點站不住的原因），不是分割。
+
+    國巨 2025-08-25 為 1:4 分割。未還原時 margin_bal 由 6,542 跳到 26,429
+    （比值 4.04），margin_chg_5 衝到 +2.86（全庫 99.89 百分位）。
+    """
+    p = _panel().sort_values(["code", "date"])
+    g = p[p["code"] == "2327"].set_index("date")
+    if "2025-08-25" not in g.index.strftime("%Y-%m-%d").tolist():
+        return  # 資料範圍不含該事件時跳過
+    chg = g["margin_bal"].pct_change().loc["2025-08-25"]
+    assert abs(chg) < 0.5, (
+        f"國巨分割日融資變動 {chg:+.2f}，未還原（正確值應遠小於分割倍數 3.04）")
+    vchg = g["volume"].pct_change().loc["2025-08-25"]
+    assert vchg < 3.0, f"國巨分割日成交量變動 {vchg:+.2f}，疑似未還原"
+
+
+def test_price_times_shares_is_conserved():
+    """還原的守恆檢查：價格 × 股數在「除權息事件日」前後必須連續。
+
+    只檢查已知事件日，不掃全部日期 —— 融資餘額本身有制度性斷層：
+    除權息前停止融資，之後恢復，餘額會真實跳增數倍（實測統一、玉山金、
+    第一金等 8 檔都有，附近卻無除權息記錄，價格也幾乎沒動）。
+    那是真實的市場行為，不是還原漏做。
+    """
+    import json
+    from pathlib import Path as _P
+    p = _panel().sort_values(["code", "date"])
+    root = _P(__file__).resolve().parent.parent / "data/raw/finmind/div"
+    if not root.exists():
+        return
+    bad = []
+    for f in root.glob("*.json"):
+        code = f.stem
+        events = json.loads(f.read_text(encoding="utf-8"))["payload"]
+        g = p[p["code"] == code].set_index("date")
+        if g.empty or "margin_bal" not in g:
+            continue
+        notional = (g["close"] * g["margin_bal"]).dropna()
+        for e in events:
+            try:
+                bp, ap = float(e["before_price"]), float(e["after_price"])
+            except (TypeError, ValueError):
+                continue
+            if not (bp > 0 and ap > 0) or ap / bp > 0.95:
+                continue           # 只檢查影響顯著的事件（配股／分割）
+            d = pd.Timestamp(e["date"])
+            win = notional[(notional.index >= d - pd.Timedelta(days=5)) &
+                           (notional.index <= d + pd.Timedelta(days=5))]
+            if len(win) < 3 or win.min() <= 0:
+                continue
+            if win.max() / win.min() > 3.0:
+                bad.append((code, str(d.date()), round(win.max() / win.min(), 2)))
+    assert not bad, f"除權息日前後價格×股數跳變逾 3 倍，還原不完整：{bad[:5]}"
