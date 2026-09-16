@@ -136,7 +136,12 @@ def _cards(t: pd.DataFrame, cur: str) -> str:
     for i, r in t.iterrows():
         ev, close = float(r["exp_ret"]), float(r["close"])
         up, dn = float(r["up_magnitude"]), float(r["dn_magnitude"])
-        tp, sl = close * (1 + up), close * (1 + dn)
+        # 獲利點用條件期望漲幅（合理可達的目標）；
+        # 停損點用下檔 10% 分位，而非條件期望跌幅 ——
+        # 後者正好是下跌情境的中心值，約有一半機率被正常波動掃到，
+        # 拿來當停損會被反覆洗出場。
+        q10 = float(r["ret_q10"]) if pd.notna(r.get("ret_q10")) else dn * 1.6
+        tp, sl = close * (1 + up), close * (1 + q10)
         dec = 2 if close < 100 else (1 if close < 1000 else 0)
         conf = {"high": "高", "medium": "中", "low": "低"}.get(str(r["conviction"]), "低")
         why = html.escape(str(r["rationale"]).split(": ", 1)[-1])
@@ -255,7 +260,8 @@ def build() -> Path:
 <div class="foot" data-gen="{gen:%Y-%m-%d %H:%M}">
 <span class="dot" style="background:#A83F17"></span>上漲　
 <span class="dot" style="background:#2A7574"></span>下跌　（台股慣例紅漲綠跌）<br>
-獲利點 = 收盤 ×(1+漲幅)　停損點 = 收盤 ×(1+跌幅)，直接由預測幅度推導<br>
+獲利點 = 收盤 ×(1+漲幅)，漲幅為「上漲情境下的平均幅度」<br>
+停損點 = 收盤 ×(1+下檔10%分位)，設在正常波動之外，跌破才代表判斷錯了<br>
 賠率比 = |漲幅 ÷ 跌幅|，偏離 1 代表報酬與風險不對稱<br>
 排序依期望值 = P(漲)×漲幅 + P(跌)×跌幅<br>
 產生於 {gen:%Y-%m-%d %H:%M} 台北 · 研究與紀律工具，不構成投資建議</div>
