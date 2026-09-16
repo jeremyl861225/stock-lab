@@ -39,16 +39,32 @@ def prepare() -> None:
     run("settle.py")                                  # 結算到期預測
     subprocess.run([PY, "-m", "pytest", "tests/", "-q"], cwd=ROOT)
     print("\n═══ 準備完成 ═══")
-    print("下一步：讀 data/briefing.parquet 做判斷，寫成 judgments/ 下的建構檔，")
-    print("       再執行  python src/daily.py finalize")
+    print(f"   資料最新交易日：{_as_of()}")
+    print(f"   判斷檔請命名為 judgments/build_{_as_of()}.py（台股）")
+    print(f"                judgments/build_us_{_as_of()}.py（美股）")
+    print("下一步：讀 data/briefing.parquet 做判斷，再執行  python src/daily.py finalize")
+
+
+def _as_of() -> str:
+    """判斷檔的日期是「資料的最新交易日」，不是「執行日」。
+
+    早上 7:30 跑的時候，as_of 是前一個交易日（甚至週一要回到上週五）——
+    用 date.today() 去找判斷檔必然落空。這個 bug 會讓排程第一次執行就失敗。
+    """
+    import pandas as pd
+    pnl = ROOT / "data/features/panel.parquet"
+    if not pnl.exists():
+        return dt.date.today().strftime("%Y%m%d")
+    return pd.read_parquet(pnl, columns=["date"])["date"].max().strftime("%Y%m%d")
 
 
 def finalize(push: bool = True) -> None:
     print("═══ 收尾階段 ═══")
-    today = dt.date.today().strftime("%Y%m%d")
-    js = sorted((ROOT / "judgments").glob(f"{today}*.json"))
+    as_of = _as_of()
+    js = sorted((ROOT / "judgments").glob(f"{as_of}*.json"))
+    print(f"   資料最新交易日 {as_of}，找到 {len(js)} 份判斷檔")
     if not js:
-        print(f"！找不到 judgments/{today}*.json —— 判斷尚未產生，中止")
+        print(f"！找不到 judgments/{as_of}*.json —— 判斷尚未產生，中止")
         sys.exit(1)
     run("ingest_judgment.py", *[str(p) for p in js])
     run("panel.py")
@@ -59,7 +75,7 @@ def finalize(push: bool = True) -> None:
         sys.exit(1)
     if push:
         subprocess.run(["git", "add", "-A"], cwd=ROOT)
-        msg = f"每日預測 {dt.date.today():%Y-%m-%d}"
+        msg = f"每日預測 {as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
         subprocess.run(["git", "commit", "-q", "-m", msg], cwd=ROOT)
         subprocess.run(["git", "push", "origin", "main"], cwd=ROOT)
         print(f"\n已提交並推送：{msg}")

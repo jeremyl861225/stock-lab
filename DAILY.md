@@ -42,7 +42,12 @@ cd "/Users/jeremy/Desktop/Claude code/stock-lab" && ./.venv/bin/python src/daily
    欣興曾因被搜索／洗產地跌停，卻差點被寫成「需求疲弱」。
 
 **判斷格式**：照 `judgments/build_20260916_v2.py` 的結構寫一支新檔
-`judgments/build_YYYYMMDD.py`，每檔給 `(code, p_up, skew, conviction, why)`：
+`judgments/build_<as_of>.py`（台股）與 `judgments/build_us_<as_of>.py`（美股），
+每檔給 `(code, p_up, skew, conviction, why)`：
+
+> **`<as_of>` 是「資料的最新交易日」，不是執行日。**
+> 早上 7:30 跑的時候 as_of 是前一個交易日（週一還要回到上週五）。
+> `prepare` 結束時會直接印出該用哪個日期，照著印出來的命名即可。
 
 - `p_up`：20 日期間的上漲機率。**要校準** —— 你給 0.60 的那批，實際要約 60% 上漲。
   台股 20 日基本率約 0.58–0.68，沒有明確理由時貼近它。
