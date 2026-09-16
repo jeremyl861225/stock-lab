@@ -55,6 +55,14 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
     horizons = horizons or HORIZONS
     uni = universe.load()
     codes = {c["code"] for c in uni["constituents"]}
+    # 美股 universe 一併納入，否則自動化只會預測台股
+    try:
+        from collect import us as us_mod
+        uni_us = us_mod.load()
+        codes |= {c["code"] for c in uni_us["constituents"]}
+        uni = {**uni, "constituents": uni["constituents"] + uni_us["constituents"]}
+    except Exception as e:  # noqa: BLE001
+        print(f"  美股 universe 未載入（{e}），僅預測台股")
 
     if rebuild_panel or not (FEATURES / "panel.parquet").exists():
         pnl = panel_mod.build(codes)
