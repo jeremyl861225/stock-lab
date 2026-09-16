@@ -1,0 +1,959 @@
+{
+ "as_of": "20260916",
+ "horizon": 20,
+ "analyst": "claude-opus-5",
+ "version": "v2",
+ "market_context": "基準日 9/16：台股收漲337點、盤中一度漲逾600點攻上46000，台積電半小時完成填息，費半衝高1.7%、台積電ADR漲1.3%。本系統資料：當日等權+1.21%、39/50檔上漲（前一日9/15為-1.23%、僅15檔上漲）。判讀：9/15的恐慌（失守月線、成交值創今年次低）在9/16已被科技股領漲的反彈打斷。若真是防禦性輪動，反彈日應由防禦股續強，實際卻是台積電與記憶體反攻——因此『防禦撤退』降級為『拉鋸』，不再作為做空金融股的主要依據。金融股的真實分歧在基本面：壽險型營收年減（國泰-36.5%、富邦-29.3%），證券型反而年增五成以上（元大+65.4%、凱基+58.7%、永豐+49.5%），銀行型平穩。看空強度改由『RSI極端度 × 基本面弱勢』共同決定，不再單看RSI。記憶體仍是最大背離：南亞科營收+561%、華邦電+289%，9/16外資雙雙由賣轉買。",
+ "judgments": [
+  {
+   "code": "2408",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.58,
+   "exp_ret": 0.04921,
+   "ret_q10": -0.18991,
+   "ret_q90": 0.27328,
+   "up_magnitude": 0.1708,
+   "dn_magnitude": -0.1187,
+   "reward_risk": 1.44,
+   "asymmetry": "正偏（上檔大）",
+   "thesis": "營收年增560.9%全場最強、20日股價僅+2.4%；9/16外資由連賣轉買6508張",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增560.9%全場最強、20日股價僅+2.4%；9/16外資由連賣轉買6508張",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2344",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.58,
+   "exp_ret": 0.04158,
+   "ret_q10": -0.17465,
+   "ret_q90": 0.24119,
+   "up_magnitude": 0.1507,
+   "dn_magnitude": -0.1092,
+   "reward_risk": 1.38,
+   "asymmetry": "正偏（上檔大）",
+   "thesis": "營收年增289.4%，且砸356億收購英飛凌記憶體事業；9/16外資買超18474張",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增289.4%，且砸356億收購英飛凌記憶體事業；9/16外資買超18474張",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2382",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.56,
+   "exp_ret": 0.01798,
+   "ret_q10": -0.1055,
+   "ret_q90": 0.13427,
+   "up_magnitude": 0.0839,
+   "dn_magnitude": -0.0659,
+   "reward_risk": 1.27,
+   "asymmetry": "正偏（上檔大）",
+   "thesis": "營收年增177.5%、月增15.8%加速，PER僅14.8、殖利率4.58%，估值最相稱",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增177.5%、月增15.8%加速，PER僅14.8、殖利率4.58%，估值最相稱",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3231",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.55,
+   "exp_ret": 0.01602,
+   "ret_q10": -0.11531,
+   "ret_q90": 0.14093,
+   "up_magnitude": 0.0881,
+   "dn_magnitude": -0.0721,
+   "reward_risk": 1.22,
+   "asymmetry": "對稱",
+   "thesis": "營收年增166.5%、月增49.3%爆發，PER14.5；惟外資5日仍賣超",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增166.5%、月增49.3%爆發，PER14.5；惟外資5日仍賣超",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2059",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.54,
+   "exp_ret": 0.01973,
+   "ret_q10": -0.18154,
+   "ret_q90": 0.21311,
+   "up_magnitude": 0.1332,
+   "dn_magnitude": -0.1135,
+   "reward_risk": 1.17,
+   "asymmetry": "對稱",
+   "thesis": "營收年增344.4%但20日-14.2%；背離極大，惟下降趨勢未止",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增344.4%但20日-14.2%；背離極大，惟下降趨勢未止",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2383",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.01344,
+   "ret_q10": -0.16843,
+   "ret_q90": 0.18994,
+   "up_magnitude": 0.1187,
+   "dn_magnitude": -0.1053,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "營收年增129.8%但20日-13.1%、距高-19.6%；PER79抵消部分吸引力",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增129.8%但20日-13.1%、距高-19.6%；PER79抵消部分吸引力",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2368",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.01887,
+   "ret_q10": -0.2607,
+   "ret_q90": 0.28814,
+   "up_magnitude": 0.1801,
+   "dn_magnitude": -0.1629,
+   "reward_risk": 1.11,
+   "asymmetry": "對稱",
+   "thesis": "營收年增76.4%、距高-24%；融資20日+16%為隱憂",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增76.4%、距高-24%；融資20日+16%為隱憂",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2360",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00991,
+   "ret_q10": -0.19031,
+   "ret_q90": 0.20617,
+   "up_magnitude": 0.1289,
+   "dn_magnitude": -0.1189,
+   "reward_risk": 1.08,
+   "asymmetry": "對稱",
+   "thesis": "營收年增156.3%但5日重挫10.5%，接刀風險高",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增156.3%但5日重挫10.5%，接刀風險高",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3653",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.01008,
+   "ret_q10": -0.22359,
+   "ret_q90": 0.23742,
+   "up_magnitude": 0.1484,
+   "dn_magnitude": -0.1397,
+   "reward_risk": 1.06,
+   "asymmetry": "對稱",
+   "thesis": "營收年增90.9%、投信小買；PER118偏貴",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增90.9%、投信小買；PER118偏貴",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2345",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00935,
+   "ret_q10": -0.17947,
+   "ret_q90": 0.19443,
+   "up_magnitude": 0.1215,
+   "dn_magnitude": -0.1122,
+   "reward_risk": 1.08,
+   "asymmetry": "對稱",
+   "thesis": "RSI35最超賣、距高-32.6%、營收+59.4%；惟投信賣超最重、融資20日+52%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI35最超賣、距高-32.6%、營收+59.4%；惟投信賣超最重、融資20日+52%",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "6446",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00304,
+   "ret_q10": -0.24338,
+   "ret_q90": 0.24338,
+   "up_magnitude": 0.1521,
+   "dn_magnitude": -0.1521,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "營收年增105.4%但5日-10.4%；生技事件風險雙向，對稱看待",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年增105.4%但5日-10.4%；生技事件風險雙向，對稱看待",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2330",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.00365,
+   "ret_q10": -0.063,
+   "ret_q90": 0.0669,
+   "up_magnitude": 0.0418,
+   "dn_magnitude": -0.0394,
+   "reward_risk": 1.06,
+   "asymmetry": "對稱",
+   "thesis": "外資6日連賣3.7萬張、融資+6.4%為負面籌碼；但8月營收+53%、9/16已完成填息、10月中法說會在期間內",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "外資6日連賣3.7萬張、融資+6.4%為負面籌碼；但8月營收+53%、9/16已完成填息、10月中法說會在期間內",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2317",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00153,
+   "ret_q10": -0.08104,
+   "ret_q90": 0.08267,
+   "up_magnitude": 0.0517,
+   "dn_magnitude": -0.0506,
+   "reward_risk": 1.02,
+   "asymmetry": "對稱",
+   "thesis": "PER16.4、殖利率2.89%、營收+52%，投信買超；缺即期催化劑",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "PER16.4、殖利率2.89%、營收+52%，投信買超；缺即期催化劑",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2454",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.01037,
+   "ret_q10": -0.21571,
+   "ret_q90": 0.19912,
+   "up_magnitude": 0.1245,
+   "dn_magnitude": -0.1348,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "PER74.8偏高、20日已漲17.8%；營收+44%不足以支撐評價",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "PER74.8偏高、20日已漲17.8%；營收+44%不足以支撐評價",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3711",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00212,
+   "ret_q10": -0.16972,
+   "ret_q90": 0.16972,
+   "up_magnitude": 0.1061,
+   "dn_magnitude": -0.1061,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "距高-16%、PER43.8、營收+45.7%；無明確方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "距高-16%、PER43.8、營收+45.7%；無明確方向",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2303",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.01765,
+   "ret_q10": -0.24949,
+   "ret_q90": 0.22125,
+   "up_magnitude": 0.1383,
+   "dn_magnitude": -0.1559,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "20日已漲22.9%、營收+30.7%相對同業偏弱；成熟製程需求不明",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "20日已漲22.9%、營收+30.7%相對同業偏弱；成熟製程需求不明",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2308",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00431,
+   "ret_q10": -0.17578,
+   "ret_q90": 0.16889,
+   "up_magnitude": 0.1056,
+   "dn_magnitude": -0.1099,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "外資、投信雙賣且融資+8%，籌碼全面轉弱；營收+34.9%尚可",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "外資、投信雙賣且融資+8%，籌碼全面轉弱；營收+34.9%尚可",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3037",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.01105,
+   "ret_q10": -0.20766,
+   "ret_q90": 0.23418,
+   "up_magnitude": 0.1464,
+   "dn_magnitude": -0.1298,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "營收+56.3%、月增+9.2%加速；20日-15%源於被搜索與洗產地調查等司法事件而非需求，惟司法風險未明",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+56.3%、月增+9.2%加速；20日-15%源於被搜索與洗產地調查等司法事件而非需求，惟司法風險未明",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3189",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.01256,
+   "ret_q10": -0.24124,
+   "ret_q90": 0.26134,
+   "up_magnitude": 0.1633,
+   "dn_magnitude": -0.1508,
+   "reward_risk": 1.08,
+   "asymmetry": "對稱",
+   "thesis": "營收+40.6%，近期外資看千元、連3根漲停；惟PER152極貴",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+40.6%，近期外資看千元、連3根漲停；惟PER152極貴",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "8046",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.24995,
+   "ret_q90": 0.24995,
+   "up_magnitude": 0.1562,
+   "dn_magnitude": -0.1562,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "營收+40.6%但PER129.8極貴、距高-21.9%；對稱看待",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+40.6%但PER129.8極貴、距高-21.9%；對稱看待",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "4958",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.0058,
+   "ret_q10": -0.22733,
+   "ret_q90": 0.23661,
+   "up_magnitude": 0.1479,
+   "dn_magnitude": -0.1421,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "營收+41.1%、距高-23.6%；無明確催化",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+41.1%、距高-23.6%；無明確催化",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3443",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.01223,
+   "ret_q10": -0.2283,
+   "ret_q90": 0.20655,
+   "up_magnitude": 0.1291,
+   "dn_magnitude": -0.1427,
+   "reward_risk": 0.9,
+   "asymmetry": "對稱",
+   "thesis": "營收+111%但PER158、PBR61極貴；漲16.5%後評價風險大於成長",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+111%但PER158、PBR61極貴；漲16.5%後評價風險大於成長",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2395",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.00611,
+   "ret_q10": -0.16607,
+   "ret_q90": 0.15955,
+   "up_magnitude": 0.0997,
+   "dn_magnitude": -0.1038,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "營收+87.5%已在高基期，融資5日減15.1%；外資買超為唯一支撐",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+87.5%已在高基期，融資5日減15.1%；外資買超為唯一支撐",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2357",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00606,
+   "ret_q10": -0.15828,
+   "ret_q90": 0.16474,
+   "up_magnitude": 0.103,
+   "dn_magnitude": -0.0989,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "PER13.7、殖利率4.47%、營收+51.2%，投信買超；估值面偏好",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "PER13.7、殖利率4.47%、營收+51.2%，投信買超；估值面偏好",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3017",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.22645,
+   "ret_q90": 0.22645,
+   "up_magnitude": 0.1415,
+   "dn_magnitude": -0.1415,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "營收+54.3%、融資減5.2%；5日-6.1%無明確訊號",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+54.3%、融資減5.2%；5日-6.1%無明確訊號",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2301",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.22174,
+   "ret_q90": 0.22174,
+   "up_magnitude": 0.1386,
+   "dn_magnitude": -0.1386,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "融資減9.9%籌碼轉乾淨，但營收+25.2%在同業中偏弱",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "融資減9.9%籌碼轉乾淨，但營收+25.2%在同業中偏弱",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3665",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00848,
+   "ret_q10": -0.27965,
+   "ret_q90": 0.26336,
+   "up_magnitude": 0.1646,
+   "dn_magnitude": -0.1748,
+   "reward_risk": 0.94,
+   "asymmetry": "對稱",
+   "thesis": "營收+54%但融資20日+55%，槓桿籌碼過重",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+54%但融資20日+55%，槓桿籌碼過重",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "7769",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00571,
+   "ret_q10": -0.2328,
+   "ret_q90": 0.22367,
+   "up_magnitude": 0.1398,
+   "dn_magnitude": -0.1455,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "5日-8.9%、融資20日+32.7%；測試設備需求隨AI capex但無即期催化",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "5日-8.9%、融資20日+32.7%；測試設備需求隨AI capex但無即期催化",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "6669",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00718,
+   "ret_q10": -0.23651,
+   "ret_q90": 0.22273,
+   "up_magnitude": 0.1392,
+   "dn_magnitude": -0.1478,
+   "reward_risk": 0.94,
+   "asymmetry": "對稱",
+   "thesis": "PER6.9、殖利率7.59%為全場最優，但融資20日+160%、外資賣超0.28，剛配股後籌碼凌亂",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "PER6.9、殖利率7.59%為全場最優，但融資20日+160%、外資賣超0.28，剛配股後籌碼凌亂",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2327",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.25932,
+   "ret_q90": 0.25932,
+   "up_magnitude": 0.1621,
+   "dn_magnitude": -0.1621,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "剛完成1:4分割，距高等技術指標失真；不做方向判斷",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "剛完成1:4分割，距高等技術指標失真；不做方向判斷",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3008",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.01481,
+   "ret_q10": -0.34867,
+   "ret_q90": 0.32835,
+   "up_magnitude": 0.2052,
+   "dn_magnitude": -0.2179,
+   "reward_risk": 0.94,
+   "asymmetry": "對稱",
+   "thesis": "營收年減16%為科技股最弱，5日-9.4%、日波動5.9%全場最高",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年減16%為科技股最弱，5日-9.4%、日波動5.9%全場最高",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2892",
+   "stance": "bearish",
+   "conviction": "high",
+   "prob_up": 0.35,
+   "exp_ret": -0.02569,
+   "ret_q10": -0.0907,
+   "ret_q90": 0.05102,
+   "up_magnitude": 0.0319,
+   "dn_magnitude": -0.0567,
+   "reward_risk": 0.56,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "RSI82.3全場最高、20日+19%，但營收僅+6.3%；漲幅幾乎全靠評價擴張",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI82.3全場最高、20日+19%，但營收僅+6.3%；漲幅幾乎全靠評價擴張",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2880",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.38,
+   "exp_ret": -0.0214,
+   "ret_q10": -0.08845,
+   "ret_q90": 0.05421,
+   "up_magnitude": 0.0339,
+   "dn_magnitude": -0.0553,
+   "reward_risk": 0.61,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "RSI78.3、20日+21.4%、在高點；營收+12.2%不足以支撐此漲幅",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI78.3、20日+21.4%、在高點；營收+12.2%不足以支撐此漲幅",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2887",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.38,
+   "exp_ret": -0.03226,
+   "ret_q10": -0.13335,
+   "ret_q90": 0.08173,
+   "up_magnitude": 0.0511,
+   "dn_magnitude": -0.0833,
+   "reward_risk": 0.61,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "RSI77.0、20日+22%、在高點；營收僅+0.5%為金融股次弱",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI77.0、20日+22%、在高點；營收僅+0.5%為金融股次弱",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2884",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.42,
+   "exp_ret": -0.02471,
+   "ret_q10": -0.14331,
+   "ret_q90": 0.10378,
+   "up_magnitude": 0.0649,
+   "dn_magnitude": -0.0896,
+   "reward_risk": 0.72,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "RSI76.2、20日+22.9%、在高點；營收+19.3%尚可，故看空程度低於台新新光金",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI76.2、20日+22.9%、在高點；營收+19.3%尚可，故看空程度低於台新新光金",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2882",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.42,
+   "exp_ret": -0.02334,
+   "ret_q10": -0.14188,
+   "ret_q90": 0.10703,
+   "up_magnitude": 0.0669,
+   "dn_magnitude": -0.0887,
+   "reward_risk": 0.75,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "營收年減36.5%全場最弱、20日仍漲14.4%；RSI61.5未極端故非最空",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年減36.5%全場最弱、20日仍漲14.4%；RSI61.5未極端故非最空",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2881",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.43,
+   "exp_ret": -0.02218,
+   "ret_q10": -0.15285,
+   "ret_q90": 0.12009,
+   "up_magnitude": 0.0751,
+   "dn_magnitude": -0.0955,
+   "reward_risk": 0.79,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "營收年減29.3%、20日+19.1%；RSI67.7中性，融資已減5.7%",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收年減29.3%、20日+19.1%；RSI67.7中性，融資已減5.7%",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2883",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.00701,
+   "ret_q10": -0.09903,
+   "ret_q90": 0.08782,
+   "up_magnitude": 0.0549,
+   "dn_magnitude": -0.0619,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "RSI77.7超買且20日+28.8%全場最強，但營收+58.7%為金融股次強——超買是風險，基本面卻支撐，兩者相抵",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI77.7超買且20日+28.8%全場最強，但營收+58.7%為金融股次強——超買是風險，基本面卻支撐，兩者相抵",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2890",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.00533,
+   "ret_q10": -0.07532,
+   "ret_q90": 0.06679,
+   "up_magnitude": 0.0417,
+   "dn_magnitude": -0.0471,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "RSI76.6超買，但營收+49.5%第三強；投信買超0.27為金融股最高",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI76.6超買，但營收+49.5%第三強；投信買超0.27為金融股最高",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "5880",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.44,
+   "exp_ret": -0.00753,
+   "ret_q10": -0.06026,
+   "ret_q90": 0.0493,
+   "up_magnitude": 0.0308,
+   "dn_magnitude": -0.0377,
+   "reward_risk": 0.82,
+   "asymmetry": "對稱",
+   "thesis": "RSI72.4、營收-0.7%、20日+10.1%；融資+30%為警訊",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI72.4、營收-0.7%、20日+10.1%；融資+30%為警訊",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2891",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.09177,
+   "ret_q90": 0.09177,
+   "up_magnitude": 0.0574,
+   "dn_magnitude": -0.0574,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "融資大減22.9%、外資投信雙買為金融股最佳籌碼；惟營收-2.5%，兩者相抵",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "融資大減22.9%、外資投信雙買為金融股最佳籌碼；惟營收-2.5%，兩者相抵",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2886",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00249,
+   "ret_q10": -0.10172,
+   "ret_q90": 0.09773,
+   "up_magnitude": 0.0611,
+   "dn_magnitude": -0.0636,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "RSI59.1與20日+8.2%皆為金融股最低、營收+13.1%、投信買超第三強；融資+66.5%是唯一警訊",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI59.1與20日+8.2%皆為金融股最低、營收+13.1%、投信買超第三強；融資+66.5%是唯一警訊",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2885",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00176,
+   "ret_q10": -0.09295,
+   "ret_q90": 0.09482,
+   "up_magnitude": 0.0593,
+   "dn_magnitude": -0.0581,
+   "reward_risk": 1.02,
+   "asymmetry": "對稱",
+   "thesis": "營收+65.4%為金融股最強、RSI59.8未超買、20日僅+11%；基本面與價格最相稱",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "營收+65.4%為金融股最強、RSI59.8未超買、20日僅+11%；基本面與價格最相稱",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2412",
+   "stance": "bearish",
+   "conviction": "medium",
+   "prob_up": 0.38,
+   "exp_ret": -0.00756,
+   "ret_q10": -0.03299,
+   "ret_q90": 0.022,
+   "up_magnitude": 0.0137,
+   "dn_magnitude": -0.0206,
+   "reward_risk": 0.67,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "RSI78.7的電信股；外資5日買超相當於4.3個交易日成交量，為全場最大，屬資金停泊型買盤",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI78.7的電信股；外資5日買超相當於4.3個交易日成交量，為全場最大，屬資金停泊型買盤",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "3045",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.42,
+   "exp_ret": -0.00764,
+   "ret_q10": -0.04645,
+   "ret_q90": 0.03504,
+   "up_magnitude": 0.0219,
+   "dn_magnitude": -0.029,
+   "reward_risk": 0.75,
+   "asymmetry": "負偏（下檔大）",
+   "thesis": "RSI82.9全場次高、在高點；融資雖增1151%但僅由98張增至1226張（0.13倍日均量），基數效應不足以獨立佐證",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "RSI82.9全場次高、在高點；融資雖增1151%但僅由98張增至1226張（0.13倍日均量），基數效應不足以獨立佐證",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "2603",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00309,
+   "ret_q10": -0.12109,
+   "ret_q90": 0.12603,
+   "up_magnitude": 0.0788,
+   "dn_magnitude": -0.0757,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "PER9.5、殖利率6.69%皆為傳產最優（全場則緯穎更優），投信買超0.13；航運景氣循環難判",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "PER9.5、殖利率6.69%皆為傳產最優（全場則緯穎更優），投信買超0.13；航運景氣循環難判",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "1303",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.01445,
+   "ret_q10": -0.30062,
+   "ret_q90": 0.27749,
+   "up_magnitude": 0.1734,
+   "dn_magnitude": -0.1879,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "20日已漲19.5%、PER36.1偏高；營收+46.7%其實不弱，但漲幅已反映",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "20日已漲19.5%、PER36.1偏高；營收+46.7%其實不弱，但漲幅已反映",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "1301",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.49,
+   "exp_ret": -0.00379,
+   "ret_q10": -0.15482,
+   "ret_q90": 0.14875,
+   "up_magnitude": 0.093,
+   "dn_magnitude": -0.0968,
+   "reward_risk": 0.96,
+   "asymmetry": "對稱",
+   "thesis": "PBR僅0.69但營收僅+6.8%、外資賣超0.15；傳產景氣未見底",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "PBR僅0.69但營收僅+6.8%、外資賣超0.15；傳產景氣未見底",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "6505",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.01073,
+   "ret_q10": -0.22311,
+   "ret_q90": 0.20594,
+   "up_magnitude": 0.1287,
+   "dn_magnitude": -0.1394,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "外資賣超0.28重；投信買超0.11為反向支撐，油價雖高但煉油利差未必受惠",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "外資賣超0.28重；投信買超0.11為反向支撐，油價雖高但煉油利差未必受惠",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  },
+  {
+   "code": "1216",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.0491,
+   "ret_q90": 0.0491,
+   "up_magnitude": 0.0307,
+   "dn_magnitude": -0.0307,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "防禦性食品股，營收+3.8%平穩、RSI42；無方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet"
+   ],
+   "inference": "防禦性食品股，營收+3.8%平穩、RSI42；無方向",
+   "falsifier": "若金融股在 RSI 76+ 的位置續漲逾 5%，或記憶體雙雄外資再度轉為連續賣超，則『超買回歸』與『基本面背離終將收斂』兩個前提分別失效。"
+  }
+ ]
+}

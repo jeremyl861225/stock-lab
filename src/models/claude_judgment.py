@@ -27,7 +27,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import DATA
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 REASONING = DATA / "reasoning.jsonl"
 REQUIRED = {"code", "stance", "prob_up", "exp_ret", "ret_q10", "ret_q90",
             "conviction", "thesis", "facts", "inference", "falsifier"}
