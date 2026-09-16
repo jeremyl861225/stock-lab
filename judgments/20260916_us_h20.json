@@ -1,0 +1,257 @@
+{
+ "as_of": "20260916",
+ "horizon": 20,
+ "analyst": "claude-opus-5",
+ "market": "US",
+ "version": "v1",
+ "market_context": "美股當前主題是『AI 放緩疑慮』：費半近期重挫、科技巨擘公開呼籲放緩 AI 發展，Broadcom CEO 甚至需出面回應並重申 2,300 億美元 AI 晶片營收目標。這使 AI 硬體（NVDA／AVGO／TSM）與平台股（GOOGL／META／MSFT／AMZN）出現分化：前者估值與情緒同時承壓，後者相對絕緣。注意：美股無每日法人買賣超與融資餘額公告，本判斷只有基本面、技術面、新聞面三個面向，因此信心普遍低於台股同類判斷。TSM 與台股 2330 是同一家公司，ADR 相對台股仍有約一成溢價，溢價收斂時 ADR 會較弱。",
+ "judgments": [
+  {
+   "code": "AVGO",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.55,
+   "exp_ret": 0.01719,
+   "ret_q10": -0.11004,
+   "ret_q90": 0.14005,
+   "up_magnitude": 0.0875,
+   "dn_magnitude": -0.0688,
+   "reward_risk": 1.27,
+   "asymmetry": "正偏（上檔大）",
+   "thesis": "營收年增85.5%但RSI33.8全場最低、距高-20.2%；CEO公開重申2300億AI營收目標，跌深來自情緒而非基本面",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收年增85.5%但RSI33.8全場最低、距高-20.2%；CEO公開重申2300億AI營收目標，跌深來自情緒而非基本面",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "GOOGL",
+   "stance": "bullish",
+   "conviction": "medium",
+   "prob_up": 0.55,
+   "exp_ret": 0.01037,
+   "ret_q10": -0.07464,
+   "ret_q90": 0.09123,
+   "up_magnitude": 0.057,
+   "dn_magnitude": -0.0467,
+   "reward_risk": 1.22,
+   "asymmetry": "對稱",
+   "thesis": "PER17.3為大型科技股最低、營收年增24.2%、距高-8.5%；AI放緩疑慮對平台股衝擊小於硬體股",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER17.3為大型科技股最低、營收年增24.2%、距高-8.5%；AI放緩疑慮對平台股衝擊小於硬體股",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "AMZN",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.54,
+   "exp_ret": 0.00978,
+   "ret_q10": -0.08995,
+   "ret_q90": 0.10559,
+   "up_magnitude": 0.066,
+   "dn_magnitude": -0.0562,
+   "reward_risk": 1.17,
+   "asymmetry": "對稱",
+   "thesis": "RSI40.9、20日-4.5%、距高-12.7%；PER20相對營收年增19.6%不算貴",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI40.9、20日-4.5%、距高-12.7%；PER20相對營收年增19.6%不算貴",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "NVDA",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.53,
+   "exp_ret": 0.01241,
+   "ret_q10": -0.15553,
+   "ret_q90": 0.17539,
+   "up_magnitude": 0.1096,
+   "dn_magnitude": -0.0972,
+   "reward_risk": 1.13,
+   "asymmetry": "對稱",
+   "thesis": "營收年增105.9%但PER僅27.3，成長與估值相稱；惟為AI放緩疑慮的核心標的，雙向風險大",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收年增105.9%但PER僅27.3，成長與估值相稱；惟為AI放緩疑慮的核心標的，雙向風險大",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "TSM",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.52,
+   "exp_ret": 0.00361,
+   "ret_q10": -0.09422,
+   "ret_q90": 0.09807,
+   "up_magnitude": 0.0613,
+   "dn_magnitude": -0.0589,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "營收年增36%、距高-12.4%；與台股2330同一公司，ADR溢價約一成，溢價收斂會壓抑ADR表現",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "營收年增36%、距高-12.4%；與台股2330同一公司，ADR溢價約一成，溢價收斂會壓抑ADR表現",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "MSFT",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00188,
+   "ret_q10": -0.0737,
+   "ret_q90": 0.0767,
+   "up_magnitude": 0.0479,
+   "dn_magnitude": -0.0461,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "RSI53.7、20日+2.6%、PER27.5、營收+17.7%；無明確催化劑",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "RSI53.7、20日+2.6%、PER27.5、營收+17.7%；無明確催化劑",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "QQQ",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00109,
+   "ret_q10": -0.0429,
+   "ret_q90": 0.04465,
+   "up_magnitude": 0.0279,
+   "dn_magnitude": -0.0268,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "那斯達克100代理，RSI48.2、20日-1.0%；接近市場中性",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "那斯達克100代理，RSI48.2、20日-1.0%；接近市場中性",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "VOO",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.51,
+   "exp_ret": 0.00077,
+   "ret_q10": -0.03036,
+   "ret_q90": 0.03159,
+   "up_magnitude": 0.0197,
+   "dn_magnitude": -0.019,
+   "reward_risk": 1.04,
+   "asymmetry": "對稱",
+   "thesis": "S&P500代理，分散度高於QQQ、日波動僅0.5%；接近市場中性",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "S&P500代理，分散度高於QQQ、日波動僅0.5%；接近市場中性",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "BRK-B",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.03204,
+   "ret_q90": 0.03204,
+   "up_magnitude": 0.02,
+   "dn_magnitude": -0.02,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "PER13.0全場最低、日波動0.6%最小；RSI66.7偏高但防禦屬性明確，無方向",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER13.0全場最低、日波動0.6%最小；RSI66.7偏高但防禦屬性明確，無方向",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "BTCO",
+   "stance": "bullish",
+   "conviction": "low",
+   "prob_up": 0.5,
+   "exp_ret": 0.0,
+   "ret_q10": -0.17802,
+   "ret_q90": 0.17802,
+   "up_magnitude": 0.1113,
+   "dn_magnitude": -0.1113,
+   "reward_risk": 1.0,
+   "asymmetry": "對稱",
+   "thesis": "比特幣ETF，20日已漲17.2%、日波動3.1%；其驅動邏輯獨立於股市，我沒有可據以判斷的依據，明確表示無觀點",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "比特幣ETF，20日已漲17.2%、日波動3.1%；其驅動邏輯獨立於股市，我沒有可據以判斷的依據，明確表示無觀點",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "AAPL",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.48,
+   "exp_ret": -0.00428,
+   "ret_q10": -0.08896,
+   "ret_q90": 0.08211,
+   "up_magnitude": 0.0513,
+   "dn_magnitude": -0.0556,
+   "reward_risk": 0.92,
+   "asymmetry": "對稱",
+   "thesis": "PER38.2偏高但營收年增僅16.4%為大型科技股最弱；5日已漲5.5%、RSI62.3",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER38.2偏高但營收年增僅16.4%為大型科技股最弱；5日已漲5.5%、RSI62.3",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "META",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.0088,
+   "ret_q10": -0.10856,
+   "ret_q90": 0.09248,
+   "up_magnitude": 0.0578,
+   "dn_magnitude": -0.0678,
+   "reward_risk": 0.85,
+   "asymmetry": "對稱",
+   "thesis": "20日+24.4%全場最強、RSI72.8最高；營收+28%與PER25.5尚稱相稱，但多篇看多預測顯示情緒已充分反映",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "20日+24.4%全場最強、RSI72.8最高；營收+28%與PER25.5尚稱相稱，但多篇看多預測顯示情緒已充分反映",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  },
+  {
+   "code": "TSLA",
+   "stance": "bearish",
+   "conviction": "low",
+   "prob_up": 0.47,
+   "exp_ret": -0.01389,
+   "ret_q10": -0.19625,
+   "ret_q90": 0.17403,
+   "up_magnitude": 0.1088,
+   "dn_magnitude": -0.1227,
+   "reward_risk": 0.89,
+   "asymmetry": "對稱",
+   "thesis": "PER338.7為全場極端值、日波動3.2%；20日+7.6%後估值風險大於成長",
+   "facts": [
+    "四面向資料見 data/briefing.parquet（美股無籌碼面）"
+   ],
+   "inference": "PER338.7為全場極端值、日波動3.2%；20日+7.6%後估值風險大於成長",
+   "falsifier": "若 AI 放緩疑慮擴大為實際的 capex 下修（雲端業者財測轉向），AI 硬體的『跌深錯殺』論點失效；反之若疑慮消退，超買平台股的回檔論點失效。"
+  }
+ ]
+}

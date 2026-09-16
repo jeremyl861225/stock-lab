@@ -28,6 +28,9 @@ jobs:
           python src/collect/universe.py || echo "universe 更新失敗，沿用既有"
           python src/collect/finmind.py
 
+      - name: 收集美股（yfinance）
+        run: python src/collect/us.py || echo "美股收集失敗，沿用既有快取"
+
       - name: 建 panel（含除權息還原）
         run: python src/features/panel.py
 

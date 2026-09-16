@@ -14,16 +14,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import DATA, PREDICTIONS
 
 
-def table(horizon: int = 20) -> pd.DataFrame:
+def table(horizon: int = 20, market: str | None = None) -> pd.DataFrame:
     rows = [json.loads(l) for l in PREDICTIONS.read_text(encoding="utf-8").splitlines() if l.strip()]
     p = pd.DataFrame([r for r in rows if r["model"] == "claude" and r["horizon"] == horizon])
     if p.empty:
         return p
     p = p.sort_values("created_at_utc").drop_duplicates("code", keep="last")
     b = pd.read_parquet(DATA / "briefing.parquet")
-    m = p.merge(b[["code", "名稱", "產業", "PER", "dividend_yield", "rev_yoy",
-                   "rsi_14", "ret_20", "foreign_5", "margin_chg_5", "dist_high_60"]],
-                on="code", how="left")
+    cols = ["code", "名稱", "產業", "PER", "dividend_yield", "rev_yoy", "rsi_14",
+            "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close", "market"]
+    m = p.merge(b[[c for c in cols if c in b.columns]], on="code", how="left",
+                suffixes=("", "_b"))
+    if market:
+        m = m[m["market"] == market]
     return m.sort_values("exp_ret", ascending=False).reset_index(drop=True)
 
 

@@ -1,0 +1,100 @@
+{
+  "as_of": "20260917",
+  "built_at_utc": "2026-09-16T16:58:59.242517+00:00",
+  "market": "US",
+  "method": "market_cap_top_n_plus_designated_etfs",
+  "size": 13,
+  "constituents": [
+    {
+      "code": "NVDA",
+      "name": "NVIDIA Corporation",
+      "industry": "Technology",
+      "mcap": 5216114049024.0,
+      "weight": 0.16856446050015522
+    },
+    {
+      "code": "AAPL",
+      "name": "Apple Inc.",
+      "industry": "Technology",
+      "mcap": 4856206065664.0,
+      "weight": 0.15693363830673923
+    },
+    {
+      "code": "GOOGL",
+      "name": "Alphabet Inc.",
+      "industry": "Communication Servic",
+      "mcap": 4224708771840.0,
+      "weight": 0.13652610893903525
+    },
+    {
+      "code": "MSFT",
+      "name": "Microsoft Corporation",
+      "industry": "Technology",
+      "mcap": 3663392931840.0,
+      "weight": 0.11838657041466276
+    },
+    {
+      "code": "AMZN",
+      "name": "Amazon.com, Inc.",
+      "industry": "Consumer Cyclical",
+      "mcap": 2672632791040.0,
+      "weight": 0.08636906714510544
+    },
+    {
+      "code": "TSM",
+      "name": "Taiwan Semiconductor Manufactur",
+      "industry": "Technology",
+      "mcap": 2170850508800.0,
+      "weight": 0.07015342099562205
+    },
+    {
+      "code": "META",
+      "name": "Meta Platforms, Inc.",
+      "industry": "Communication Servic",
+      "mcap": 1722929381376.0,
+      "weight": 0.05567835728320658
+    },
+    {
+      "code": "AVGO",
+      "name": "Broadcom Inc.",
+      "industry": "Technology",
+      "mcap": 1628666986496.0,
+      "weight": 0.05263216435317031
+    },
+    {
+      "code": "TSLA",
+      "name": "Tesla, Inc.",
+      "industry": "Consumer Cyclical",
+      "mcap": 1431315939328.0,
+      "weight": 0.04625454828067681
+    },
+    {
+      "code": "BRK-B",
+      "name": "Berkshire Hathaway Inc. New",
+      "industry": "Financial Services",
+      "mcap": 1111242440704.0,
+      "weight": 0.0359110212586695
+    },
+    {
+      "code": "BTCO",
+      "name": "Invesco Galaxy Bitcoin ETF",
+      "industry": "ETF",
+      "mcap": 407250976.0,
+      "weight": 1.3160763053186417e-05
+    },
+    {
+      "code": "QQQ",
+      "name": "Invesco QQQ Trust, Series 1",
+      "industry": "ETF",
+      "mcap": 488981004288.0,
+      "weight": 0.01580195877773292
+    },
+    {
+      "code": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "industry": "ETF",
+      "mcap": 1756880437248.0,
+      "weight": 0.05677552298217076
+    }
+  ]
+}

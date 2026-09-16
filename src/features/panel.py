@@ -141,6 +141,22 @@ def repair_unexplained_splits(px: pd.DataFrame, threshold: float = 0.30) -> pd.D
     return px
 
 
+def _has_us() -> bool:
+    return (RAW / "us/prices.parquet").exists()
+
+
+def _load_us() -> pd.DataFrame:
+    """美股：yfinance 的 auto_adjust 已還原分割與股息，不需自行處理公司行動。
+    籌碼欄位（foreign/trust/margin）美股沒有對應公告，一律留空由 imputer 處理。"""
+    us = pd.read_parquet(RAW / "us/prices.parquet")
+    us["date"] = pd.to_datetime(us["date"])
+    us["market"] = "US"
+    for c in ("foreign", "trust", "dealer", "margin_bal", "short_bal", "adj_factor"):
+        if c not in us.columns:
+            us[c] = np.nan
+    return us
+
+
 def build(codes: set[str] | None = None) -> pd.DataFrame:
     px = _read("price")
     if px.empty:
@@ -180,6 +196,8 @@ def build(codes: set[str] | None = None) -> pd.DataFrame:
             .drop_duplicates(["code", "date"]).reset_index(drop=True))
     px = adjust_for_corporate_actions(px)
     px = repair_unexplained_splits(px)
+    px["market"] = "TW"
+    px = pd.concat([px, _load_us()], ignore_index=True) if _has_us() else px
     FEATURES.mkdir(parents=True, exist_ok=True)
     px.to_parquet(FEATURES / "panel.parquet", index=False)
     return px

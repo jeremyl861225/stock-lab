@@ -77,6 +77,7 @@ def save_reasoning(d: dict, pid_map: dict[str, str]) -> int:
             rec["horizon"] = d["horizon"]
             rec["pid"] = pid_map.get(str(j["code"]), "")
             rec["market_context"] = d.get("market_context", "")
+            rec["market"] = d.get("market", "TW")   # 不寫的話美股 context 會覆蓋台股
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
             n += 1
     return n

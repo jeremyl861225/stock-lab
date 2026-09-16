@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """每日預測面板（手機優先，單檔 HTML，離線可開）。
 
-設計依 lieflat-charts：
-  圖型  G10 Diverging Bar 的資料編碼 —— 零軸居中、正負分向、長度∝|期望值|。
-        以手寫 SVG 實作，因為手機面板需離線可開、不依賴 ECharts。
-  選型  比較過 F5 Tick Rows（單極、限 ≤8 行）、L2 Dot Cascade（類目名豎排，
-        中文長名不適用）、F12 Dumbbell（兩時點對比，非本資料形狀），
-        三者都無法誠實編碼雙極資料，故降級至 Glance G10。
-  色板  Mono 灰階。50 檔類目遠超 6，依規則不得使用彩色預設。
-        方向編碼正負、明度編碼信心度，顏色不承擔第二種含義。
+色板沿用 todo-app 五色（使用者指定）：棉紙白底、深藍墨本文、
+磚紅＝上漲、鴨綠＝下跌（台股慣例紅漲綠跌）、琥珀＝信心標記。
+
+每檔顯示八個數字，各自以色塊承載：
+  P漲／漲幅／跌幅／賠率比／收盤價／獲利點／停損點／信心
+獲利點 = 收盤 ×(1+漲幅)、停損點 = 收盤 ×(1+跌幅) —— 直接由預測推導，
+不是另外設定的目標價，看到的價位就是模型自己說的那個幅度。
 """
 from __future__ import annotations
 import datetime as dt, html, json, sys
@@ -17,184 +16,198 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import DOCS, DATA
 import ranking as ranking_mod
+import accuracy as acc_mod
 
-# ── custom 色板：沿用 todo-app 的五色色票（使用者指定）──
-#   依 lieflat-charts 第六點五節「使用者明確給出色板時建立 custom」的規則。
-#   角色分配：BG 棉紙白／TXT 深藍墨／磚紅＝正期望值（漲）／鴨綠＝負期望值（跌）。
-#   依台股慣例紅漲綠跌，而非歐美的綠漲紅跌。
-BG, CARD, INK, LINE = "#F8F7F2", "#FFFEFC", "#133E50", "#DCD9CE"
-ACCENT, DANGER, HOT, OLIVE = "#2A7574", "#A83F17", "#F4A14F", "#636845"
-D_BG, D_CARD, D_INK, D_LINE = "#111214", "#181A1D", "#ECEEF1", "#34383D"
-D_ACCENT, D_DANGER = "#5BA7A6", "#E97552"
-
-CSS = f"""
-:root{{--bg:{BG};--card:{CARD};--ink:{INK};--mut:#6B7F8A;--faint:#9AA8B0;
---line:{LINE};--pos:{DANGER};--neg:{ACCENT};--hot:{HOT};--r:16px;
---e:cubic-bezier(.2,.8,.25,1)}}
-@media(prefers-color-scheme:dark){{:root:not([data-t="light"]){{--bg:{D_BG};--card:{D_CARD};
---ink:{D_INK};--mut:#8A949C;--faint:#5C656C;--line:{D_LINE};
---pos:{D_DANGER};--neg:{D_ACCENT}}}}}
-:root[data-t="dark"]{{--bg:{D_BG};--card:{D_CARD};--ink:{D_INK};--mut:#8A949C;
---faint:#5C656C;--line:{D_LINE};--pos:{D_DANGER};--neg:{D_ACCENT}}}
-*{{box-sizing:border-box;-webkit-tap-highlight-color:transparent}}
-body{{margin:0;background:var(--bg);color:var(--ink);
+CSS = """
+:root{--bg:#F8F7F2;--card:#FFFEFC;--ink:#133E50;--mut:#6B7F8A;--faint:#9AA8B0;
+--line:#DCD9CE;--up:#A83F17;--dn:#2A7574;--hot:#B9660F;--upbg:#FBE7E0;--dnbg:#DCEBE8;
+--neu:#EEEDE7;--r:16px;--e:cubic-bezier(.2,.8,.25,1)}
+@media(prefers-color-scheme:dark){:root:not([data-t="light"]){--bg:#111214;--card:#181A1D;
+--ink:#ECEEF1;--mut:#8A949C;--faint:#5C656C;--line:#34383D;--up:#E97552;--dn:#5BA7A6;
+--hot:#F4A14F;--upbg:#2B1D18;--dnbg:#16292C;--neu:#212429}}
+:root[data-t="dark"]{--bg:#111214;--card:#181A1D;--ink:#ECEEF1;--mut:#8A949C;
+--faint:#5C656C;--line:#34383D;--up:#E97552;--dn:#5BA7A6;--hot:#F4A14F;
+--upbg:#2B1D18;--dnbg:#16292C;--neu:#212429}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);
 font-family:Inter,-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC",sans-serif;
-font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}}
-.wrap{{max-width:560px;margin:0 auto;padding:22px 16px 60px}}
-h1{{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:0 0 3px}}
-.sub{{font-size:11.5px;color:var(--mut);margin:0 0 16px}}
-.read{{background:var(--card);border-radius:var(--r);padding:15px 17px;margin:0 0 14px;
-font-size:12.5px;line-height:1.62;box-shadow:0 1px 2px rgba(19,62,80,.07)}}
-.read b{{font-weight:700;color:var(--ink)}}
-.tabs{{display:flex;gap:6px;margin:0 0 12px}}
-.tabs button{{flex:1;padding:9px 0;border:none;border-radius:99px;background:var(--card);
-color:var(--mut);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
-transition:background .14s var(--e),color .14s var(--e)}}
-.tabs button[aria-selected="true"]{{background:var(--ink);color:{BG}}}
-.list{{background:var(--card);border-radius:var(--r);overflow:hidden;
-box-shadow:0 1px 2px rgba(19,62,80,.07)}}
-.row{{display:block;width:100%;border:none;background:none;padding:0;
-font:inherit;color:inherit;cursor:pointer;text-align:left;
-border-bottom:1px solid var(--line)}}
-.list .row:last-child{{border-bottom:none}}
-.row[aria-expanded="true"]{{background:color-mix(in srgb,var(--ink) 4%,transparent)}}
-.top{{display:grid;grid-template-columns:20px 1fr 92px 58px;align-items:center;
-gap:7px;padding:9px 13px}}
-.rk{{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;text-align:right}}
-.nm{{font-size:13.5px;font-weight:600;letter-spacing:-.01em;overflow:hidden;
-text-overflow:ellipsis;white-space:nowrap}}
-.nm span{{font-size:10px;color:var(--mut);font-weight:400;margin-left:4px}}
-.ev{{font-size:13px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;
-letter-spacing:-.02em}}
-.ev.p{{color:var(--pos)}}.ev.n{{color:var(--neg)}}
-.asym{{font-size:9px;color:var(--hot);text-align:right;letter-spacing:.02em;font-weight:600}}
-.det{{display:none;padding:2px 13px 14px;font-size:11.5px;color:var(--mut);line-height:1.6}}
-.row[aria-expanded="true"] .det{{display:block}}
-.det .g{{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0 9px}}
-.det .g div{{background:var(--bg);border-radius:10px;padding:6px 8px}}
-.det .g .k{{font-size:9px;color:var(--mut)}}
-.det .g .v{{font-size:12.5px;font-weight:700;color:var(--ink);
-font-variant-numeric:tabular-nums;margin-top:1px}}
-.why{{color:var(--ink);font-size:11.5px}}
-.foot{{margin-top:22px;font-size:9.5px;color:var(--faint);letter-spacing:.06em;line-height:1.8}}
-.dot{{display:inline-block;width:7px;height:7px;border-radius:2px;vertical-align:-1px;
-margin-right:3px}}
-.tog{{position:fixed;right:14px;bottom:14px;width:38px;height:38px;border-radius:50%;
+font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:23px;font-weight:800;letter-spacing:-.03em;margin:0 0 2px}
+.sub{font-size:11.5px;color:var(--mut);margin:0 0 14px}
+.acc{background:var(--card);border-radius:var(--r);padding:14px 16px;margin:0 0 12px;
+box-shadow:0 1px 2px rgba(19,62,80,.07)}
+.acc .t{font-size:10.5px;color:var(--mut);letter-spacing:.04em}
+.acc .v{font-size:27px;font-weight:800;letter-spacing:-.03em;margin:1px 0 0;
+font-variant-numeric:tabular-nums}
+.acc .n{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.5}
+.tabs{display:flex;gap:5px;margin:0 0 9px}
+.tabs button{flex:1;padding:8px 0;border:none;border-radius:99px;background:var(--card);
+color:var(--mut);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+transition:background .14s var(--e),color .14s var(--e)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.tabs.h button{font-size:12px;font-weight:600}
+.read{background:var(--card);border-radius:var(--r);padding:13px 15px;margin:0 0 12px;
+font-size:11.5px;line-height:1.65;box-shadow:0 1px 2px rgba(19,62,80,.07)}
+.read b{font-weight:700}
+.card{background:var(--card);border-radius:var(--r);padding:11px 12px 9px;margin:0 0 7px;
+box-shadow:0 1px 2px rgba(19,62,80,.07)}
+.hd{display:flex;align-items:baseline;gap:7px;margin:0 0 8px}
+.rk{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:15px}
+.nm{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.cd{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.02em}
+.ev{margin-left:auto;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.ev.p{color:var(--up)}.ev.n{color:var(--dn)}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.c{background:var(--neu);border-radius:9px;padding:5px 6px;text-align:center}
+.c b{display:block;font-size:8.5px;font-weight:600;color:var(--mut);letter-spacing:.02em}
+.c i{display:block;font-size:13px;font-weight:800;font-style:normal;margin-top:1px;
+font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.c.u{background:var(--upbg)}.c.u i{color:var(--up)}
+.c.d{background:var(--dnbg)}.c.d i{color:var(--dn)}
+.c.h i{color:var(--hot)}
+.why{font-size:10.5px;color:var(--mut);line-height:1.55;margin-top:7px}
+.foot{margin-top:20px;font-size:9.5px;color:var(--faint);letter-spacing:.04em;line-height:1.8}
+.dot{display:inline-block;width:7px;height:7px;border-radius:2px;vertical-align:-1px;margin-right:3px}
+.tog{position:fixed;right:13px;bottom:13px;width:37px;height:37px;border-radius:50%;
 border:none;background:var(--card);color:var(--mut);font-size:15px;cursor:pointer;
-box-shadow:0 2px 8px rgba(19,62,80,.12)}}
-@media(prefers-reduced-motion:no-preference){{
-.bar{{transform-origin:var(--o) center;animation:g .5s var(--e) both}}
-@keyframes g{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}}}
+box-shadow:0 2px 8px rgba(19,62,80,.12)}
 """
 
 
-def _bar(ev: float, mx: float, conf: str) -> str:
-    """G10 編碼：零軸在中線，正值向右、負值向左，長度 ∝ |期望值|。
-    明度編碼信心度（high 最黑），不重複編碼數值。"""
-    W, H, C = 92, 16, 46
-    w = min(abs(ev) / mx * 43, 43) if mx > 0 else 0
-    op = {"high": 1.0, "medium": .74, "low": .52}.get(conf, .52)
-    col = "var(--pos)" if ev >= 0 else "var(--neg)"
-    x = C if ev >= 0 else C - w
-    origin = "left" if ev >= 0 else "right"
-    return (f'<svg class="b" width="{W}" height="{H}" viewBox="0 0 {W} {H}" aria-hidden="true">'
-            f'<line x1="{C}" y1="1.5" x2="{C}" y2="{H-1.5}" stroke="var(--grid)" stroke-width="1"/>'
-            f'<rect class="bar" style="--o:{origin}" x="{x}" y="4" width="{max(w,0.8):.1f}" '
-            f'height="{H-8}" rx="3" fill="{col}" opacity="{op}"/></svg>')
-
-
-def _rows(t: pd.DataFrame) -> str:
+def _cards(t: pd.DataFrame, cur: str) -> str:
     if t.empty:
         return '<p class="sub">（尚無判斷）</p>'
-    mx = t["exp_ret"].abs().max()
     out = []
     for i, r in t.iterrows():
-        ev = float(r["exp_ret"])
-        yoy = "—" if pd.isna(r["rev_yoy"]) else f"{r['rev_yoy']*100:+.0f}%"
-        # foreign_5 是「每日」標準化值；×5 還原成 5 日累計相當於幾倍日均量，較直覺
-        fgn = "—" if pd.isna(r["foreign_5"]) else f"{r['foreign_5']*5:+.1f}×"
-        asym = str(r["asymmetry"] or "")
-        tag = "上檔大" if "正偏" in asym else ("下檔大" if "負偏" in asym else "")
+        ev, close = float(r["exp_ret"]), float(r["close"])
+        up, dn = float(r["up_magnitude"]), float(r["dn_magnitude"])
+        tp, sl = close * (1 + up), close * (1 + dn)          # 獲利點／停損點
+        dec = 2 if close < 100 else (1 if close < 1000 else 0)
+        conf = {"high": "高", "medium": "中", "low": "低"}.get(str(r["conviction"]), "低")
         why = html.escape(str(r["rationale"]).split(": ", 1)[-1])
         out.append(
-            f'<button class="row" aria-expanded="false" onclick="t(this)">'
-            f'<div class="top"><div class="rk">{i+1}</div>'
-            f'<div class="nm">{html.escape(str(r["名稱"]))}<span>{r["code"]}</span></div>'
-            f'{_bar(ev, mx, str(r["conviction"]))}'
-            f'<div><div class="ev {"p" if ev>=0 else "n"}">{ev*100:+.2f}%</div>'
-            f'<div class="asym">{tag}</div></div></div>'
-            f'<div class="det"><div class="g">'
-            f'<div><div class="k">P(漲)</div><div class="v">{r["prob_up"]*100:.0f}%</div></div>'
-            f'<div><div class="k">漲幅</div><div class="v">{r["up_magnitude"]*100:+.1f}%</div></div>'
-            f'<div><div class="k">跌幅</div><div class="v">{r["dn_magnitude"]*100:+.1f}%</div></div>'
-            f'<div><div class="k">賠率比</div><div class="v">{r["reward_risk"]:.2f}</div></div>'
-            f'<div><div class="k">RSI</div><div class="v">{r["rsi_14"]:.0f}</div></div>'
-            f'<div><div class="k">營收YoY</div><div class="v">{yoy}</div></div>'
-            f'<div><div class="k">外資5日買超</div><div class="v">{fgn}</div></div>'
-            f'<div><div class="k">信心</div><div class="v">{r["conviction"]}</div></div>'
-            f'</div><div class="why">{why}</div></div></button>')
+            f'<div class="card"><div class="hd"><span class="rk">{i+1}</span>'
+            f'<span class="nm">{html.escape(str(r["名稱"]))}</span>'
+            f'<span class="cd">{r["code"]}</span>'
+            f'<span class="ev {"p" if ev>=0 else "n"}">期望 {ev*100:+.2f}%</span></div>'
+            f'<div class="chips">'
+            f'<div class="c"><b>P漲</b><i>{r["prob_up"]*100:.0f}%</i></div>'
+            f'<div class="c u"><b>漲幅</b><i>{up*100:+.1f}%</i></div>'
+            f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
+            f'<div class="c"><b>賠率比</b><i>{r["reward_risk"]:.2f}</i></div>'
+            f'<div class="c"><b>收盤價</b><i>{cur}{close:,.{dec}f}</i></div>'
+            f'<div class="c u"><b>獲利點</b><i>{cur}{tp:,.{dec}f}</i></div>'
+            f'<div class="c d"><b>停損點</b><i>{cur}{sl:,.{dec}f}</i></div>'
+            f'<div class="c h"><b>信心</b><i>{conf}</i></div>'
+            f'</div><div class="why">{why}</div></div>')
     return "".join(out)
 
 
+def _acc_block(a: dict) -> str:
+    if a.get("status") != "ok":
+        n = a.get("pending", 0)
+        return ('<div class="acc"><div class="t">期望值加權準確率</div>'
+                f'<div class="v" style="color:var(--mut)">待結算</div>'
+                f'<div class="n">{n} 筆預測已鎖定但尚未到期。'
+                '首批 5 日預測於 2026-09-23 結算、20 日於 10-15。<br>'
+                '在那之前沒有分數可報 —— 事前鎖死、到期才對答案，是這套系統的重點。</div></div>')
+    wh = a.get("weighted_hit")
+    parts = []
+    for h, d in sorted(a.get("by_horizon", {}).items(), key=lambda x: int(x[0])):
+        parts.append(f"{h}日 {d['weighted_hit']*100:.0f}%（{d['n']} 筆）")
+    slope = a.get("calib_slope")
+    extra = f" · 幅度校準斜率 {slope}" if slope is not None else ""
+    return ('<div class="acc"><div class="t">期望值加權準確率</div>'
+            f'<div class="v">{wh*100:.1f}%</div>'
+            f'<div class="n">未加權命中率 {a["hit_rate"]*100:.1f}% · '
+            f'已結算 {a["settled"]} 筆{extra}<br>{" · ".join(parts)}</div></div>')
+
+
 def build() -> Path:
-    t20, t5 = ranking_mod.table(20), ranking_mod.table(5)
-    if t20.empty:
+    views = {}
+    for mk, cur in (("TW", "NT$"), ("US", "US$")):
+        for h in (20, 5):
+            t = ranking_mod.table(h, market=mk)
+            views[f"{mk}{h}"] = (t, cur)
+    if all(v[0].empty for v in views.values()):
         raise RuntimeError("尚無判斷可呈現")
-    as_of = t20["as_of"].iloc[0]
+
+    any_t = next(v[0] for v in views.values() if not v[0].empty)
+    as_of = any_t["as_of"].iloc[0]
     d = f"{as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
 
-    ctx = ""
-    rp = DATA / "reasoning.jsonl"
-    if rp.exists():
-        for line in rp.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                j = json.loads(line)
-                if j.get("as_of") == as_of and j.get("market_context"):
-                    ctx = j["market_context"]
-                    break
-    ctx = html.escape(ctx)
+    # 市場判讀直接讀判斷檔，不經 reasoning.jsonl ——
+    # 早期的推理記錄沒寫 market 欄位，會讓美股的判讀覆蓋台股。
+    ctx = {}
+    jd = Path(__file__).resolve().parent.parent / "judgments"
+    for f in sorted(jd.glob("*.json")):
+        try:
+            j = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if j.get("as_of") == as_of and j.get("market_context"):
+            ctx[j.get("market", "TW")] = j["market_context"]
+
+    body = ""
+    for key, (t, cur) in views.items():
+        mk = key[:2]
+        body += (f'<div class="view" id="v{key}" hidden>'
+                 f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
+                 f'{_cards(t, cur)}</div>')
 
     gen = dt.datetime.now(dt.UTC).astimezone(dt.timezone(dt.timedelta(hours=8)))
     doc = f"""<!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>當日預測 · {d}</title>
+<title>股市預測 · {d}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>{CSS}</style></head><body><div class="wrap">
-<h1>當日預測</h1>
-<p class="sub">{d} 收盤 · 市值前 50 大 · 期望值 = P(漲)×漲幅 + P(跌)×跌幅</p>
+<h1>股市預測</h1>
+<p class="sub">{d} 收盤 · 台股市值前 50 大 · 美股市值前 10 大＋ETF</p>
 
-<div class="read"><b>市場判讀</b><br>{ctx}</div>
+{_acc_block(acc_mod.summary())}
 
 <div class="tabs" role="tablist">
-<button role="tab" aria-selected="true" onclick="s(this,'h20')">20 個交易日</button>
-<button role="tab" aria-selected="false" onclick="s(this,'h5')">5 個交易日</button>
+<button role="tab" aria-selected="true" onclick="m(this,'TW')">台股</button>
+<button role="tab" aria-selected="false" onclick="m(this,'US')">美股</button>
+</div>
+<div class="tabs h" role="tablist">
+<button role="tab" aria-selected="true" onclick="z(this,20)">20 個交易日</button>
+<button role="tab" aria-selected="false" onclick="z(this,5)">5 個交易日</button>
 </div>
 
-<div class="list" id="h20">{_rows(t20)}</div>
-<div class="list" id="h5" hidden>{_rows(t5)}</div>
+{body}
 
 <div class="foot">
-<span class="dot" style="background:{DANGER}"></span>正期望值（預期上漲）　
-<span class="dot" style="background:{ACCENT}"></span>負期望值（預期下跌）<br>
-柱長 ∝ 期望值絕對值 · 深淺 = 信心度 · 點任一列展開四面向依據<br>
-營收YoY = 最新月營收較去年同月增減 · 外資5日買超 = 近5日累計相當於幾倍日均成交量<br>
+<span class="dot" style="background:#A83F17"></span>上漲　
+<span class="dot" style="background:#2A7574"></span>下跌　（台股慣例紅漲綠跌）<br>
+獲利點 = 收盤 ×(1+漲幅)　停損點 = 收盤 ×(1+跌幅)，直接由預測幅度推導<br>
+賠率比 = |漲幅 ÷ 跌幅|，偏離 1 代表報酬與風險不對稱<br>
+排序依期望值 = P(漲)×漲幅 + P(跌)×跌幅<br>
 產生於 {gen:%Y-%m-%d %H:%M} 台北 · 研究與紀律工具，不構成投資建議</div>
 </div>
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>
 <script>
-function t(e){{e.setAttribute('aria-expanded',e.getAttribute('aria-expanded')!=='true')}}
-function s(b,id){{
- document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
- ['h20','h5'].forEach(x=>document.getElementById(x).hidden=(x!==id));}}
+let MK='TW', HZ=20;
+function show(){{
+ document.querySelectorAll('.view').forEach(v=>v.hidden=true);
+ const el=document.getElementById('v'+MK+HZ); if(el) el.hidden=false;
+ window.scrollTo({{top:0,behavior:'instant'}});
+}}
+function m(b,v){{MK=v;document.querySelectorAll('.tabs:not(.h) button')
+ .forEach(x=>x.setAttribute('aria-selected',x===b));show();}}
+function z(b,v){{HZ=v;document.querySelectorAll('.tabs.h button')
+ .forEach(x=>x.setAttribute('aria-selected',x===b));show();}}
 function k(){{const r=document.documentElement;
  const c=r.getAttribute('data-t')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
  const n=c==='dark'?'light':'dark';r.setAttribute('data-t',n);
  try{{localStorage.setItem('t',n)}}catch(e){{}}}}
 try{{const v=localStorage.getItem('t');if(v)document.documentElement.setAttribute('data-t',v)}}catch(e){{}}
+show();
 </script></body></html>"""
     DOCS.mkdir(parents=True, exist_ok=True)
     out = DOCS / "index.html"

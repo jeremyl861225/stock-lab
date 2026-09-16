@@ -84,6 +84,13 @@ def news_titles(as_of: str) -> dict[str, list[str]]:
     return out
 
 
+def us_fundamentals() -> pd.DataFrame:
+    """美股基本面（yfinance）。營收成長是季報年增，與台股的月營收年增語意不同，
+    欄位共用但 rev_month 標為「季報」以免誤讀。"""
+    f = RAW / "us/fundamentals.parquet"
+    return pd.read_parquet(f) if f.exists() else pd.DataFrame()
+
+
 def build_briefing(as_of: str | None = None) -> pd.DataFrame:
     pnl = pd.read_parquet(DATA / "features/panel.parquet")
     as_of_ts = pd.Timestamp(as_of) if as_of else pnl["date"].max()
@@ -93,15 +100,33 @@ def build_briefing(as_of: str | None = None) -> pd.DataFrame:
     inds = {c["code"]: c["industry"] for c in uni["constituents"]}
     wts = {c["code"]: c["weight"] for c in uni["constituents"]}
 
+    # 美股 universe 併入名稱／產業對照
+    try:
+        from collect import us as us_mod
+        uus = us_mod.load()
+        names.update({c["code"]: c["name"] for c in uus["constituents"]})
+        inds.update({c["code"]: c.get("industry", "") for c in uus["constituents"]})
+        wts.update({c["code"]: c.get("weight", 0) for c in uus["constituents"]})
+    except Exception:  # noqa: BLE001
+        pass
+
     f = build(pnl, as_of_ts)
     f = f[f["code"].isin(names)].copy()
+
     fund = fundamentals(as_of_str)
-    if not fund.empty:
-        f = f.merge(fund, on="code", how="left")
+    usf = us_fundamentals()
+    cols = ["code", "PER", "PBR", "dividend_yield", "rev_month", "rev_yoy", "rev_yoy3m", "rev_mom"]
+    parts = [d for d in (fund, usf) if not d.empty]
+    if parts:
+        allf = pd.concat([d.reindex(columns=cols) for d in parts], ignore_index=True)
+        f = f.merge(allf.drop_duplicates("code"), on="code", how="left")
+
     f["名稱"] = f["code"].map(names)
     f["產業"] = f["code"].map(inds)
     f["權重"] = f["code"].map(wts)
-    return f.sort_values("權重", ascending=False).reset_index(drop=True)
+    if "market" not in f.columns:
+        f["market"] = "TW"
+    return f.sort_values(["market", "權重"], ascending=[True, False]).reset_index(drop=True)
 
 
 if __name__ == "__main__":

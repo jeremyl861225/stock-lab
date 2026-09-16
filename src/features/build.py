@@ -57,17 +57,24 @@ def _compute(df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["margin_chg_5"] = df["margin_chg_20"] = df["short_ratio"] = np.nan
 
-    # 市場（universe 等權）報酬 —— 同樣只由截斷後的資料算出
-    mkt = df.groupby("date")["ret_1"].mean().rename("mkt_ret_1")
-    mkt_df = mkt.to_frame()
-    mkt_df["mkt_ret_5"] = mkt_df["mkt_ret_1"].rolling(5).sum()
-    mkt_df["mkt_ret_20"] = mkt_df["mkt_ret_1"].rolling(20).sum()
-    df = df.merge(mkt_df[["mkt_ret_5", "mkt_ret_20"]], left_on="date", right_index=True, how="left")
+    # 市場（universe 等權）報酬 —— 必須分市場計算。
+    # 台股與美股交易日曆不同，混在一起算會把兩地漲跌互相污染，
+    # 例如台股休市日只剩美股的報酬，卻被當成「大盤」餵給台股標的。
+    key = ["market", "date"] if "market" in df.columns else ["date"]
+    mkt = df.groupby(key)["ret_1"].mean().rename("mkt_ret_1").to_frame()
+    if "market" in df.columns:
+        mkt["mkt_ret_5"] = mkt.groupby(level=0)["mkt_ret_1"].transform(lambda s: s.rolling(5).sum())
+        mkt["mkt_ret_20"] = mkt.groupby(level=0)["mkt_ret_1"].transform(lambda s: s.rolling(20).sum())
+    else:
+        mkt["mkt_ret_5"] = mkt["mkt_ret_1"].rolling(5).sum()
+        mkt["mkt_ret_20"] = mkt["mkt_ret_1"].rolling(20).sum()
+    df = df.merge(mkt[["mkt_ret_5", "mkt_ret_20"]].reset_index(), on=key, how="left")
 
-    # 橫斷面相對強度：同日跨股排名，仍只用當日資料
-    df["xs_ret_20"] = df.groupby("date")["ret_20"].rank(pct=True)
+    # 橫斷面相對強度：同日、同市場內排名（跨市場比較沒有意義）
+    df["xs_ret_20"] = df.groupby(key)["ret_20"].rank(pct=True)
     df["as_of"] = df["date"]
-    out = df[["as_of", "code", "close"] + FEATURE_COLS].copy()
+    keep = ["as_of", "code", "close"] + (["market"] if "market" in df.columns else [])
+    out = df[keep + FEATURE_COLS].copy()
     # 除以零會產生 inf（例如融資餘額由 0 起算的 pct_change、或零成交量日）。
     # sklearn 會直接拋錯，而 inf 混進訓練集比缺值更危險 —— 一律轉成缺值，
     # 交給 imputer 以中位數填補。
