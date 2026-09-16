@@ -20,6 +20,10 @@ def table(horizon: int = 20, market: str | None = None) -> pd.DataFrame:
     if p.empty:
         return p
     p = p.sort_values("created_at_utc").drop_duplicates("code", keep="last")
+    # 只取最新一個 as_of 的判斷。不篩的話，某天沒做判斷而 briefing 照常重建時，
+    # 會靜默把昨天的幅度配上今天的收盤，算出錯的獲利點與停損點，且不會有任何訊號。
+    if not p.empty:
+        p = p[p["as_of"] == p["as_of"].max()]
     b = pd.read_parquet(DATA / "briefing.parquet")
     cols = ["code", "名稱", "產業", "PER", "dividend_yield", "rev_yoy", "rsi_14",
             "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close",

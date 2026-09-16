@@ -155,7 +155,7 @@ color:var(--mut);font-size:12.5px}
 本頁為研究與紀律工具，不構成投資建議。</footer>
 </div></body></html>"""
     DOCS.mkdir(parents=True, exist_ok=True)
-    out = DOCS / "index.html"
+    out = DOCS / "report.html"   # 不可寫 index.html —— 那是 PWA 主頁，由 panel.py 產生
     out.write_text(doc, encoding="utf-8")
     return out
 

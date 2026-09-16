@@ -72,6 +72,11 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
     as_of_ts = pd.Timestamp(as_of) if as_of else pnl["date"].max()
     as_of_str = as_of_ts.strftime("%Y%m%d")
     feats = build_feats(pnl, as_of_ts)
+    # 每個市場的最新交易日不同（台股 13:30 收盤、美股 21:30 才開盤），
+    # build() 已逐市場算好各自的 as_of。若在此用全域 max 覆蓋，
+    # 美股會被標上台股的日期 → settle 永遠找不到對應交易日 → 永久失聯。
+    # 實測：settled 50、missing 53。台股休市日則反向失聯。
+    feats["as_of_str"] = pd.to_datetime(feats["as_of"]).dt.strftime("%Y%m%d")
     if feats.empty:
         raise RuntimeError(f"{as_of_str} 無特徵可用")
     feats = feats[feats["code"].isin(codes)].reset_index(drop=True)
@@ -80,6 +85,7 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
     run_id = dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%SZ")
     created = dt.datetime.now(dt.UTC).isoformat()
     hashes = {r["code"]: feature_hash(r) for _, r in feats.iterrows()}
+    code_as_of = dict(zip(feats["code"], feats["as_of_str"]))
     summary = {}
 
     for h in horizons:
@@ -105,13 +111,14 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
             recs = []
             for _, r in out.iterrows():
                 code = str(r["code"])
-                pid = _pid(as_of_str, h, name, code, ver)
+                a_of = code_as_of.get(code, as_of_str)   # 逐檔用自己市場的交易日
+                pid = _pid(a_of, h, name, code, ver)
                 if pid in seen:
                     continue
                 seen.add(pid)
                 recs.append({
                     "pid": pid, "run_id": run_id, "created_at_utc": created,
-                    "as_of": as_of_str, "code": code, "horizon": h,
+                    "as_of": a_of, "code": code, "horizon": h,
                     "model": name, "model_family": family, "model_version": ver,
                     "prob_up": round(float(r["prob_up"]), 6),
                     "exp_ret": round(float(r.get("exp_ret", 0.0)), 6),

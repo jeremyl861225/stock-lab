@@ -59,6 +59,11 @@ color:inherit;cursor:pointer;text-align:left;border-bottom:1px solid var(--line)
 .list .row:last-child{border-bottom:none}
 .row[aria-expanded="true"]{background:color-mix(in srgb,var(--ink) 4%,transparent)}
 .top{display:flex;align-items:center;gap:6px;padding:9px 11px}
+.pin{border:none;background:none;padding:0 1px;font-size:12px;line-height:1;
+color:var(--line);cursor:pointer;flex-shrink:0;transition:color .14s var(--e)}
+.row.pinned .pin{color:var(--hot)}
+.row.pinned{background:color-mix(in srgb,var(--hot) 7%,transparent);
+box-shadow:inset 3px 0 0 var(--hot)}
 .rk{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:16px;
 text-align:right}
 .nm{font-size:16px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
@@ -164,8 +169,12 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None) -> str:
         wt = float(r["權重"]) if "權重" in t.columns and pd.notna(r["權重"]) else float("nan")
         wtxt = "" if pd.isna(wt) else f'<span class="wp">{wt*100:.1f}%</span>'
         out.append(
-            f'<button class="row" aria-expanded="false" onclick="t(this)">'
-            f'<div class="top"><span class="rk">{i+1}</span>'
+            f'<div class="row" data-code="{r["code"]}" role="button" tabindex="0" '
+            f'aria-expanded="false" onclick="t(this)" onkeydown="kd(event,this)">'
+            f'<div class="top">'
+            f'<button class="pin" aria-label="釘選 {html.escape(str(r["名稱"]))}" '
+            f'onclick="pin(event,this)">✦</button>'
+            f'<span class="rk">{i+1}</span>'
             f'<span class="nm">{html.escape(str(r["名稱"]))}</span>'
             f'<span class="cd">{r["code"]}</span>'
             f'{_wt(wt, mxw)}{wtxt}'
@@ -180,7 +189,7 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None) -> str:
             f'<div class="c u"><b>獲利點</b><i>{cur}{tp:,.{dec}f}</i></div>'
             f'<div class="c d"><b>停損點</b><i>{cur}{sl:,.{dec}f}</i></div>'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
-            f'</div><div class="why">{why}</div></div></button>')
+            f'</div><div class="why">{why}</div></div></div>')
     return "".join(out)
 
 
@@ -235,7 +244,7 @@ def build() -> Path:
         mk = key[:2]
         body += (f'<div class="view" id="v{key}" hidden>'
                  f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
-                 f'<p class="hint">點任一列展開詳細數字　·　細條＝市值權重　·　橫桿＝期望值</p>'
+                 f'<p class="hint">點任一列展開詳細數字　·　點 ✦ 釘選置頂　·　細條＝市值權重　·　橫桿＝期望值</p>'
                  f'<div class="list">{_cards(t, cur, hist)}</div></div>')
 
     gen = dt.datetime.now(dt.UTC).astimezone(dt.timezone(dt.timedelta(hours=8)))
@@ -263,6 +272,7 @@ def build() -> Path:
 
 {_acc_block(acc_mod.summary())}
 
+<p class="hint" id="pintip" style="margin:0 0 8px"></p>
 <div class="tabs" role="tablist">
 <button role="tab" aria-selected="true" onclick="m(this,'TW')">台股</button>
 <button role="tab" aria-selected="false" onclick="m(this,'US')">美股</button>
@@ -289,6 +299,29 @@ def build() -> Path:
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>
 <script>
 function t(e){{e.setAttribute('aria-expanded',e.getAttribute('aria-expanded')!=='true')}}
+function kd(e,el){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();t(el);}}}}
+
+/* 釘選：存在瀏覽器本機，只屬於這台裝置的這個瀏覽器，不會外傳。
+   釘選的標的置頂，內部仍依期望值排序（用 reverse+prepend 保持相對次序）。 */
+let PINS = new Set();
+try{{ PINS = new Set(JSON.parse(localStorage.getItem('pins')||'[]')); }}catch(e){{}}
+function savePins(){{ try{{ localStorage.setItem('pins', JSON.stringify([...PINS])); }}catch(e){{}} }}
+function pin(ev, btn){{
+ ev.stopPropagation();                       // 不要連帶展開整列
+ const row = btn.closest('.row'), code = row.dataset.code;
+ PINS.has(code) ? PINS.delete(code) : PINS.add(code);
+ savePins(); applyPins();
+}}
+function applyPins(){{
+ document.querySelectorAll('.list').forEach(list=>{{
+   const rows=[...list.querySelectorAll('.row')];
+   rows.forEach(r=>r.classList.toggle('pinned', PINS.has(r.dataset.code)));
+   // 由後往前 prepend，釘選群組內部維持原本的期望值排序
+   rows.filter(r=>PINS.has(r.dataset.code)).reverse().forEach(r=>list.prepend(r));
+ }});
+ const n=PINS.size, tip=document.getElementById('pintip');
+ if(tip) tip.textContent = n ? `已釘選 ${{n}} 檔，置於各分頁最上方` : '';
+}}
 let MK='TW', HZ=20;
 function show(){{
  document.querySelectorAll('.view').forEach(v=>v.hidden=true);
@@ -304,6 +337,7 @@ function k(){{const r=document.documentElement;
  const n=c==='dark'?'light':'dark';r.setAttribute('data-t',n);
  try{{localStorage.setItem('t',n)}}catch(e){{}}}}
 try{{const v=localStorage.getItem('t');if(v)document.documentElement.setAttribute('data-t',v)}}catch(e){{}}
+applyPins();
 show();
 if('serviceWorker' in navigator)
  navigator.serviceWorker.register('sw.js',{{scope:'./'}}).catch(()=>{{}});

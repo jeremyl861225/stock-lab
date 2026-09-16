@@ -34,10 +34,15 @@ def prepare() -> None:
     run("collect/finmind.py", allow_fail=True)       # 台股價量／法人／融資／除權息／估值／營收
     run("collect/us.py", allow_fail=True)            # 美股價量／基本面
     run("features/panel.py")                          # 含除權息還原
+    run("collect/news_daily.py", allow_fail=True)     # 新聞面（未納入時明天會是空的）
     run("briefing.py")                                # 四面向簡報
     run("predict.py")                                 # 基準線＋統計模型（LLM 無 key 則跳過）
     run("settle.py")                                  # 結算到期預測
-    subprocess.run([PY, "-m", "pytest", "tests/", "-q"], cwd=ROOT)
+    # 測試失敗必須擋下來 —— 那些測試在擋未來函數、除權息還原不完整、
+    # universe 空檔、跨市場 as_of 錯置，每一項都會讓當天的判斷建立在壞資料上。
+    if subprocess.run([PY, "-m", "pytest", "tests/", "-q"], cwd=ROOT).returncode != 0:
+        print("\n！測試未通過，停止流程。先查清楚再做判斷。")
+        sys.exit(1)
     print("\n═══ 準備完成 ═══")
     print(f"   資料最新交易日：{_as_of()}")
     print(f"   判斷檔請命名為 judgments/build_{_as_of()}.py（台股）")
@@ -61,8 +66,19 @@ def _as_of() -> str:
 def finalize(push: bool = True) -> None:
     print("═══ 收尾階段 ═══")
     as_of = _as_of()
-    js = sorted((ROOT / "judgments").glob(f"{as_of}*.json"))
-    print(f"   資料最新交易日 {as_of}，找到 {len(js)} 份判斷檔")
+    # 同一個 as_of 可能有多個版本（v1／v2／v3）。字典序會讓舊版先進，
+    # 而 pid 相同時後進的會被丟棄 —— 實測 v2 台股 50 檔全數被靜默丟掉。
+    # 改為依 (horizon, 市場) 分組，各取 mtime 最新的一份。
+    allj = list((ROOT / "judgments").glob(f"{as_of}*.json"))
+    groups: dict[tuple, Path] = {}
+    for f in allj:
+        key = ("us" if "_us" in f.name else "tw", "h5" if f.name.endswith("h5.json") else "h20")
+        if key not in groups or f.stat().st_mtime > groups[key].stat().st_mtime:
+            groups[key] = f
+    js = sorted(groups.values())
+    print(f"   資料最新交易日 {as_of}，{len(allj)} 份判斷檔中取最新的 {len(js)} 份：")
+    for f in js:
+        print(f"     {f.name}")
     if not js:
         print(f"！找不到 judgments/{as_of}*.json —— 判斷尚未產生，中止")
         sys.exit(1)
@@ -74,11 +90,21 @@ def finalize(push: bool = True) -> None:
         print("！測試未通過，不提交")
         sys.exit(1)
     if push:
-        subprocess.run(["git", "add", "-A"], cwd=ROOT)
+        # 用白名單而非 -A：同一個 repo 可能有其他 session 正在改原始碼，
+        # git add -A 會把進行中的改動一起掃進「每日預測」這個 commit。
+        paths = ["data/predictions.jsonl", "data/settlements.jsonl",
+                 "data/reasoning.jsonl", "data/revisions.jsonl",
+                 "docs/", "judgments/", "config/universe_latest.json",
+                 "config/universe/", "config/universe_us/",
+                 "config/universe_us_latest.json", "LESSONS.md"]
+        subprocess.run(["git", "add", *paths], cwd=ROOT)
         msg = f"每日預測 {as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
         subprocess.run(["git", "commit", "-q", "-m", msg], cwd=ROOT)
-        subprocess.run(["git", "push", "origin", "main"], cwd=ROOT)
-        print(f"\n已提交並推送：{msg}")
+        # GitHub Actions 每天也會 push，不先同步必然 non-fast-forward 被拒
+        subprocess.run(["git", "fetch", "origin", "-q"], cwd=ROOT)
+        subprocess.run(["git", "rebase", "origin/main"], cwd=ROOT)
+        rc = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT).returncode
+        print(f"\n{'已提交並推送' if rc == 0 else '！push 失敗（returncode %d），本機已 commit' % rc}：{msg}")
     print("面板：https://jeremyl861225.github.io/stock-lab/")
 
 

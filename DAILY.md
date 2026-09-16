@@ -20,6 +20,30 @@ cd "/Users/jeremy/Desktop/Claude code/stock-lab" && ./.venv/bin/python src/daily
 **測試若失敗必須停下來查清楚，不要繼續。** 那些測試在擋的是未來函數、
 除權息還原不完整、預測記錄重複 —— 每一項都會讓成績單失真。
 
+## 一點五、回顧（新增，**不可跳過**）
+
+每天都是全新 session，沒有昨天的記憶。所以「學習」不會自動發生 ——
+它只存在於下面這幾個檔案裡。做判斷之前必須先讀：
+
+1. **`LESSONS.md`** —— 三輪獨立審核實際查出的錯誤型態清冊。
+   每一條都真的發生過，而且多數不會拋錯，只會讓判斷安靜地建立在錯的前提上。
+   判斷寫完後，再拿這份清冊逐項自檢一次。
+
+2. **成績單**：`./.venv/bin/python src/accuracy.py`
+   有結算資料時，看期望值加權準確率與幅度校準斜率（斜率遠小於 1 代表幅度灌水）。
+   還沒有結算時它會顯示 pending，那是正常的。
+
+3. **上一次的判斷與它的下場**（有結算時）：
+   讀 `data/settlements.jsonl` 最近的幾十筆，找**錯得最離譜的幾檔**，
+   回頭看 `data/reasoning.jsonl` 裡當時寫的理由與否證條件 ——
+   是事實錯了、推論錯了、還是推論對但市場不理會？
+   這三種錯誤的處置完全不同，分不清楚就不會進步。
+
+4. **`data/revisions.jsonl` 的最後幾筆** —— 最近一次審核發現了什麼、哪些還沒修。
+
+**若這次回顧發現了新的錯誤型態，追加到 `LESSONS.md` 對應分類，註明日期與案例。**
+那份檔案是這個系統唯一會累積的東西。
+
 ## 二、判斷（你做，這是唯一無法自動化的部分）
 
 讀 `data/briefing.parquet`（103 檔 × 四面向）：
@@ -45,6 +69,17 @@ cd "/Users/jeremy/Desktop/Claude code/stock-lab" && ./.venv/bin/python src/daily
 `judgments/build_<as_of>.py`（台股）與 `judgments/build_us_<as_of>.py`（美股），
 每檔給 `(code, p_up, skew, conviction, why)`：
 
+**寫完判斷檔後，要先執行它產生 JSON**（`finalize` 找的是 `.json`，`.py` 不會自己變成 `.json`）：
+
+```bash
+cd "/Users/jeremy/Desktop/Claude code/stock-lab"
+./.venv/bin/python judgments/build_<as_of>.py
+./.venv/bin/python judgments/build_us_<as_of>.py
+```
+
+腳本內的 `as_of` 字串與輸出檔名都硬編碼在檔案裡，複製範本後要一起改；
+且必須在 repo 根目錄執行（腳本用相對路徑）。
+
 > **`<as_of>` 是「資料的最新交易日」，不是執行日。**
 > 早上 7:30 跑的時候 as_of 是前一個交易日（週一還要回到上週五）。
 > `prepare` 結束時會直接印出該用哪個日期，照著印出來的命名即可。
@@ -59,7 +94,7 @@ cd "/Users/jeremy/Desktop/Claude code/stock-lab" && ./.venv/bin/python src/daily
 
 5 日的機率由程式自動推導（`(p₅−0.5) = (p₂₀−0.5) × √(5/20)`），不要另外給。
 
-**自我檢查**（寫完判斷後必做）：
+**自我檢查**（寫完判斷後必做，逐項對照 `LESSONS.md`）：
 - 機率與基本面的相關性方向對嗎？曾經整組金融股的 p 只由 RSI 決定，
   與自己主張的基本面論點相關 −0.234 且方向相反 —— 部位沒有實作論點。
 - 有沒有引用「最高／最低／唯一」卻沒驗證的說法？

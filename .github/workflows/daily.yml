@@ -53,8 +53,8 @@ jobs:
       - name: 產生期望值排序
         run: python src/ranking.py
 
-      - name: 產生報表
-        run: python src/report.py
+      - name: 產生面板（PWA 主頁）
+        run: python src/panel.py
 
       - name: 提交（git 歷史＝不可竄改的稽核軌跡）
         run: |
@@ -62,6 +62,7 @@ jobs:
           git config user.email "bot@users.noreply.github.com"
           git add data/predictions.jsonl data/settlements.jsonl data/reasoning.jsonl \
                   data/revisions.jsonl docs/ config/universe_latest.json \
-                  config/universe/ config/universe_us_latest.json judgments/ || true
+                  config/universe/ config/universe_us/ config/universe_us_latest.json \
+                  judgments/ || true
           git diff --staged --quiet || git commit -m "daily: $(date -u +%Y-%m-%d)"
           git push

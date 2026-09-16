@@ -27,6 +27,19 @@ DATASETS = {
 }
 
 
+def _last_expected(end: str) -> str:
+    """end 之前最近的一個工作日。用來判斷快取是否已經是最新。
+
+    週末與國定假日沒有新資料，若拿日曆今天去比對，快取永遠不會命中。
+    國定假日無法從這裡判斷，所以再往前放寬一天作為緩衝 ——
+    寧可偶爾多抓一次，也不要每天固定撞上額度上限。
+    """
+    d = dt.date.fromisoformat(end)
+    while d.weekday() >= 5:
+        d -= dt.timedelta(days=1)
+    return (d - dt.timedelta(days=1)).isoformat()
+
+
 def fetch(kind: str, code: str, start: str, end: str, refresh: bool = False) -> list[dict]:
     """kind: price|inst|margin。start/end: YYYY-MM-DD。落盤快取。"""
     d = RAW / "finmind" / kind
@@ -34,7 +47,12 @@ def fetch(kind: str, code: str, start: str, end: str, refresh: bool = False) -> 
     f = d / f"{code}.json"
     if f.exists() and not refresh:
         c = json.loads(f.read_text(encoding="utf-8"))
-        if c.get("start") <= start and c.get("end") >= end:
+        # 用「快取是否已涵蓋最後一筆資料日」判斷，而不是比對日曆今天。
+        # 比對今天的話，end 每天 +1 天 → 隔天全部 miss → 每天固定 300 次請求，
+        # 正好撞上 FinMind 免費版的每小時上限。
+        rows = c.get("payload") or []
+        last = max((r.get("date", "") for r in rows), default="")
+        if c.get("start", "9999") <= start and last and last >= _last_expected(end):
             return c["payload"]
 
     params = {"dataset": DATASETS[kind], "data_id": code,
