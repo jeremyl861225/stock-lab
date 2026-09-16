@@ -17,12 +17,21 @@ from config import RAW, CONFIG
 
 # 使用者指定的 ETF ＋ 自行以市值排序取得的前十大個股
 ETFS = ["BTCO", "QQQ", "VOO"]
-CANDIDATES = ["NVDA", "AAPL", "GOOGL", "MSFT", "AMZN", "AVGO", "META", "TSLA", "TSM",
-              "BRK-B", "LLY", "JPM", "WMT", "V", "ORCL", "NFLX", "XOM", "MA", "COST",
-              "JNJ", "PLTR", "AMD", "HD", "PG", "ABBV", "BAC", "CRM", "CVX"]
+# 取市值前 50 需要足夠寬的候選池；以 S&P500 大型股為母體，
+# 實際排名仍由 yfinance 的即時市值決定，不依賴二手清單。
+CANDIDATES = [
+    "NVDA","AAPL","MSFT","GOOGL","AMZN","META","AVGO","TSLA","BRK-B","LLY",
+    "TSM","WMT","JPM","V","ORCL","MA","XOM","COST","UNH","NFLX",
+    "PG","JNJ","HD","ABBV","BAC","CRM","KO","CVX","AMD","PM",
+    "TMUS","CSCO","WFC","MCD","ABT","IBM","GE","LIN","CAT","MRK",
+    "NOW","PEP","ISRG","AXP","MS","GS","VZ","DIS","RTX","INTU",
+    "T","AMGN","TXN","BKNG","QCOM","SPGI","PLTR","BLK","SCHW","C",
+    "LOW","ADBE","HON","NEE","UBER","ETN","PGR","TJX","BSX","SYK",
+    "LMT","MU","ADP","VRTX","PANW","MDT","GILD","ANET","KKR","DE",
+]
 
 
-def build_universe(top_n: int = 10) -> dict:
+def build_universe(top_n: int = 50) -> dict:
     """自行抓市值排序，不依賴二手清單 —— 與台股 universe 同一套邏輯。"""
     import yfinance as yf
     rows = []
@@ -121,7 +130,7 @@ def fetch_fundamentals(codes: list[str]) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    uni = build_universe()
+    uni = build_universe(50)
     codes = [c["code"] for c in uni["constituents"]]
     print(f"美股 universe：{len(codes)} 檔 → {', '.join(codes)}")
     px = fetch_prices(codes)

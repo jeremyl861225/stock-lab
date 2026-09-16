@@ -50,14 +50,27 @@ transition:background .14s var(--e),color .14s var(--e)}
 .read{background:var(--card);border-radius:var(--r);padding:13px 15px;margin:0 0 12px;
 font-size:11.5px;line-height:1.65;box-shadow:0 1px 2px rgba(19,62,80,.07)}
 .read b{font-weight:700}
-.card{background:var(--card);border-radius:var(--r);padding:11px 12px 9px;margin:0 0 7px;
+.list{background:var(--card);border-radius:var(--r);overflow:hidden;
 box-shadow:0 1px 2px rgba(19,62,80,.07)}
-.hd{display:flex;align-items:baseline;gap:7px;margin:0 0 8px}
-.rk{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:15px}
-.nm{font-size:17px;font-weight:800;letter-spacing:-.02em}
-.cd{font-size:12px;font-weight:600;color:var(--mut);letter-spacing:.02em}
-.ev{margin-left:auto;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.row{display:block;width:100%;border:none;background:none;padding:0;font:inherit;
+color:inherit;cursor:pointer;text-align:left;border-bottom:1px solid var(--line)}
+.list .row:last-child{border-bottom:none}
+.row[aria-expanded="true"]{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.top{display:flex;align-items:center;gap:6px;padding:9px 11px}
+.rk{font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:16px;
+text-align:right}
+.nm{font-size:16px;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.cd{font-size:11.5px;font-weight:600;color:var(--mut);letter-spacing:.02em}
+.wt{display:inline-block;width:26px;height:4px;border-radius:2px;background:var(--line);
+overflow:hidden;flex-shrink:0}
+.wt>span{display:block;height:100%;background:var(--mut);border-radius:2px}
+.wp{font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:26px}
+.bar{margin-left:auto;flex-shrink:0}
+.ev{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
+min-width:52px;text-align:right}
 .ev.p{color:var(--up)}.ev.n{color:var(--dn)}
+.det{display:none;padding:0 11px 11px}
+.row[aria-expanded="true"] .det{display:block}
 .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .c{background:var(--neu);border-radius:9px;padding:5px 6px;text-align:center}
 .c b{display:block;font-size:8.5px;font-weight:600;color:var(--mut);letter-spacing:.02em}
@@ -67,6 +80,7 @@ font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .c.d{background:var(--dnbg)}.c.d i{color:var(--dn)}
 .c.h i{color:var(--hot)}
 .why{font-size:10.5px;color:var(--mut);line-height:1.55;margin-top:7px}
+.hint{font-size:10px;color:var(--faint);margin:0 0 6px;padding-left:2px}
 .foot{margin-top:20px;font-size:9.5px;color:var(--faint);letter-spacing:.04em;line-height:1.8}
 .dot{display:inline-block;width:7px;height:7px;border-radius:2px;vertical-align:-1px;margin-right:3px}
 #pull{position:fixed;top:0;left:0;right:0;height:56px;display:flex;
@@ -78,6 +92,9 @@ pointer-events:none}
 border-top-color:var(--ink);border-radius:50%}
 #pull.go .ico{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:no-preference){
+.bx{transform-origin:var(--o) center;animation:g .5s var(--e) both}
+@keyframes g{from{transform:scaleX(0)}to{transform:scaleX(1)}}}
 body{overscroll-behavior-y:none}
 .tog{position:fixed;right:13px;bottom:13px;width:37px;height:37px;border-radius:50%;
 border:none;background:var(--card);color:var(--mut);font-size:15px;cursor:pointer;
@@ -85,23 +102,55 @@ box-shadow:0 2px 8px rgba(19,62,80,.12)}
 """
 
 
+def _bar(ev: float, mx: float, conf: str) -> str:
+    """G10 Diverging Bar 的編碼：零軸居中、正負分向、長度 ∝ |期望值|。
+    深淺編碼信心度，顏色編碼方向（紅漲綠跌）。"""
+    W, H, C = 74, 15, 37
+    w = min(abs(ev) / mx * 34, 34) if mx > 0 else 0
+    op = {"high": 1.0, "medium": .74, "low": .5}.get(conf, .5)
+    col = "var(--up)" if ev >= 0 else "var(--dn)"
+    x = C if ev >= 0 else C - w
+    o = "left" if ev >= 0 else "right"
+    return (f'<svg class="bar" width="{W}" height="{H}" viewBox="0 0 {W} {H}" aria-hidden="true">'
+            f'<line x1="{C}" y1="2" x2="{C}" y2="{H-2}" stroke="var(--line)" stroke-width="1"/>'
+            f'<rect class="bx" style="--o:{o}" x="{x}" y="4" width="{max(w,.8):.1f}" '
+            f'height="{H-8}" rx="3" fill="{col}" opacity="{op}"/></svg>')
+
+
+def _wt(w: float, mxw: float) -> str:
+    """權重條：這檔在該市場市值中的佔比。
+    台積電一檔就佔台股 universe 的一半，這件事比任何預測都值得先看到。"""
+    if pd.isna(w) or mxw <= 0:
+        return ""
+    pct = min(w / mxw * 100, 100)
+    return (f'<span class="wt" title="市值權重 {w*100:.2f}%">'
+            f'<span style="width:{pct:.1f}%"></span></span>')
+
+
 def _cards(t: pd.DataFrame, cur: str) -> str:
     if t.empty:
         return '<p class="sub">（尚無判斷）</p>'
+    mx = t["exp_ret"].abs().max()
+    mxw = t["權重"].max() if "權重" in t.columns else 0
     out = []
     for i, r in t.iterrows():
         ev, close = float(r["exp_ret"]), float(r["close"])
         up, dn = float(r["up_magnitude"]), float(r["dn_magnitude"])
-        tp, sl = close * (1 + up), close * (1 + dn)          # 獲利點／停損點
+        tp, sl = close * (1 + up), close * (1 + dn)
         dec = 2 if close < 100 else (1 if close < 1000 else 0)
         conf = {"high": "高", "medium": "中", "low": "低"}.get(str(r["conviction"]), "低")
         why = html.escape(str(r["rationale"]).split(": ", 1)[-1])
+        wt = float(r["權重"]) if "權重" in t.columns and pd.notna(r["權重"]) else float("nan")
+        wtxt = "" if pd.isna(wt) else f'<span class="wp">{wt*100:.1f}%</span>'
         out.append(
-            f'<div class="card"><div class="hd"><span class="rk">{i+1}</span>'
+            f'<button class="row" aria-expanded="false" onclick="t(this)">'
+            f'<div class="top"><span class="rk">{i+1}</span>'
             f'<span class="nm">{html.escape(str(r["名稱"]))}</span>'
             f'<span class="cd">{r["code"]}</span>'
-            f'<span class="ev {"p" if ev>=0 else "n"}">期望 {ev*100:+.2f}%</span></div>'
-            f'<div class="chips">'
+            f'{_wt(wt, mxw)}{wtxt}'
+            f'{_bar(ev, mx, str(r["conviction"]))}'
+            f'<span class="ev {"p" if ev>=0 else "n"}">{ev*100:+.2f}%</span></div>'
+            f'<div class="det"><div class="chips">'
             f'<div class="c"><b>P漲</b><i>{r["prob_up"]*100:.0f}%</i></div>'
             f'<div class="c u"><b>漲幅</b><i>{up*100:+.1f}%</i></div>'
             f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
@@ -110,7 +159,7 @@ def _cards(t: pd.DataFrame, cur: str) -> str:
             f'<div class="c u"><b>獲利點</b><i>{cur}{tp:,.{dec}f}</i></div>'
             f'<div class="c d"><b>停損點</b><i>{cur}{sl:,.{dec}f}</i></div>'
             f'<div class="c h"><b>信心</b><i>{conf}</i></div>'
-            f'</div><div class="why">{why}</div></div>')
+            f'</div><div class="why">{why}</div></div></button>')
     return "".join(out)
 
 
@@ -164,7 +213,8 @@ def build() -> Path:
         mk = key[:2]
         body += (f'<div class="view" id="v{key}" hidden>'
                  f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
-                 f'{_cards(t, cur)}</div>')
+                 f'<p class="hint">點任一列展開詳細數字　·　細條＝市值權重　·　橫桿＝期望值</p>'
+                 f'<div class="list">{_cards(t, cur)}</div></div>')
 
     gen = dt.datetime.now(dt.UTC).astimezone(dt.timezone(dt.timedelta(hours=8)))
     doc = f"""<!doctype html>
@@ -212,6 +262,7 @@ def build() -> Path:
 </div>
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>
 <script>
+function t(e){{e.setAttribute('aria-expanded',e.getAttribute('aria-expanded')!=='true')}}
 let MK='TW', HZ=20;
 function show(){{
  document.querySelectorAll('.view').forEach(v=>v.hidden=true);

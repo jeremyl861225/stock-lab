@@ -22,7 +22,8 @@ def table(horizon: int = 20, market: str | None = None) -> pd.DataFrame:
     p = p.sort_values("created_at_utc").drop_duplicates("code", keep="last")
     b = pd.read_parquet(DATA / "briefing.parquet")
     cols = ["code", "名稱", "產業", "PER", "dividend_yield", "rev_yoy", "rsi_14",
-            "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close", "market"]
+            "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close",
+            "market", "權重"]
     m = p.merge(b[[c for c in cols if c in b.columns]], on="code", how="left",
                 suffixes=("", "_b"))
     if market:
