@@ -240,8 +240,11 @@ def build(codes: set[str] | None = None) -> pd.DataFrame:
 
 if __name__ == "__main__":
     from collect import universe
-    uni = universe.load()
-    codes = {c["code"] for c in uni["constituents"]}
+    # 用「曾入選過」的全集，而非今天的成分股 ——
+    # 後者會把 16 檔後來掉出前 50 的股票整批排除，那正是生存者偏差的來源。
+    codes = universe.codes_ever()
+    print(f"  panel 涵蓋曾入選過的 {len(codes)} 檔（今日成分股只有 "
+          f"{len(universe.load()['constituents'])} 檔）")
     df = build(codes)
     print(f"panel: {len(df):,} 列 × {df['code'].nunique()} 檔  "
           f"{df['date'].min().date()} ~ {df['date'].max().date()}")

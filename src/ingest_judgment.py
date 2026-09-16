@@ -29,7 +29,38 @@ def run(path: str, revise: bool = False) -> dict:
     created = dt.datetime.now(dt.UTC).isoformat()
     by_code = {j["code"]: j for j in d["judgments"]}
 
-    recs, pid_map, skipped = [], {}, []
+    # 既有列按 pid 收攏。修訂要能分辨兩件事：
+    #   (a) 真的改了判斷 —— 該留下痕跡，且修訂編號要遞增
+    #   (b) 只是重跑重新匯入（面板重建後波動度微幅漂移）—— 不該留痕跡
+    # 舊版兩者都寫成 revision=1，在帳本裡長得一模一樣，等於讓「改判斷」
+    # 可以偽裝成「重跑」。實測 20260916 的美股 53 檔各被寫了 3 次。
+    prior = {}
+    if PREDICTIONS.exists():
+        for line in PREDICTIONS.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                r = json.loads(line)
+            except Exception:  # noqa: BLE001
+                continue
+            prior.setdefault(r["pid"], []).append(r)
+
+    def _material(old: dict, new: dict) -> bool:
+        """判斷是否為實質修訂。純重跑造成的浮點漂移不算。"""
+        if round(old.get("prob_up") or 0, 3) != round(new["prob_up"], 3):
+            return True
+        for k in ("up_magnitude", "dn_magnitude"):
+            a_, b_ = old.get(k), new.get(k)
+            if a_ is None or b_ is None:
+                if a_ != b_:
+                    return True
+                continue
+            # 幅度相對變動 >1% 才算改了判斷；波動度重算的漂移約 0.3%
+            if abs(b_) > 1e-9 and abs(a_ / b_ - 1) > 0.01:
+                return True
+        return False
+
+    recs, pid_map, skipped, noop = [], {}, [], []
     for _, r in fr.iterrows():
         code = str(r["code"])
         pid = _pid(as_of, h, "claude", code, cj.VERSION)
@@ -43,7 +74,7 @@ def run(path: str, revise: bool = False) -> dict:
             "as_of": as_of, "code": code, "horizon": h,
             "model": "claude", "model_family": "judgment",
             "model_version": cj.VERSION,
-            "revision": int(revise),
+            "revision": len(prior.get(pid, [])),
             "prob_up": round(float(r["prob_up"]), 6),
             "exp_ret": round(float(r["exp_ret"]), 6),
             "ret_q10": round(float(r["ret_q10"]), 6),
@@ -57,9 +88,23 @@ def run(path: str, revise: bool = False) -> dict:
             "rationale": str(r["rationale"])[:200],
             "feature_hash": "",
         })
+    # 把沒有實質改變的修訂剔掉，不留無意義的列
+    if revise:
+        keep = []
+        for rec in recs:
+            old = prior.get(rec["pid"])
+            if old and not _material(old[-1], rec):
+                noop.append(rec["code"])
+                continue
+            keep.append(rec)
+        recs = keep
+
     n = _append(recs)
     m = cj.save_reasoning(d, pid_map)
     out = {"as_of": as_of, "horizon": h, "written": n, "reasoning_saved": m}
+    if noop:
+        out["noop_revisions"] = len(noop)
+        print(f"  · {len(noop)} 檔的修訂與既有判斷實質相同（僅浮點漂移），未寫入")
     if skipped:
         # 靜默跳過是最危險的行為 —— 修正會消失而沒有任何訊號
         out["skipped_existing"] = len(skipped)

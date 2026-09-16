@@ -86,7 +86,7 @@ def build(horizon: int, vol: dict) -> dict:
     out = []
     for code, p20, skew, conf, why in J:
         p = 0.5 + (p20 - 0.5) * math.sqrt(horizon / 20)
-        base = 0.8 * vol.get(code, 0.02) * math.sqrt(horizon)
+        base = 0.85 * vol.get(code, 0.02) * math.sqrt(horizon)
         up, dn = base * (1 + skew), -base * (1 - skew)
         ev = p * up + (1 - p) * dn
         ratio = abs(up / dn) if dn else float("inf")

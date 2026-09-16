@@ -83,17 +83,37 @@ def build(date: str, size: int = 50) -> dict:
 
 
 def load(as_of: str | None = None) -> dict:
-    """取用 as_of 當下最接近、且不晚於 as_of 的 universe（point-in-time）。"""
+    """取用不晚於 as_of 的最近一份 universe 快照（真正的 point-in-time）。
+
+    快照來源是元大 0050 每日申購買回清單（PCF）—— 那一天這檔 ETF 實際持有哪 50 檔。
+    它是實際交易的籃子，零生存者偏差是結構上成立的。
+
+    為什麼這件事重要：用「今天的成分股」回測，會把 16 檔「當時在前 50、
+    後來掉出去」的股票（台泥、中鋼、和泰車、陽明、萬海、統一超、和碩…）
+    整批排除。這 16 檔多是後來表現落後的，排除它們等於預先知道答案。
+    """
     out = CONFIG / "universe"
     files = sorted(out.glob("*.json")) if out.exists() else []
     if not files:
-        raise FileNotFoundError("尚未建立 universe，請先執行 build()")
+        raise FileNotFoundError("尚未建立 universe，請先執行 collect/pit_universe.py")
     if as_of is None:
         return json.loads(files[-1].read_text(encoding="utf-8"))
+    as_of = str(as_of).replace("-", "")[:8]
     ok = [f for f in files if f.stem <= as_of]
     if not ok:
-        raise ValueError(f"{as_of} 之前沒有可用的 universe（會造成前視偏誤）")
+        raise ValueError(f"{as_of} 之前沒有可用的 universe 快照（會造成前視偏誤）")
     return json.loads(ok[-1].read_text(encoding="utf-8"))
+
+
+def codes_ever() -> set[str]:
+    """所有快照中曾入選過的代號 —— panel 必須涵蓋這整組，
+    否則「後來掉出去」的股票會在特徵計算時整批消失。"""
+    out = CONFIG / "universe"
+    ever = set()
+    for f in sorted(out.glob("*.json")):
+        d = json.loads(f.read_text(encoding="utf-8"))
+        ever |= {c["code"] for c in d.get("constituents", [])}
+    return ever
 
 
 if __name__ == "__main__":
