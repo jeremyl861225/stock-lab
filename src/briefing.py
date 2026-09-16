@@ -124,6 +124,13 @@ def build_briefing(as_of: str | None = None) -> pd.DataFrame:
     f["名稱"] = f["code"].map(names)
     f["產業"] = f["code"].map(inds)
     f["權重"] = f["code"].map(wts)
+    # 一年期用的波動窗口。vol_20 是短期狀態，拿它外推一年會錯得很離譜：
+    # 實測 2330 的 vol_20 年化 18.0%、vol_60 年化 36.2%（近 20 天剛好平靜）。
+    # 而預測「未來 120 日實現波動」的能力 vol_60 r=0.908 > vol_20 r=0.841。
+    _p = pnl.sort_values(["code", "date"]).copy()
+    _p["_r"] = _p.groupby("code")["close"].pct_change()
+    f["vol_60"] = f["code"].map(
+        _p.groupby("code")["_r"].apply(lambda s: s.tail(60).std()))
     if "market" not in f.columns:
         f["market"] = "TW"
     return f.sort_values(["market", "權重"], ascending=[True, False]).reset_index(drop=True)

@@ -23,11 +23,19 @@ def test_as_of_never_returns_unpublished():
 
 
 def test_margins_within_possible_range():
-    """毛利率不可能 >100% 或 <-200%；超出代表資料或對齊壞了。"""
+    """毛利率的合理上界是 ~105%，不是 100%。
+
+    100% 以上確實會出現，但只在存貨跌價回升等會計迴轉的情況，幅度很小。
+    實測 6446（藥華藥）2019Q1 營收 0.36 億、毛利 0.36 億 → 101.65%，
+    那是真的。超過 105% 才代表對齊或單位壞了。
+
+    營益率刻意不設下界：臨床階段生技公司營收 0.24 億、研發費用 3.55 億，
+    營益率 −1488% 是事實不是錯誤。設下界會把真實資料誤判成 bug。
+    """
     f = F.build()
     gm = f["gross_margin"].dropna()
     if len(gm):
-        assert gm.max() <= 1.0, f"毛利率最大 {gm.max():.2f} 超過 100%"
+        assert gm.max() <= 1.05, f"毛利率最大 {gm.max():.2f} 超過 105%"
         assert gm.min() >= -2.0, f"毛利率最小 {gm.min():.2f} 低於 -200%"
 
 
@@ -48,7 +56,7 @@ def test_eps_yoy_guards_tiny_base():
 
 
 def test_as_of_row_is_a_single_quarter():
-    """as_of() 回傳的每一列必須全部來自同一季。
+    """as_of() 回傳的每一列必須全部來自同一季（且是最後一季有資料的）。
 
     起因：原本用 groupby().last()，而 pandas 的 .last() 是逐欄取最後一個
     非空值 —— 它會把不同季的數字拼成同一列。實測 1303（南亞）被拼成
@@ -63,6 +71,9 @@ def test_as_of_row_is_a_single_quarter():
     full = F.build()
     for _, row in snap.iterrows():
         g = full[(full["code"] == row["code"]) & (full["avail_date"] <= d)]
+        if g.empty:
+            continue
+        g = g[g[F.FUND_COLS].notna().any(axis=1)]   # 整列作廢的季別會被跳過
         if g.empty:
             continue
         last = g.sort_values("date").iloc[-1]

@@ -85,10 +85,19 @@ overflow:hidden;flex-shrink:0}
 .cp.no em{font-style:normal;color:var(--dn);font-weight:700}
 .cp b{font-weight:400;color:var(--mut)} .cp em{font-style:normal;color:var(--faint);
 font-variant-numeric:tabular-nums}
-.vd{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:99px;
-font-size:9px;font-weight:700;letter-spacing:.02em}
-.vd.v0{background:var(--up);color:#fff} .vd.v1{background:var(--dn);color:#fff}
-.vd.v2{background:var(--line);color:var(--mut)}
+/* 論點判定不用徽章 —— 徽章佔 40px 橫向空間，正好是中文名字剩下的量，
+   會把「南亞科」擠成「南…」。改成左緣色條：零橫向成本，
+   而且一整欄掃下去比分散的徽章更容易看出哪些論點壞了。 */
+.row[data-vd]{border-left:3px solid transparent}
+/* 刻意不用 --up／--dn。這個 app 是紅漲綠跌，紅色條會被讀成「上漲」
+   而不是「論點成立」—— 兩種語意撞在同一個顏色上。
+   改用與價格方向無關的軸：實心深色＝論點站著，琥珀＝動搖，淡灰＝已倒。 */
+.row[data-vd="成立"]{border-left-color:var(--ink)}
+.row[data-vd="動搖"]{border-left-color:var(--hot)}
+.row[data-vd="失效"]{border-left-color:var(--faint)}
+.row[data-vd="失效"] .nm{color:var(--mut)}
+.vdt{font-size:10px;font-weight:700;letter-spacing:.04em;margin:0 0 4px}
+.vdt.v0{color:var(--ink)} .vdt.v1{color:var(--hot)} .vdt.v2{color:var(--mut)}
 .wp{font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:26px;flex:0 0 auto}
 .bar{margin-left:auto;flex-shrink:0}
 .ev{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;
@@ -225,11 +234,21 @@ def _ident(code: str, name: str) -> str:
 
 
 def _vd(r: dict | None) -> str:
-    """論點判定徽章。過半前提被推翻就標失效 —— 該重寫判斷，不是等到期。"""
+    """列的左緣色條屬性。過半前提被推翻就標失效 —— 該重寫判斷，不是等到期。"""
+    return f' data-vd="{r["verdict"]}"' if r else ""
+
+
+def _vdt(r: dict | None) -> str:
+    """展開後的判定文字，連同成立／推翻的條數。"""
     if not r:
         return ""
-    cls = {"成立": "v0", "失效": "v1", "動搖": "v1"}.get(r["verdict"], "v2")
-    return f'<span class="vd {cls}">{r["verdict"]}</span>'
+    cls = {"成立": "v0", "動搖": "v1", "失效": "v2"}.get(r["verdict"], "v2")
+    n = f'{r["holding"]} 條成立'
+    if r["broken"]:
+        n += f"、{r['broken']} 條已被推翻"
+    if r["pending"]:
+        n += f"、{r['pending']} 條尚未公告"
+    return f'<div class="vdt {cls}">論點{r["verdict"]}　{n}</div>'
 
 
 def _cp_html(r: dict | None) -> str:
@@ -272,7 +291,15 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
         # 改用實證偏態同樣不行：個股偏態前後半期 r=−0.08、符號一致率 55%，不持續。
         # 位置改放年化波動——它持續（前後半期 r=+0.65）、與 P漲 幾乎無關（R²=10%），
         # 而且正是它決定了獲利點與停損點拉多開。
-        vol = float(r["vol_20"]) * (252 ** 0.5) if pd.notna(r.get("vol_20")) else float("nan")
+        # 波動窗口必須跟幅度用的同一個，否則同一張卡上會出現互相矛盾的數字：
+        # 2330 的 vol_20 年化 18.0%、vol_60 年化 36.2%（近 20 天剛好平靜），
+        # 而一年期的幅度是用 vol_60 算的 —— 卡片若顯示 18% 而幅度是 ±33%，
+        # 讀者無從對帳。
+        vcol = "vol_60" if horizon >= 250 else "vol_20"
+        vraw = r.get(vcol)
+        if pd.isna(vraw):
+            vraw = r.get("vol_20")
+        vol = float(vraw) * (252 ** 0.5) if pd.notna(vraw) else float("nan")
         # 一定要先算成字串再放進 f-string 鏈。把 `A if c else B` 直接寫在
         # 隱式字串串接裡，Python 會把條件套用到「整條鏈」而不是那一格 ——
         # 條件成立時整張卡在這裡截斷、div 不閉合，版面全垮。已中招一次。
@@ -284,18 +311,21 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
         acc = (f'{hc["weighted"]*100:.0f}%' if hc and hc.get("reliable")
                and hc.get("weighted") is not None else "—")
         accn = f'（{hc["n"]}）' if hc else ""
+        cp = (cps or {}).get(str(r["code"]))
         why = html.escape(str(r["rationale"]).split(": ", 1)[-1])
         wt = float(r["權重"]) if "權重" in t.columns and pd.notna(r["權重"]) else float("nan")
         wtxt = "" if pd.isna(wt) else f'<span class="wp">{wt*100:.1f}%</span>'
         out.append(
-            f'<div class="row" data-code="{r["code"]}" role="button" tabindex="0" '
+            f'<div class="row" data-code="{r["code"]}"'
+            # 色條只掛在一年期 —— 論點狀態是一年期判斷的屬性，
+            # 拿它去染 5／20 日的列會讓兩種期別的訊息混在一起。
+            f'{_vd(cp) if horizon >= 250 else ""} role="button" tabindex="0" '
             f'aria-expanded="false" onclick="t(this)" onkeydown="kd(event,this)">'
             f'<div class="top">'
             f'<button class="pin" aria-label="釘選 {html.escape(_short(str(r["名稱"])))}" '
             f'onclick="pin(event,this)">✦</button>'
             f'<span class="rk">{i+1}</span>'
             f'{_ident(str(r["code"]), str(r["名稱"]))}'
-            f'{_vd((cps or {}).get(str(r["code"])))}'
             f'{_wt(wt, mxw)}{wtxt}'
             f'{_bar(ev, mx, str(r["conviction"]))}'
             f'<span class="ev {"p" if ev>1e-9 else ("n" if ev<-1e-9 else "z")}">{ev*100:+.2f}%</span></div>'
@@ -313,7 +343,7 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<i>{cur}{sl:,.{dec}f}</i></div>'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
             f'</div><div class="why">{why}</div>'
-            f'{_cp_html((cps or {}).get(str(r["code"]))) if horizon >= 250 else ""}'
+            f'{(_vdt(cp) + _cp_html(cp)) if horizon >= 250 else ""}'
             f'</div></div>')
     return "".join(out)
 
@@ -373,7 +403,7 @@ def build() -> Path:
         mk, hz = key[:2], int(key[2:])
         hint = ('點任一列展開詳細數字　·　點 ✦ 釘選置頂　·　細條＝市值權重　·　橫桿＝期望值'
                 if hz < 250 else
-                '點任一列展開　·　✓＝前提成立　✗＝已被資料推翻　·＝該期尚未公告')
+                '點任一列展開　·　左緣色條＝論點狀態（深＝成立／琥珀＝動搖／淡＝失效）　·　✓前提成立　✗已被推翻')
         body += (f'<div class="view" id="v{key}" hidden>'
                  f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
                  f'<p class="hint">{hint}</p>'

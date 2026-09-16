@@ -106,8 +106,29 @@ def _reconcile() -> set[tuple[str, str]]:
     return bad
 
 
-def build() -> pd.DataFrame:
-    """回傳 [code, avail_date, <FUND_COLS>]。avail_date 是「這天起才看得到」。"""
+_CACHE: dict[str, pd.DataFrame] = {}
+
+
+def build(refresh: bool = False) -> pd.DataFrame:
+    """回傳 [code, avail_date, <FUND_COLS>]。avail_date 是「這天起才看得到」。
+
+    結果快取在記憶體：它要讀 67 檔 × 三張表（資產負債表就 21 萬列）
+    並跑一次全庫對帳，單次約 15 秒。測試與面板會反覆呼叫，
+    不快取的話整套測試從 15 秒變成 9 分鐘。
+    快取鍵用原始檔的總 mtime —— 有新資料落盤就自動失效。
+    """
+    stamp = str(sorted(
+        (f.name, int(f.stat().st_mtime))
+        for k in ("fin", "bs", "cf") for f in (RAW / "finmind" / k).glob("*.json")))
+    if not refresh and stamp in _CACHE:
+        return _CACHE[stamp].copy()
+    out = _build_uncached()
+    _CACHE.clear()          # 只留最新一份，避免記憶體無限成長
+    _CACHE[stamp] = out
+    return out.copy()
+
+
+def _build_uncached() -> pd.DataFrame:
     fin, bs, cf = _load("fin"), _load("bs"), _load("cf")
     if fin.empty:
         return pd.DataFrame(columns=["code", "avail_date", *FUND_COLS])
@@ -124,6 +145,16 @@ def build() -> pd.DataFrame:
         return df[name] if name in df.columns else pd.Series(np.nan, index=df.index)
 
     rev, gp, oi = col("Revenue"), col("GrossProfit"), col("OperatingIncome")
+
+    # 營收趨近零時，任何以營收為分母的比值都會爆掉。
+    # 實測 6446（藥華藥）2016–2019 還是零營收生技公司：毛利率 251%、
+    # 營益率 −205%。那不是「毛利率很高」，是除以接近零。
+    # 判準用「相對該公司自身營收中位數」而非絕對金額 —— 公司規模差異極大，
+    # 絕對門檻對小公司太嚴、對大公司形同無效。
+    med = df.assign(_r=rev).groupby("code")["_r"].transform("median")
+    too_small = rev.abs() < (med.abs() * 0.05)
+    rev = rev.mask(too_small)
+
     out = pd.DataFrame({"code": df["code"], "date": df["date"]})
 
     # ── 獲利能力 ──────────────────────────────────────────────
@@ -158,8 +189,20 @@ def build() -> pd.DataFrame:
         lambda s: (s / s.shift(12)) ** (1 / 3) - 1)
 
     # ── 現金與擴張 ────────────────────────────────────────────
-    ocf = col("NetCashInflowFromOperatingActivities")
-    capex = col("PropertyAndPlantAndEquipment").abs()
+    # 陷阱：損益表是「單季」，現金流量表是「累計」（Q1=Q1、Q2=H1、Q3=9M、Q4=FY）。
+    # 兩者混用會讓 TTM 重複計算 —— 實測台積電的 capex_intensity 算成 76.2%
+    # （實際約 40–45%）、fcf_margin 算成 59%，隱含營運現金流是營收的 135%，不可能。
+    # 判準：2330 的 Q2/Q1 比值 = 2.12。還原成單季 = 本期累計 − 同年上期累計。
+    def _decum(name):
+        v = col(name)
+        if v.isna().all():
+            return v
+        t = df.assign(_v=v, _y=df["date"].dt.year)
+        prev = t.groupby(["code", "_y"])["_v"].shift(1)
+        return v - prev.fillna(0)
+
+    ocf = _decum("NetCashInflowFromOperatingActivities")
+    capex = _decum("PropertyAndPlantAndEquipment").abs()
     ocf_ttm = df.assign(x=ocf).groupby("code")["x"].transform(lambda s: s.rolling(4).sum())
     cap_ttm = df.assign(x=capex).groupby("code")["x"].transform(lambda s: s.rolling(4).sum())
     out["fcf_margin"] = (ocf_ttm - cap_ttm) / rev_ttm.replace(0, np.nan)
@@ -199,6 +242,15 @@ def as_of(d: pd.Timestamp | str) -> pd.DataFrame:
     if f.empty:
         return f
     f = f[f["avail_date"] <= d]
+    # 整列作廢的季別（對帳失敗）不該讓整檔消失 —— 應退回上一季仍有效的資料。
+    # 這仍然守 PIT：avail_date 照樣 <= d，只是用比較舊的一季。
+    # 實測 2059（川湖）2026Q2 被作廢後整檔從一年期判斷中消失，
+    # 但它到 2026Q1 的資料都是好的。
+    has = f[FUND_COLS].notna().any(axis=1)
+    f = f[has]
+    if f.empty:
+        return f
+
     # 必須取「最後一列」，不能用 groupby().last() ——
     # pandas 的 .last() 是逐欄取最後一個非空值，會把不同季的數字拼成同一列。
     # 實測 1303（南亞）被拼成「2026Q2 的毛利率 18.9% ＋ 2025Q2 的 EPS 年增 −143%」，
