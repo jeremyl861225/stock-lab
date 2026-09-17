@@ -117,12 +117,34 @@ def finalize(push: bool = True) -> None:
                  "docs/", "judgments/", "config/universe_latest.json",
                  "config/universe/", "config/universe_us/",
                  "config/universe_us_latest.json", "LESSONS.md"]
-        subprocess.run(["git", "add", *paths], cwd=ROOT)
+        # 只 add 實際存在的路徑。git add 對任何一個不存在的 pathspec 會整批
+        # fatal（returncode 128）而**什麼都不暫存** —— 2026-09-18 實際發生：
+        # settle 尚未產出過 settlements.jsonl，於是白名單裡的這一項讓整個 add
+        # 失敗，接著 commit 無事可提交、rebase 因未暫存的改動而拒絕，
+        # 而 push 回報 "Everything up-to-date"（returncode 0），
+        # 最後照樣印出「已提交並推送」。整條鏈沒有一個環節出聲。
+        existing = [p for p in paths if (ROOT / p).exists()]
+        missing = [p for p in paths if p not in existing]
+        if missing:
+            print(f"   （白名單中尚未存在、略過：{', '.join(missing)}）")
         msg = f"每日預測 {as_of[:4]}-{as_of[4:6]}-{as_of[6:]}"
-        subprocess.run(["git", "commit", "-q", "-m", msg], cwd=ROOT)
-        # GitHub Actions 每天也會 push，不先同步必然 non-fast-forward 被拒
+        if subprocess.run(["git", "add", *existing], cwd=ROOT).returncode != 0:
+            print("\n！git add 失敗，未提交。判斷已寫入本機資料，但沒有進版本庫。")
+            return
+        # 沒有任何改動被暫存時就不要 commit —— 否則 commit 會失敗，
+        # 而失敗的原因會被後面的 push 掩蓋掉。
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT).returncode == 0:
+            print(f"\n沒有需要提交的變更（判斷可能先前已提交）：{msg}")
+            return
+        if subprocess.run(["git", "commit", "-q", "-m", msg], cwd=ROOT).returncode != 0:
+            print(f"\n！git commit 失敗，未推送：{msg}")
+            return
+        # GitHub Actions 每天也會 push，不先同步必然 non-fast-forward 被拒。
+        # rebase 會因為工作目錄有其他 session 未暫存的改動而拒絕執行，
+        # 那不是致命問題（push 若能 fast-forward 仍會成功），但要說出來。
         subprocess.run(["git", "fetch", "origin", "-q"], cwd=ROOT)
-        subprocess.run(["git", "rebase", "origin/main"], cwd=ROOT)
+        if subprocess.run(["git", "rebase", "origin/main"], cwd=ROOT).returncode != 0:
+            print("   （rebase 未執行，多半是工作目錄有未暫存的改動；直接嘗試 push）")
         rc = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT).returncode
         print(f"\n{'已提交並推送' if rc == 0 else '！push 失敗（returncode %d），本機已 commit' % rc}：{msg}")
     print("面板：https://jeremyl861225.github.io/stock-lab/")
