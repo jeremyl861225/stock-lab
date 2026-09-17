@@ -37,6 +37,10 @@ def prepare() -> None:
     run("collect/news_daily.py", allow_fail=True)     # 新聞面（未納入時明天會是空的）
     run("briefing.py")                                # 四面向簡報
     run("predict.py")                                 # 基準線＋統計模型（LLM 無 key 則跳過）
+    # 一年期滾動。多數日子只重新定價（收盤與 vol_60 變了），
+    # 只有月營收或季報更新的那約 16 天會真正重算 P漲。
+    # 已實查的論點不自動改，只標記待複核。
+    run("roll_1y.py", allow_fail=True)
     run("settle.py")                                  # 結算到期預測
     # 測試失敗必須擋下來 —— 那些測試在擋未來函數、除權息還原不完整、
     # universe 空檔、跨市場 as_of 錯置，每一項都會讓當天的判斷建立在壞資料上。
@@ -72,7 +76,14 @@ def finalize(push: bool = True) -> None:
     allj = list((ROOT / "judgments").glob(f"{as_of}*.json"))
     groups: dict[tuple, Path] = {}
     for f in allj:
-        key = ("us" if "_us" in f.name else "tw", "h5" if f.name.endswith("h5.json") else "h20")
+        # 一年期必須自成一格。原本的鍵只有 (市場, h5/h20)，
+        # 20260917_1y.json 會被歸成 ("tw","h20") 而與當天的台股 20 日判斷
+        # 撞在同一格，兩份只會活一份 —— 而且是靜默的。
+        if "_1y" in f.name:
+            key = ("tw", "h250")
+        else:
+            key = ("us" if "_us" in f.name else "tw",
+                   "h5" if f.name.endswith("h5.json") else "h20")
         if key not in groups or f.stat().st_mtime > groups[key].stat().st_mtime:
             groups[key] = f
     js = sorted(groups.values())

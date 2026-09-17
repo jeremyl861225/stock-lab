@@ -6,3 +6,4 @@ data/raw/
 data/features/
 data/backtest/*.parquet
 .DS_Store
+data/roll_1y_state.json

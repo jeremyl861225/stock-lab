@@ -97,6 +97,8 @@ font-variant-numeric:tabular-nums}
 .row[data-vd="失效"]{border-left-color:var(--faint)}
 .row[data-vd="失效"] .nm{color:var(--mut)}
 .vdt{font-size:10px;font-weight:700;letter-spacing:.04em;margin:0 0 4px}
+.vsrc{display:block;margin-top:2px;font-size:9.5px;font-weight:400;color:var(--faint);
+letter-spacing:0}
 .vdt.v0{color:var(--ink)} .vdt.v1{color:var(--hot)} .vdt.v2{color:var(--mut)}
 .wp{font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:26px;flex:0 0 auto}
 .bar{margin-left:auto;flex-shrink:0}
@@ -179,7 +181,12 @@ def _score_checkpoints(jdir: Path) -> dict:
         today = pd.Timestamp.today()
         for j in json.loads(fs[-1].read_text(encoding="utf-8")).get("judgments", []):
             try:
-                out[str(j["code"])] = CP.score_all(j, today)
+                r = CP.score_all(j, today)
+                # 滾動出處：一年期每天都會重新定價，但論點本身多數日子沒動。
+                # 不標出「這個論點是哪天下的」，讀者會以為今天有新判斷。
+                r["thesis_as_of"] = j.get("thesis_as_of")
+                r["repriced_only"] = j.get("repriced_only")
+                out[str(j["code"])] = r
             except Exception:  # noqa: BLE001
                 continue
     except Exception:  # noqa: BLE001
@@ -248,7 +255,14 @@ def _vdt(r: dict | None) -> str:
         n += f"、{r['broken']} 條已被推翻"
     if r["pending"]:
         n += f"、{r['pending']} 條尚未公告"
-    return f'<div class="vdt {cls}">論點{r["verdict"]}　{n}</div>'
+    src = ""
+    t = r.get("thesis_as_of")
+    if t:
+        d = f"{t[:4]}-{t[4:6]}-{t[6:]}"
+        src = (f'<span class="vsrc">論點 {d} 起未變，今日僅重新定價</span>'
+               if r.get("repriced_only") else
+               f'<span class="vsrc">論點 {d} 更新</span>')
+    return f'<div class="vdt {cls}">論點{r["verdict"]}　{n}{src}</div>'
 
 
 def _cp_html(r: dict | None) -> str:
