@@ -119,7 +119,16 @@ def build_briefing(as_of: str | None = None) -> pd.DataFrame:
     parts = [d for d in (fund, usf) if not d.empty]
     if parts:
         allf = pd.concat([d.reindex(columns=cols) for d in parts], ignore_index=True)
-        f = f.merge(allf.drop_duplicates("code"), on="code", how="left")
+        # build() 已經有一個 rev_yoy（台股月營收 YoY，以法定公告期限為可用日），
+        # fundamentals 也有同名欄。用預設後綴會變成 rev_yoy_x / rev_yoy_y，
+        # 於是 briefing 裡根本沒有 rev_yoy 這一欄 —— ranking.py 讀它就 KeyError，
+        # 而 finalize 不允許 ranking 失敗，會整條流程中止。
+        # 台股保留 PIT 明確的 build() 版本，美股（build() 無月營收）才落到 fundamentals。
+        f = f.merge(allf.drop_duplicates("code"), on="code", how="left",
+                    suffixes=("", "_fund"))
+        if "rev_yoy_fund" in f.columns:
+            f["rev_yoy"] = f["rev_yoy"].fillna(f["rev_yoy_fund"])
+            f = f.drop(columns=[c for c in f.columns if c.endswith("_fund")])
 
     f["名稱"] = f["code"].map(names)
     f["產業"] = f["code"].map(inds)

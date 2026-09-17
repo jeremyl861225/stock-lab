@@ -65,7 +65,11 @@ def run(as_of: str | None = None, horizons: list[int] | None = None,
         print(f"  美股 universe 未載入（{e}），僅預測台股")
 
     if rebuild_panel or not (FEATURES / "panel.parquet").exists():
-        pnl = panel_mod.build(codes)
+        # panel 要涵蓋「曾入選過」的全集；預測範圍另由下方 isin(codes) 限定在今日成分股。
+        # 只用今日成分股建 panel，會把後來掉出前 50 的股票從 panel 整批抹掉 ——
+        # 它們尚未到期的預測在 settle 就永遠找不到價格（missing），靜默消失。
+        # 掉出成分股的多半是跌下去的那些，正是模型看錯的樣本，成績單會因此偏樂觀。
+        pnl = panel_mod.build(set(universe.codes_ever()) | codes)
     else:
         pnl = pd.read_parquet(FEATURES / "panel.parquet")
 

@@ -52,6 +52,30 @@ def _cache_path(kind: str, date: str) -> Path:
     return p / f"{date}.json"
 
 
+def _cached(kind: str, date: str):
+    """讀快取；讀不到回 None。
+
+    空 payload 只有在「該交易日收盤資料已上架之後才抓到空」時，才真的代表非交易日。
+    盤前（台北 15:00 前）抓到的空是資料還沒上架，若當成有效快取就會把那一天
+    永久釘死成非交易日 —— 2026-09-17 就是這樣整天被跳過的。
+    """
+    cp = _cache_path(kind, date)
+    if not cp.exists():
+        return None
+    d = json.loads(cp.read_text(encoding="utf-8"))
+    payload = d["payload"]
+    if payload:
+        return payload
+    try:
+        fetched = dt.datetime.fromisoformat(d["fetched_at_utc"])
+        # 台北 15:00 = 該日 UTC 07:00
+        cutoff = dt.datetime.strptime(date, "%Y%m%d").replace(
+            hour=7, tzinfo=dt.UTC)
+    except (KeyError, ValueError):
+        return None
+    return payload if fetched >= cutoff else None
+
+
 def _save(kind: str, date: str, payload):
     p = _cache_path(kind, date)
     p.write_text(json.dumps({
@@ -63,9 +87,9 @@ def _save(kind: str, date: str, payload):
 
 def daily_quotes(date: str) -> list[dict]:
     """某交易日全市場行情。date: YYYYMMDD。回傳 [] 代表非交易日。"""
-    cp = _cache_path("mi_index", date)
-    if cp.exists():
-        return json.loads(cp.read_text(encoding="utf-8"))["payload"]
+    hit = _cached("mi_index", date)
+    if hit is not None:
+        return hit
 
     d = _get(f"{RWD}/afterTrading/MI_INDEX",
              {"date": date, "type": "ALL", "response": "json"})
@@ -95,9 +119,9 @@ def daily_quotes(date: str) -> list[dict]:
 
 def institutional(date: str) -> list[dict]:
     """三大法人買賣超（單位：股）。"""
-    cp = _cache_path("t86", date)
-    if cp.exists():
-        return json.loads(cp.read_text(encoding="utf-8"))["payload"]
+    hit = _cached("t86", date)
+    if hit is not None:
+        return hit
 
     d = _get(f"{RWD}/fund/T86",
              {"date": date, "selectType": "ALL", "response": "json"})
@@ -127,9 +151,9 @@ def institutional(date: str) -> list[dict]:
 
 def valuations(date: str) -> list[dict]:
     """本益比／殖利率／股價淨值比（僅當日快照，官方不提供歷史回補）。"""
-    cp = _cache_path("bwibbu", date)
-    if cp.exists():
-        return json.loads(cp.read_text(encoding="utf-8"))["payload"]
+    hit = _cached("bwibbu", date)
+    if hit is not None:
+        return hit
     d = _get(f"{OPENAPI}/exchangeReport/BWIBBU_ALL")
     rows = [{"code": r.get("Code", "").strip(), "pe": r.get("PEratio", ""),
              "yield": r.get("DividendYield", ""), "pb": r.get("PBratio", ""),

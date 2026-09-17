@@ -45,9 +45,9 @@
    "ret_q10": -0.952548,
    "ret_q90": 1.491801,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "f695d9a038c225e6",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 492.5
   },
   {
@@ -85,13 +85,13 @@
    "prob_up": 0.62,
    "up_magnitude": 0.7816,
    "dn_magnitude": -0.6605,
-   "exp_ret": 0.233604,
+   "exp_ret": 0.233605,
    "ret_q10": -0.920087,
    "ret_q90": 1.387296,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "2a205848cf2c2f25",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 169.0
   },
   {
@@ -133,9 +133,9 @@
    "ret_q10": -0.861323,
    "ret_q90": 1.245861,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "3c4c6b66167d8cc0",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 3175.0
   },
   {
@@ -173,58 +173,14 @@
    "prob_up": 0.599,
    "up_magnitude": 0.6802,
    "dn_magnitude": -0.6044,
-   "exp_ret": 0.165078,
+   "exp_ret": 0.165079,
    "ret_q10": -0.86262,
    "ret_q90": 1.192777,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "7b28d129f3e49444",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 992.0
-  },
-  {
-   "code": "6669",
-   "stance": "bullish",
-   "thesis": "未實查前瞻計畫；僅依財報橫斷面位置推導",
-   "facts": [
-    "未實查公司前瞻計畫，本判斷由財報規則推導（橫斷面百分位）：毛利率較四季前+0.7pp（同業第 36 百分位）、ROE+42%（同業第 89 百分位）、EPS TTM 年增+65%（同業第 60 百分位）、三年營收 CAGR+55%（同業第 94 百分位）、PER 6.9（便宜度第 97 百分位）。證據強度低於已實查標的，信心一律標低。"
-   ],
-   "inference": "未實查公司前瞻計畫，本判斷由財報規則推導（橫斷面百分位）：毛利率較四季前+0.7pp（同業第 36 百分位）、ROE+42%（同業第 89 百分位）、EPS TTM 年增+65%（同業第 60 百分位）、三年營收 CAGR+55%（同業第 94 百分位）、PER 6.9（便宜度第 97 百分位）。證據強度低於已實查標的，信心一律標低。",
-   "falsifier": "毛利率 ≥6.3%（獲利結構未惡化）；EPS TTM 年增維持正值；月營收 TTM 年增維持正值 —— 任一前提被推翻即論點動搖",
-   "conviction": "low",
-   "checkpoints": [
-    {
-     "claim": "毛利率 ≥6.3%（獲利結構未惡化）",
-     "metric": "gross_margin",
-     "op": ">=",
-     "threshold": 0.0626
-    },
-    {
-     "claim": "EPS TTM 年增維持正值",
-     "metric": "eps_yoy",
-     "op": ">=",
-     "threshold": 0.0
-    },
-    {
-     "claim": "月營收 TTM 年增維持正值",
-     "metric": "rev_yoy_ttm",
-     "op": ">=",
-     "threshold": 0.0
-    }
-   ],
-   "researched": false,
-   "rationale": "未實查公司前瞻計畫，本判斷由財報規則推導（橫斷面百分位）：毛利率較四季前+0.7pp（同業第 35 百分位）、ROE+42%（同業第 92 百分位）、EPS TTM 年增+65%（同業第 71 百分位）、三年營收 CAGR+55%（同業第 96 百分位）、PER 6.9（便宜度第 97 百分位）。證據強度低於已實查標的，信心一律標低。",
-   "prob_up": 0.598,
-   "up_magnitude": 0.6253,
-   "dn_magnitude": -0.5568,
-   "exp_ret": 0.150093,
-   "ret_q10": -0.795567,
-   "ret_q90": 1.095753,
-   "thesis_as_of": "20260917",
-   "repriced_only": false,
-   "basis": "8a3f9f953ca40ecf",
-   "roll_note": "首次滾動，沿用原判斷",
-   "close_at_call": 2165.0
   },
   {
    "code": "6505",
@@ -265,9 +221,9 @@
    "ret_q10": -0.819181,
    "ret_q90": 1.073552,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "83ce5547982741db",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 80.5
   },
   {
@@ -318,9 +274,9 @@
    "ret_q10": -0.74003,
    "ret_q90": 0.951431,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "9b35c1557ad3c364",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 1710.0
   },
   {
@@ -362,9 +318,9 @@
    "ret_q10": -0.905734,
    "ret_q90": 1.154258,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "39f419f8dec31f93",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 1205.0
   },
   {
@@ -402,13 +358,13 @@
    "prob_up": 0.577,
    "up_magnitude": 0.6267,
    "dn_magnitude": -0.5878,
-   "exp_ret": 0.112969,
+   "exp_ret": 0.11297,
    "ret_q10": -0.858655,
    "ret_q90": 1.084594,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "94e9eaeb2c671a0e",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 5085.0
   },
   {
@@ -450,9 +406,9 @@
    "ret_q10": -0.799628,
    "ret_q90": 1.010006,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "96d5b12573cdd4fb",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 1840.0
   },
   {
@@ -505,9 +461,9 @@
    "ret_q10": -0.404893,
    "ret_q90": 0.576579,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "82c69b4f2d870597",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 2380.0
   },
   {
@@ -545,13 +501,13 @@
    "prob_up": 0.566,
    "up_magnitude": 0.6663,
    "dn_magnitude": -0.6414,
-   "exp_ret": 0.09876,
+   "exp_ret": 0.098759,
    "ret_q10": -0.947415,
    "ret_q90": 1.144934,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "841138572717902a",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 5240.0
   },
   {
@@ -593,9 +549,9 @@
    "ret_q10": -0.952939,
    "ret_q90": 1.147173,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "1348fc05632bf3ef",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 142.0
   },
   {
@@ -631,9 +587,9 @@
    "ret_q10": -1.177813,
    "ret_q90": 1.351693,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "60af12a4d0bdc27c",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 224.0
   },
   {
@@ -675,9 +631,9 @@
    "ret_q10": -0.919939,
    "ret_q90": 1.089455,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "18a3bbb981a23e7e",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 12045.0
   },
   {
@@ -719,9 +675,9 @@
    "ret_q10": -0.866159,
    "ret_q90": 1.046776,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "257e31f8c7d55db2",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 277.0
   },
   {
@@ -765,9 +721,9 @@
    "ret_q10": -0.419985,
    "ret_q90": 0.553868,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "c6b9a10615eff2c3",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 248.0
   },
   {
@@ -809,11 +765,11 @@
    "dn_magnitude": -0.3255,
    "exp_ret": 0.065066,
    "ret_q10": -0.483115,
-   "ret_q90": 0.613248,
+   "ret_q90": 0.613247,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "e0a34bc6ea0d4002",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 340.5
   },
   {
@@ -855,9 +811,9 @@
    "ret_q10": -0.630099,
    "ret_q90": 0.789818,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "bc708c0ed5daec37",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 939.0
   },
   {
@@ -896,12 +852,12 @@
    "up_magnitude": 0.5996,
    "dn_magnitude": -0.5936,
    "exp_ret": 0.067436,
-   "ret_q10": -0.887173,
+   "ret_q10": -0.887174,
    "ret_q90": 1.022046,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "776946f9190252af",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 2090.0
   },
   {
@@ -937,11 +893,11 @@
    "dn_magnitude": -0.7171,
    "exp_ret": 0.058501,
    "ret_q10": -1.112198,
-   "ret_q90": 1.2292,
+   "ret_q90": 1.229201,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "9f352c0ae8d81125",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 961.0
   },
   {
@@ -978,9 +934,9 @@
    "ret_q10": -0.631459,
    "ret_q90": 0.743171,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "e861e06e098662b7",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 183.0
   },
   {
@@ -1022,9 +978,9 @@
    "ret_q10": -0.877999,
    "ret_q90": 0.998849,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "450830393f36eef7",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 605.0
   },
   {
@@ -1062,13 +1018,13 @@
    "prob_up": 0.545,
    "up_magnitude": 0.641,
    "dn_magnitude": -0.6488,
-   "exp_ret": 0.054142,
+   "exp_ret": 0.054143,
    "ret_q10": -0.977723,
    "ret_q90": 1.086008,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "ab44531ee2596745",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 1995.0
   },
   {
@@ -1104,9 +1060,9 @@
    "ret_q10": -1.27581,
    "ret_q90": 1.351277,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "64014920e6ff89e9",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 1105.0
   },
   {
@@ -1148,9 +1104,9 @@
    "ret_q10": -1.212052,
    "ret_q90": 1.309737,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "7a06f2601e3e651c",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 536.0
   },
   {
@@ -1188,13 +1144,13 @@
    "prob_up": 0.535,
    "up_magnitude": 0.5231,
    "dn_magnitude": -0.5423,
-   "exp_ret": 0.027687,
+   "exp_ret": 0.027688,
    "ret_q10": -0.824582,
-   "ret_q90": 0.879956,
+   "ret_q90": 0.879957,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "47bb379d7dfb01b0",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 62.4
   },
   {
@@ -1236,9 +1192,9 @@
    "ret_q10": -0.227297,
    "ret_q90": 0.261812,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "d153ddd09c4c2ede",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 74.5
   },
   {
@@ -1284,9 +1240,9 @@
    "ret_q10": -0.938383,
    "ret_q90": 0.962095,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "ab0e711d7e7f4da6",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 4530.0
   },
   {
@@ -1322,9 +1278,9 @@
    "ret_q10": -1.000819,
    "ret_q90": 1.018472,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "eb93e57b509d858e",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 6125.0
   },
   {
@@ -1366,9 +1322,9 @@
    "ret_q10": -0.203213,
    "ret_q90": 0.221235,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "e72885c36afd93cf",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 124.5
   },
   {
@@ -1406,13 +1362,13 @@
    "prob_up": 0.525,
    "up_magnitude": 0.268,
    "dn_magnitude": -0.2846,
-   "exp_ret": 0.005516,
+   "exp_ret": 0.005515,
    "ret_q10": -0.436608,
    "ret_q90": 0.447639,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "1d2cb4995221060d",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 239.0
   },
   {
@@ -1449,9 +1405,9 @@
    "ret_q10": -1.247621,
    "ret_q90": 1.247621,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "f7a75c2c5a3b6924",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 820.0
   },
   {
@@ -1493,9 +1449,9 @@
    "ret_q10": -0.704427,
    "ret_q90": 0.722312,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "5f46e0240c7f87b3",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 695.0
   },
   {
@@ -1537,9 +1493,9 @@
    "ret_q10": -0.144682,
    "ret_q90": 0.140299,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "89128383820d8d47",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 143.5
   },
   {
@@ -1581,9 +1537,9 @@
    "ret_q10": -1.103187,
    "ret_q90": 1.139684,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "4fa0c138192e16b4",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 493.5
   },
   {
@@ -1625,9 +1581,9 @@
    "ret_q10": -1.123408,
    "ret_q90": 1.147539,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "f880a8fe0b523fad",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 6170.0
   },
   {
@@ -1669,9 +1625,9 @@
    "ret_q10": -1.126505,
    "ret_q90": 1.105668,
    "thesis_as_of": "20260917",
-   "repriced_only": false,
+   "repriced_only": true,
    "basis": "6827c318e3465f55",
-   "roll_note": "首次滾動，沿用原判斷",
+   "roll_note": "輸入未變，僅重新定價",
    "close_at_call": 6225.0
   }
  ]
