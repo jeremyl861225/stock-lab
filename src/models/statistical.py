@@ -24,6 +24,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from models.quantiles import quantiles
 from features.build import FEATURE_COLS, build_all, labels_all
 from config import MIN_TRAIN_ROWS
 
@@ -103,7 +104,8 @@ def predict(feats: pd.DataFrame, horizon: int, as_of, panel: pd.DataFrame,
         z = (resid / (train_vol * np.sqrt(horizon))).replace([np.inf, -np.inf], np.nan).dropna()
         k = float(z.std()) if len(z) > 30 and z.std() > 0 else 1.0
         sig = feats["vol_20"].fillna(feats["vol_20"].median()).to_numpy() * np.sqrt(horizon) * k
-        q10, q90 = exp_ret - 1.2816 * sig, exp_ret + 1.2816 * sig
+        # 對數常態，理由同 models/quantiles.py：常態左尾會越過 −100%
+        q10, q90 = quantiles(exp_ret, sig, z=1.2816)
     else:
         q10 = _reg(kind, X, y_ret, 0.10).predict(Xp)
         q90 = _reg(kind, X, y_ret, 0.90).predict(Xp)

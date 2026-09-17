@@ -36,6 +36,7 @@ import json, math, sys
 from pathlib import Path
 import numpy as np, pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from models.quantiles import quantiles
 
 AS_OF, HORIZON = "20260916", 250
 ANCHOR = 0.55
@@ -277,8 +278,10 @@ def build() -> dict:
         base = 0.85 * float(v) * math.sqrt(HORIZON)
         up, dn = base * (1 + skew), -base * (1 - skew)
         ev = p_up * up + (1 - p_up) * dn
-        # q10 用 1.36σ（t₁₉ 的參數不確定性修正，非常態的 1.2816）
+        # 分位數走對數常態。常態的左尾會延伸到 −∞，而報酬不可能低於 −100%；
+        # 一年期又高波動時會算出負的股價（實測南電 −316.5 元）。見 models/quantiles.py
         sig = float(v) * math.sqrt(HORIZON)
+        q10, q90 = quantiles(ev, sig)
         researched = not why.startswith("RULE:")
         why_clean = why.removeprefix("RULE:")
         th, facts = THESIS.get(code, (None, None))
@@ -295,7 +298,7 @@ def build() -> dict:
             "falsifier": falsifier, "researched": researched,
             "up_magnitude": round(up, 4), "dn_magnitude": round(dn, 4),
             "exp_ret": round(ev, 6),
-            "ret_q10": round(ev - 1.36 * sig, 6), "ret_q90": round(ev + 1.36 * sig, 6),
+            "ret_q10": round(q10, 6), "ret_q90": round(q90, 6),
             "conviction": conf, "rationale": why_clean, "checkpoints": cps,
         })
     out.sort(key=lambda x: -x["exp_ret"])

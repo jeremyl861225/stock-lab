@@ -49,7 +49,9 @@ def run(path: str, revise: bool = False) -> dict:
         """判斷是否為實質修訂。純重跑造成的浮點漂移不算。"""
         if round(old.get("prob_up") or 0, 3) != round(new["prob_up"], 3):
             return True
-        for k in ("up_magnitude", "dn_magnitude"):
+        # q10／q90 也算實質。修正一個「隱含負股價」的區間是實質變更，
+        # 上一版只比對 P漲 與漲跌幅，把 14 檔的區間修正誤判成浮點漂移而擋掉。
+        for k in ("up_magnitude", "dn_magnitude", "ret_q10", "ret_q90"):
             a_, b_ = old.get(k), new.get(k)
             if a_ is None or b_ is None:
                 if a_ != b_:

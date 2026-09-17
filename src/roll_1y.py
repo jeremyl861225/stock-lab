@@ -32,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import DATA, ROOT, HORIZON_1Y
 from features import fundamentals as F
 from models.rule_1y import prob_up as rule_prob_up
+from models.quantiles import quantiles
 import checkpoints as CP
 
 JDIR = ROOT / "judgments"
@@ -201,6 +202,7 @@ def roll(as_of: str | None = None, commit: bool = False) -> dict:
         up, dn = base * (1 + skew), -base * (1 - skew)
         ev = p_up * up + (1 - p_up) * dn
         sig = float(v) * math.sqrt(HORIZON_1Y)
+        q10, q90 = quantiles(ev, sig)
         out.append({
             **{k: j[k] for k in ("code", "stance", "thesis", "facts", "inference",
                                  "falsifier", "conviction", "checkpoints",
@@ -209,8 +211,7 @@ def roll(as_of: str | None = None, commit: bool = False) -> dict:
             "prob_up": round(p_up, 4),
             "up_magnitude": round(up, 4), "dn_magnitude": round(dn, 4),
             "exp_ret": round(ev, 6),
-            "ret_q10": round(ev - 1.36 * sig, 6),
-            "ret_q90": round(ev + 1.36 * sig, 6),
+            "ret_q10": round(q10, 6), "ret_q90": round(q90, 6),
             # 帳本要能分辨「新判斷」與「同一個判斷換了價格」。
             # 少了這兩欄，250 筆重疊預測看起來就像 250 次獨立下注。
             "thesis_as_of": thesis_as_of,

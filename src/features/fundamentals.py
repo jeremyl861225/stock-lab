@@ -228,8 +228,15 @@ def _build_uncached() -> pd.DataFrame:
 
     # ── 財務結構 ──────────────────────────────────────────────
     out["debt_ratio"] = col("Liabilities") / col("TotalAssets").replace(0, np.nan)
+    # 成本也要守近零分母。上一版只守了營收，存貨天數因此出現 ±34,197 天
+    # （93 年的存貨），全部來自 6446 在零營收時期的極小成本基數。
     cogs = col("CostOfGoodsSold").abs()
+    cmed = df.assign(_c=cogs).groupby("code")["_c"].transform("median")
+    cogs = cogs.mask(cogs < cmed * 0.05)
     inv_days = col("Inventories") / cogs.replace(0, np.nan) * 91.25
+    # 即使守了分母，存貨天數本身也有物理上限：超過兩年的存貨
+    # 不是「庫存偏高」而是資料或業務型態不適用這個指標。
+    inv_days = inv_days.mask(inv_days.abs() > 730)
     out["inv_days_chg"] = df.assign(x=inv_days).groupby("code")["x"].transform(
         lambda s: s - s.shift(4))
 
