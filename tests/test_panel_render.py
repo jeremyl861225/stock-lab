@@ -99,3 +99,22 @@ def test_markets_keep_their_own_as_of():
         # 兩市場都必須有內容（只要帳本裡各自有判斷）
         mks = set(t["market"].dropna().unique())
         assert len(mks) >= 1, f"h={h} 一個市場都沒有"
+
+
+def test_no_undefined_css_variables():
+    """所有用到的 CSS 變數都必須有定義。
+
+    起因：K 線用了 var(--card2)，那個變數根本不存在（我憑空發明的），
+    結果圖表框與尺度按鈕在兩個主題下都是透明的 —— 瀏覽器不會報錯，
+    只會安靜地當成 initial 值。
+    """
+    import re
+    h = _html()
+    css = h[h.index("<style>"):h.index("</style>")]
+    used = set(re.findall(r"var\(--([a-z0-9]+)", css))
+    # 變數可以在樣式表裡宣告，也可以在元素上用 inline style 設定
+    # （例如橫桿的 style="--o:left" 決定變形原點），兩邊都要算。
+    declared = (set(re.findall(r"--([a-z0-9]+)\s*:", css))
+                | set(re.findall(r'style="[^"]*--([a-z0-9]+)\s*:', h)))
+    missing = used - declared
+    assert not missing, f"用到但未定義的 CSS 變數：{sorted(missing)}"

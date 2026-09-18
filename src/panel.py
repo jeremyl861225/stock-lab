@@ -82,11 +82,11 @@ overflow:hidden;flex-shrink:0}
    103 檔 × 4 個尺度若在載入時全部畫出來，是 412 張 SVG。 */
 .kw{margin:8px 0 2px}
 .ks{display:flex;gap:4px;margin:0 0 6px}
-.ks button{flex:1;padding:4px 0;border:none;border-radius:7px;background:var(--card2);
+.ks button{flex:1;padding:4px 0;border:none;border-radius:7px;background:var(--bg);
 color:var(--mut);font:inherit;font-size:10.5px;font-weight:600;cursor:pointer;
 transition:background .14s var(--e),color .14s var(--e)}
 .ks button.on{background:var(--ink);color:var(--bg)}
-.kbox{position:relative;width:100%;height:132px;background:var(--card2);border-radius:9px;
+.kbox{position:relative;width:100%;height:132px;background:var(--bg);border-radius:9px;
 overflow:hidden}
 .kbox svg{display:block;width:100%;height:100%}
 .kg{stroke:var(--line);stroke-width:.5}

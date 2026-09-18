@@ -262,3 +262,41 @@ BAC RSI 31.3、5 日 -7.0% 為全場最弱，表面上是最極端的超賣。
 前一版給 BAC 0.55／medium（全書最樂觀的金融股），本版收斂至 0.52／low。
 → **對策**：對每一檔 RSI < 35 的標的，先查「這波跌勢有沒有具體事件」，
 再決定它是均值回歸的候選，還是重評價的起點。這兩者的處置完全相反。
+
+## 2026-09-18 ｜`git add` 遇到不存在的路徑會整條失敗，而且我把它吞掉了
+
+我在收尾時跑：
+```
+git add -A src judgments tests docs data/predictions.jsonl data/settlements.jsonl 2>/dev/null
+git commit -q -m "9/17 預測補上；修…" && git push -q origin main && echo "✓ pushed"
+```
+`data/settlements.jsonl` 當時**不存在**。`git add` 遇到不存在的 pathspec 會
+**整條失敗、一個檔都不暫存**，而 `2>/dev/null` 把錯誤訊息吞了。
+下一行是獨立的一行（不是 `&&` 串接），所以 `git commit` 照樣執行，
+提交了先前殘留在暫存區的內容（兩個 `git rm --cached` 的刪除），
+然後印出「✓ pushed」。
+
+結果：commit 訊息宣稱修了快取落後與美股歸零兩個 bug，**實際上一行程式碼都沒進版**。
+我據此向使用者回報「已 push」，那是假的。
+
+**教訓不是「別打錯路徑」，是「宣稱成功之前要驗證」。**
+以後收尾一律：
+1. `git add <明確列出的檔案>`（不要 `-A <多個路徑>` 混用）
+2. `git diff --cached --stat` 先看暫存區真正有什麼
+3. commit 後 `git show --stat HEAD` 加上關鍵字比對，確認核心修改真的在裡面
+4. 不要用 `2>/dev/null` 吞掉 git 的錯誤
+
+同一天另一個 session 也提交了 `修 finalize 的自動提交整條鏈靜默失敗`，
+顯示這個模式在自動化管線裡也會發生。
+
+## 2026-09-18 ｜CSS 變數打錯不會報錯，只會安靜地變透明
+
+K 線的圖表框與尺度按鈕用了 `var(--card2)` —— 那個變數**根本不存在**，
+是我憑空發明的。瀏覽器不報錯、不警告，只是把它當成 initial 值，
+於是兩個主題下框線都是透明的，而我在深色模式下沒看出來。
+
+正確的值是 `--bg`：它在兩個主題下都比卡片更「凹」一層
+（淺色 bg #F8F7F2 vs card #FFFEFC；深色 bg #111214 vs card #181A1D）。
+
+已加測試 `test_no_undefined_css_variables`：掃 `var(--x)` 與宣告處比對，
+inline style（如橫桿的 `style="--o:left"`）也算宣告。

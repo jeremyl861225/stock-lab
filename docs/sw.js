@@ -4,8 +4,8 @@
  * caches.keys() 會列出「整個 origin」所有 app 的快取，
  * 所以清理時只能刪掉前綴符合自己的那些 —— 否則會清掉 todo-app 等其他 app。
  */
-const CACHE = 'stocklab-v2';
-const ASSETS = ['./', './index.html', './manifest.json',
+const CACHE = 'stocklab-v3';
+const ASSETS = ['./', './index.html', './manifest.json', './charts.json',
                 './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {

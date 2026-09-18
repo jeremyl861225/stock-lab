@@ -36,6 +36,7 @@ def prepare() -> None:
     run("features/panel.py")                          # 含除權息還原
     run("collect/news_daily.py", allow_fail=True)     # 新聞面（未納入時明天會是空的）
     run("briefing.py")                                # 四面向簡報
+    run("charts.py", allow_fail=True)                 # K 線資料（docs/charts.json）
     run("predict.py")                                 # 基準線＋統計模型（LLM 無 key 則跳過）
     # 一年期滾動。多數日子只重新定價（收盤與 vol_60 變了），
     # 只有月營收或季報更新的那約 16 天會真正重算 P漲。
