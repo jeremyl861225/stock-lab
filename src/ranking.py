@@ -20,16 +20,23 @@ def table(horizon: int = 20, market: str | None = None) -> pd.DataFrame:
     if p.empty:
         return p
     p = p.sort_values("created_at_utc").drop_duplicates("code", keep="last")
-    # 只取最新一個 as_of 的判斷。不篩的話，某天沒做判斷而 briefing 照常重建時，
-    # 會靜默把昨天的幅度配上今天的收盤，算出錯的獲利點與停損點，且不會有任何訊號。
-    if not p.empty:
-        p = p[p["as_of"] == p["as_of"].max()]
     b = pd.read_parquet(DATA / "briefing.parquet")
     cols = ["code", "名稱", "產業", "PER", "dividend_yield", "rev_yoy", "rsi_14",
             "ret_20", "foreign_5", "margin_chg_5", "dist_high_60", "close", "vol_20",
             "market", "權重", "vol_60"]
     m = p.merge(b[[c for c in cols if c in b.columns]], on="code", how="left",
                 suffixes=("", "_b"))
+    # 只取各市場自己最新的 as_of。
+    #
+    # 要先 merge 再篩 —— 帳本的列本身沒有 market 欄位，市場是從 briefing 帶進來的。
+    # 若在 merge 前用全域 max 篩，台股推進到新交易日之後，還停在前一日的美股
+    # 判斷會被整組濾掉，美股分頁直接空掉（實測 2026-09-17 台股推進後美股歸零）。
+    # 兩個市場的收盤時間差 12 小時以上，as_of 本來就會不同步，這是常態不是例外。
+    #
+    # 仍然要篩的理由不變：某天沒做判斷而 briefing 照常重建時，不篩會靜默把
+    # 昨天的幅度配上今天的收盤，算出錯的獲利點與停損點，且不會有任何訊號。
+    if not m.empty and "market" in m.columns:
+        m = m[m["as_of"] == m.groupby("market")["as_of"].transform("max")]
     if market:
         m = m[m["market"] == market]
     return m.sort_values("exp_ret", ascending=False).reset_index(drop=True)

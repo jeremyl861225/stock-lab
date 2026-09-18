@@ -78,6 +78,29 @@ white-space:nowrap;font-weight:500}
 .wt{display:inline-block;width:26px;height:4px;border-radius:2px;background:var(--line);
 overflow:hidden;flex-shrink:0}
 .wt>span{display:block;height:100%;background:var(--mut);border-radius:2px}
+/* K 線。四個時間尺度，展開後才抓資料、才渲染 ——
+   103 檔 × 4 個尺度若在載入時全部畫出來，是 412 張 SVG。 */
+.kw{margin:8px 0 2px}
+.ks{display:flex;gap:4px;margin:0 0 6px}
+.ks button{flex:1;padding:4px 0;border:none;border-radius:7px;background:var(--card2);
+color:var(--mut);font:inherit;font-size:10.5px;font-weight:600;cursor:pointer;
+transition:background .14s var(--e),color .14s var(--e)}
+.ks button.on{background:var(--ink);color:var(--bg)}
+.kbox{position:relative;width:100%;height:132px;background:var(--card2);border-radius:9px;
+overflow:hidden}
+.kbox svg{display:block;width:100%;height:100%}
+.kg{stroke:var(--line);stroke-width:.5}
+.kup{fill:var(--up);stroke:var(--up)}
+.kdn{fill:var(--dn);stroke:var(--dn)}
+.khit{fill:transparent;cursor:pointer}
+.kbar.sel .kb{stroke-width:1.6}
+.klab{fill:var(--faint);font-size:7px;font-weight:600}
+.ktip{margin:5px 0 0;min-height:15px;font-size:10.5px;color:var(--mut);
+font-variant-numeric:tabular-nums;line-height:1.4}
+.ktip b{color:var(--ink);font-weight:700}
+.ktip .u{color:var(--up);font-weight:700}.ktip .d{color:var(--dn);font-weight:700}
+.kmsg{display:flex;align-items:center;justify-content:center;height:100%;
+font-size:10.5px;color:var(--faint)}
 .cps{margin:6px 0 0;display:flex;flex-direction:column;gap:3px}
 .cp{display:flex;gap:6px;align-items:baseline;font-size:10.5px;line-height:1.45}
 .cp s{text-decoration:none;flex:0 0 11px;font-weight:800}
@@ -357,6 +380,14 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<i>{cur}{sl:,.{dec}f}</i></div>'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
             f'</div><div class="why">{why}</div>'
+            f'<div class="kw" data-kc="{r["code"]}">'
+            f'<div class="ks" role="tablist">'
+            f'<button class="on" data-s="d20" onclick="ks(event,this)">20 天</button>'
+            f'<button data-s="m3" onclick="ks(event,this)">3 個月</button>'
+            f'<button data-s="y1" onclick="ks(event,this)">1 年</button>'
+            f'<button data-s="y5" onclick="ks(event,this)">5 年</button>'
+            f'</div><div class="kbox"><div class="kmsg">載入中…</div></div>'
+            f'<div class="ktip"></div></div>'
             f'{(_vdt(cp) + _cp_html(cp)) if horizon >= 250 else ""}'
             f'</div></div>')
     return "".join(out)
@@ -478,8 +509,94 @@ def build() -> Path:
 </div>
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>
 <script>
-function t(e){{e.setAttribute('aria-expanded',e.getAttribute('aria-expanded')!=='true')}}
+function t(e){{
+ const open = e.getAttribute('aria-expanded')!=='true';
+ e.setAttribute('aria-expanded', open);
+ if(open) kinit(e);          /* 展開才畫圖 —— 見 kload 的說明 */
+}}
 function kd(e,el){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();t(el);}}}}
+
+/* ── K 線 ────────────────────────────────────────────────────────
+   資料放在同目錄的 charts.json，第一次展開任一列時才抓（約 160 KB 壓縮後），
+   抓完存在記憶體。不內嵌進本頁的理由：103 檔 × 4 個尺度 = 412 組序列，
+   內嵌會讓每個人不論看不看圖都先背下整包。
+   不用圖表庫的理由：外部腳本受 CSP 限制，且為了四種 K 線載入一整個
+   函式庫，在手機上不划算 —— SVG 直接畫就夠。                       */
+let KD=null, KP=null;
+function kload(){{
+ if(KD) return Promise.resolve(KD);
+ if(!KP) KP = fetch('charts.json').then(r=>r.ok?r.json():Promise.reject(r.status))
+   .then(j=>{{KD=j; return j;}});
+ return KP;
+}}
+function kinit(row){{
+ const w = row.querySelector('.kw');
+ if(!w || w.dataset.done) return;
+ w.dataset.done = '1';
+ kload().then(()=>kdraw(w)).catch(()=>{{
+   const b=w.querySelector('.kbox');
+   if(b) b.innerHTML='<div class="kmsg">K 線資料載入失敗</div>';
+ }});
+}}
+function ks(ev, btn){{
+ ev.stopPropagation();          /* 不要連帶收合整列 */
+ const w = btn.closest('.kw');
+ w.querySelectorAll('.ks button').forEach(b=>b.classList.toggle('on', b===btn));
+ w.querySelector('.ktip').innerHTML='';
+ kdraw(w);
+}}
+function kfmt(v){{
+ return v>=1000 ? v.toLocaleString(undefined,{{maximumFractionDigits:0}})
+      : v>=100  ? v.toFixed(1) : v.toFixed(2);
+}}
+function kdraw(w){{
+ const box = w.querySelector('.kbox');
+ const code = w.dataset.kc;
+ const span = (w.querySelector('.ks button.on')||{{dataset:{{}}}}).dataset.s || 'd20';
+ const s = KD && KD.series[code] && KD.series[code][span];
+ if(!s){{ box.innerHTML='<div class="kmsg">此區間無資料</div>'; return; }}
+ const n=s.close.length, W=300, H=132, PL=2, PR=26, PT=8, PB=12;
+ const lo=Math.min(...s.low), hi=Math.max(...s.high), rng=(hi-lo)||1;
+ const iw=(W-PL-PR)/n, bw=Math.max(1.2, iw*0.62);
+ const y=v=>PT+(hi-v)/rng*(H-PT-PB);
+ let g='';
+ /* 水平參考線：最高、最低、以及中間值。只畫三條，多了會蓋過 K 線本身 */
+ [hi, (hi+lo)/2, lo].forEach(v=>{{
+   g+=`<line class="kg" x1="${{PL}}" y1="${{y(v).toFixed(1)}}" x2="${{W-PR}}" y2="${{y(v).toFixed(1)}}"/>`
+     +`<text class="klab" x="${{W-PR+2}}" y="${{(y(v)+2.5).toFixed(1)}}">${{kfmt(v)}}</text>`;
+ }});
+ for(let i=0;i<n;i++){{
+   const o=s.open[i],h=s.high[i],l=s.low[i],c=s.close[i];
+   const cx=PL+iw*(i+0.5), cls=c>=o?'kup':'kdn';
+   const yo=y(o), yc=y(c), top=Math.min(yo,yc), bh=Math.max(0.8,Math.abs(yc-yo));
+   const tap = span==='d20' ? ` data-i="${{i}}" onclick="ktap(event,this)"` : '';
+   g+=`<g class="kbar"${{tap}}>`
+     +`<line class="kb ${{cls}}" x1="${{cx.toFixed(1)}}" y1="${{y(h).toFixed(1)}}" x2="${{cx.toFixed(1)}}" y2="${{y(l).toFixed(1)}}" stroke-width="1"/>`
+     +`<rect class="kb ${{cls}}" x="${{(cx-bw/2).toFixed(1)}}" y="${{top.toFixed(1)}}" width="${{bw.toFixed(1)}}" height="${{bh.toFixed(1)}}"/>`
+     + (span==='d20'
+        ? `<rect class="khit" x="${{(cx-iw/2).toFixed(1)}}" y="0" width="${{iw.toFixed(1)}}" height="${{H}}"/>`
+        : '')
+     +`</g>`;
+ }}
+ box.innerHTML=`<svg viewBox="0 0 ${{W}} ${{H}}" preserveAspectRatio="none" role="img" `
+   +`aria-label="${{code}} ${{span}} K 線">${{g}}</svg>`;
+ const tip=w.querySelector('.ktip');
+ tip.innerHTML = span==='d20'
+   ? '點任一根 K 棒看當日數字'
+   : ({{m3:'日 K · 近 3 個月', y1:'週 K · 近 1 年', y5:'月 K · 近 5 年'}})[span];
+}}
+function ktap(ev, g){{
+ ev.stopPropagation();          /* 不要連帶收合整列 */
+ const w = g.closest('.kw'), i = +g.dataset.i;
+ w.querySelectorAll('.kbar').forEach(x=>x.classList.toggle('sel', x===g));
+ const s = KD.series[w.dataset.kc].d20, p = s.p[i];
+ const cls = p==null ? '' : (p>0?'u':(p<0?'d':''));
+ const sign = p==null ? '—' : (p>0?'+':'')+p.toFixed(2)+'%';
+ w.querySelector('.ktip').innerHTML =
+   `<b>${{s.t[i]}}</b>　開 ${{kfmt(s.open[i])}}　高 ${{kfmt(s.high[i])}}　`
+  +`低 ${{kfmt(s.low[i])}}　收 <b>${{kfmt(s.close[i])}}</b>　`
+  +`<span class="${{cls}}">${{sign}}</span>`;
+}}
 
 /* 釘選：存在瀏覽器本機，只屬於這台裝置的這個瀏覽器，不會外傳。
    釘選的標的置頂，內部仍依期望值排序（用 reverse+prepend 保持相對次序）。 */

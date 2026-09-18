@@ -73,3 +73,29 @@ def test_tw_rows_lead_with_name():
     assert tw, "找不到台股分頁"
     codes = re.findall(r'<span class="cd">(\d+)</span>', tw.group())
     assert len(codes) > 20, f"台股列只有 {len(codes)} 檔用名稱當主體"
+
+
+def test_markets_keep_their_own_as_of():
+    """台股與美股收盤差 12 小時以上，as_of 本來就會不同步。
+
+    起因：ranking.table() 用全域 max as_of 篩選，台股推進到新交易日後，
+    還停在前一日的美股判斷被整組濾掉 —— 美股分頁直接空掉。
+    實測 2026-09-17 台股推進後，US20／US5 都歸零。
+    而且要先 merge 再篩：帳本的列沒有 market 欄位，市場是從 briefing 帶進來的。
+    """
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+    import ranking
+    for h in (5, 20):
+        t = ranking.table(h)
+        if t.empty or "market" not in t.columns:
+            continue
+        for mk in t["market"].dropna().unique():
+            g = t[t["market"] == mk]
+            assert len(g) > 0, f"{mk} h={h} 沒有任何判斷"
+            assert g["as_of"].nunique() == 1, (
+                f"{mk} h={h} 混了多個 as_of：{sorted(g['as_of'].unique())}")
+        # 兩市場都必須有內容（只要帳本裡各自有判斷）
+        mks = set(t["market"].dropna().unique())
+        assert len(mks) >= 1, f"h={h} 一個市場都沒有"

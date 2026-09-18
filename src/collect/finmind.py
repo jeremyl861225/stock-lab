@@ -61,6 +61,27 @@ def _expected_monthly(end: str) -> str:
     return dt.date(y, m, 1).isoformat()
 
 
+def _tw_last_close_utc(now: dt.datetime | None = None) -> dt.datetime:
+    """最近一次台股收盤的 UTC 時刻。台股 13:30 收盤 = 05:30 UTC。
+
+    用「快取是否在最近一次收盤之後抓的」來判斷新鮮度，而不是用
+    「快取最後一筆是哪天」。後者需要預測「今天該不該有資料」，
+    而國定假日無法從日曆判斷 —— 舊版為此一律減一天當緩衝，
+    結果是當天 15:30 的排程永遠抓不到當天收盤，資料恆定落後一天。
+    實測 2026-09-17（週四，完整交易日）的排程跑了卻沒抓到當天資料。
+
+    改用時戳後，假日也自然處理：收盤後抓一次、沒有新資料、
+    時戳標記已是最新，不會反覆重抓。
+    """
+    now = now or dt.datetime.now(dt.UTC)
+    close = now.replace(hour=5, minute=30, second=0, microsecond=0)
+    if now < close:
+        close -= dt.timedelta(days=1)
+    while close.weekday() >= 5:          # 週末往前找到週五
+        close -= dt.timedelta(days=1)
+    return close
+
+
 def _last_expected(end: str) -> str:
     """end 之前最近的一個工作日。用來判斷快取是否已經是最新。
 
@@ -87,10 +108,21 @@ def fetch(kind: str, code: str, start: str, end: str, refresh: bool = False) -> 
         rows = c.get("payload") or []
         last = max((r.get("date", "") for r in rows), default="")
         freq = FREQ.get(kind, "D")
-        want = (_expected_quarterly(end) if freq == "Q" else
-                _expected_monthly(end) if freq == "M" else _last_expected(end))
-        if c.get("start", "9999") <= start and last and last >= want:
-            return c["payload"]
+        if c.get("start", "9999") <= start and rows:
+            if freq in ("Q", "M"):
+                want = (_expected_quarterly(end) if freq == "Q"
+                        else _expected_monthly(end))
+                if last >= want:
+                    return c["payload"]
+            else:
+                # 日頻：看「有沒有在最近一次收盤之後抓過」，
+                # 不看「最後一筆是哪天」—— 見 _tw_last_close_utc 的說明。
+                try:
+                    got = dt.datetime.fromisoformat(c.get("fetched_at_utc", ""))
+                except ValueError:
+                    got = None
+                if got is not None and got >= _tw_last_close_utc():
+                    return c["payload"]
 
     params = {"dataset": DATASETS[kind], "data_id": code,
               "start_date": start, "end_date": end}
