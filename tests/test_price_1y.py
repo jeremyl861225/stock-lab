@@ -17,15 +17,23 @@ from models.quantiles import Z10
 ROOT = Path(__file__).resolve().parent.parent
 
 
-@pytest.mark.parametrize("p", [0.30, 0.45, 0.50, 0.55, 0.63, 0.80])
+@pytest.mark.parametrize("p", [0.30, 0.45, 0.50, 0.55, 0.63, 0.80, 0.90])
 @pytest.mark.parametrize("sig", [0.10, 0.30, 0.60, 0.90, 1.20])
 def test_all_numbers_come_from_one_distribution(p, sig):
     r = price(p, sig)
     # 分位數反推的 P漲 必須等於輸入的 P漲 —— 這正是 2026-09-19 抓錯用的檢驗
     assert abs(implied_prob_up(r["q10"], r["q90"]) - p) < 1e-9
     # 同一個分布的分位數必然有序
-    assert r["q10"] < r["dn"] < r["median"] < r["up"] < r["q90"]
+    assert r["q10"] < r["median"] < r["q90"]
+    assert r["dn"] < r["median"] < r["up"]
     assert r["q10"] > -1.0 and r["dn"] > -1.0
+    # q10（約第 8.7 百分位，因 Z10=1.36 比 1.2816 寬）與 dn（第 (1−p)/2 百分位）
+    # 在 p > 0.826 時交叉。實務上 P漲 不會到那裡，但這裡把界線釘住，
+    # 免得日後有人看到「保守價高於下跌情境」以為是 bug 而去改數學。
+    if p < 0.82:
+        assert r["q10"] < r["dn"], f"p={p} 時 q10 應低於 dn"
+    if p > 0.84:
+        assert r["q10"] > r["dn"], f"p={p} 時兩者應已交叉"
     # 中位數的正負與 P漲 一致 —— 看多／看空的標籤永遠跟得上機率
     assert (r["median"] > 0) == (p > 0.5)
     if p == 0.5:
