@@ -33,11 +33,18 @@ def test_div_tags_balanced():
 
 
 def test_price_points_present_per_market():
-    """獲利點／目標點在每張卡都要有 —— 少了代表串接鏈被條件截斷。"""
+    """每張卡都要有價格格 —— 少了代表 f-string 串接鏈被條件截斷（曾中招一次）。
+
+    兩個期別顯示的名稱刻意不同（2026-09-19 起）：
+      5／20 日　獲利點／停損點 —— 期間夠短，是可執行的價位
+      一年期　　中位價／五成區間 —— 一年尺度的「目標價」有 97% 是波動度的讀數
+    這個測試守的是「有沒有被截斷」，不是守某一個標籤，所以三種都接受。
+    """
     h = _html()
     cards = re.findall(r'<div class="det">.*?</div></div>', h, re.S)
-    bad = [c for c in cards if ("獲利點" not in c and "目標價" not in c)]
-    assert not bad, f"{len(bad)} 張卡缺少獲利點／目標價"
+    ok = ("獲利點", "目標價", "中位價")
+    bad = [c for c in cards if not any(k in c for k in ok)]
+    assert not bad, f"{len(bad)} 張卡缺少價格格"
 
 
 def test_long_names_cannot_push_ev_offscreen():

@@ -17,6 +17,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import DOCS, DATA
 import ranking as ranking_mod
+from models.price_1y import price as price_1y
 import accuracy as acc_mod
 
 CSS = """
@@ -323,6 +324,45 @@ def _cp_html(r: dict | None) -> str:
     return f'<div class="cps">{"".join(rows)}</div>'
 
 
+def _price_chips(horizon: int, r, close: float, up: float, q10: float,
+                 cur: str, dec: int) -> str:
+    """價格格。5／20 日與一年期顯示的東西刻意不同。
+
+    5／20 日：獲利點（條件期望漲幅）與停損點（下檔 10% 分位）。
+    這兩個是可執行的價位 —— 期間夠短，波動度不會把它們撐到荒謬。
+
+    一年期：**中位價**與**五成區間**（q25–q75）。
+    2026-09-19 換掉原本的「目標價／保守價」，理由是實測：
+      · 目標價與 σ 的 Spearman 是 +0.972，與 P漲 只有 +0.045。
+        把 38 檔的 P漲 全部換成同一個值，目標價的橫斷面差異只掉 1%
+        —— 那個數字有 97% 是波動度的讀數，不是判斷。
+      · 而它**不是太寬**：過去一年南電實際高/低 7.9 倍、南亞科 10.1 倍、
+        華邦電 9.1 倍，而模型的 q75/q25 只有約 3 倍。把它縮窄會讓它
+        同時變成沒用又錯的數字。
+    所以改的是「顯示什麼」不是「分布」：
+      中位價 = 第 50 百分位，median > 0 ⟺ P漲 > 50%，這一格才是判斷；
+      五成區間 = 一年後有一半機率落在這裡，是一句說得清楚的話，
+      而「目標價／保守價」會被讀成可執行的價位。
+    """
+    if horizon < 250:
+        tp, sl = close * (1 + up), close * (1 + q10)
+        return (f'<div class="c u"><b>獲利點</b><i>{cur}{tp:,.{dec}f}</i></div>'
+                f'<div class="c d"><b>停損點</b><i>{cur}{sl:,.{dec}f}</i></div>')
+    p_up = float(r["prob_up"])
+    sig = r.get("sigma_annual")
+    if pd.isna(sig) or not sig:
+        # 舊帳本沒有 sigma_annual 的列：退回只顯示中位價，不硬湊一個區間。
+        med = close * (1 + float(r["exp_ret"]))
+        return (f'<div class="c u"><b>中位價</b><i>{cur}{med:,.{dec}f}</i></div>'
+                f'<div class="c"><b>五成區間</b><i>—</i></div>')
+    q = price_1y(p_up, float(sig))
+    med = close * (1 + q["median"])
+    lo, hi = close * (1 + q["q25"]), close * (1 + q["q75"])
+    return (f'<div class="c u"><b>中位價</b><i>{cur}{med:,.{dec}f}</i></div>'
+            f'<div class="c" title="一年後有一半機率落在這個範圍；寬度由波動度決定，不是判斷">'
+            f'<b>五成區間</b><i>{lo:,.{dec}f}–{hi:,.{dec}f}</i></div>')
+
+
 def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 20,
            cps: dict | None = None) -> str:
     if t.empty:
@@ -339,7 +379,6 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
         # 後者正好是下跌情境的中心值，約有一半機率被正常波動掃到，
         # 拿來當停損會被反覆洗出場。
         q10 = float(r["ret_q10"]) if pd.notna(r.get("ret_q10")) else dn * 1.6
-        tp, sl = close * (1 + up), close * (1 + q10)
         # 這裡曾放「賠率比」，已移除。它拿條件期望（約五成機率）除以 10% 分位（尾部），
         # 兩者不是同一種量，200 筆全部落在 0.35–0.90、無一 ≥1，等於沒有資訊。
         # 改成同類相比的 |漲幅/跌幅| 也不行：與 P漲 的 R²=85%，只是把旁邊那格換句話說。
@@ -394,12 +433,7 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
             f'<div class="c"><b>年化波動</b><i>{voltxt}</i></div>'
             f'<div class="c"><b>收盤價</b><i>{cur}{close:,.{dec}f}</i></div>'
-            f'<div class="c u"><b>{"目標價" if horizon >= 250 else "獲利點"}</b>'
-            f'<i>{cur}{tp:,.{dec}f}</i></div>'
-            # 一年尺度不存在「停損」—— 沒有人抱一年還設日內出場價。
-            # 同一個 q10 在這裡的意思是「悲觀情境下的價位」，所以換名字。
-            f'<div class="c d"><b>{"保守價" if horizon >= 250 else "停損點"}</b>'
-            f'<i>{cur}{sl:,.{dec}f}</i></div>'
+            f'{_price_chips(horizon, r, close, up, q10, cur, dec)}'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
             f'</div><div class="why">{why}</div>'
             f'<div class="kw" data-kc="{r["code"]}">'
@@ -522,15 +556,20 @@ def build() -> Path:
 <span class="dot" style="background:#2A7574"></span>下跌　（台股慣例紅漲綠跌）<br>
 信心是判斷當下的把握，準確率是該檔過去預測的期望值加權命中率<br>
 （樣本未達 8 筆顯示「—」，因為 3 筆對 2 筆不代表 67% 的準確率）<br>
-獲利點 = 收盤 ×(1+漲幅)，漲幅為「上漲情境下的平均幅度」<br>
-停損點 = 收盤 ×(1+下檔10%分位)，設在正常波動之外，跌破才代表判斷錯了<br>
+獲利點 = 收盤 ×(1+漲幅)，漲幅為「上漲情境下的平均幅度」（5／20 日）<br>
+停損點 = 收盤 ×(1+下檔10%分位)，設在正常波動之外，跌破才代表判斷錯了（5／20 日）<br>
 年化波動 = 近 20 日報酬標準差 ×√252，決定上面兩個價位拉多開<br>
 （原「賠率比」已移除：它把五成機率的目標除以一成機率的尾部，200 筆全部 &lt;1，不帶資訊）<br>
 排序依期望值 = P(漲)×漲幅 + P(跌)×跌幅<br>
-<b>一年期分頁的三個數字意思不同</b>：期望值是<b>中位數</b>（第 50 百分位，不是平均數 ——
-平均數含 exp(σ²/2)，會讓排序退化成純波動度排序）；目標價與跌幅是<b>上漲／下跌情境的中位數</b>；
-年化波動是近 60 日與長期波動的混合 σ。四者全部出自同一個對數常態，
-所以「期望值 &gt; 0」與「P漲 &gt; 50%」永遠一致<br>
+<b>一年期分頁不顯示獲利點與停損點</b>，改為中位價與五成區間。原因是實測：
+目標價與 σ 的相關是 +0.97、與 P漲 只有 +0.05，把所有標的的 P漲 換成同一個值，
+目標價的差異只掉 1% —— 那是波動度的讀數不是判斷。
+而它並不是太寬：過去一年南電實際高/低 7.9 倍、南亞科 10.1 倍，模型只有約 3 倍，
+所以縮窄會讓它同時變成沒用又錯的數字。改的是顯示什麼，不是分布<br>
+<b>中位價</b> = 第 50 百分位，中位價高於收盤 ⟺ P漲 &gt; 50%，這一格才是判斷<br>
+<b>五成區間</b> = 一年後有一半機率落在這裡，寬度由波動度決定<br>
+一年期的期望值也是中位數（不是平均數 —— 平均數含 exp(σ²/2)，
+會讓排序退化成純波動度排序）<br>
 產生於 {gen:%Y-%m-%d %H:%M} 台北 · 研究與紀律工具，不構成投資建議</div>
 </div>
 <button class="tog" onclick="k()" aria-label="切換深淺色">◐</button>

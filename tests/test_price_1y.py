@@ -101,3 +101,49 @@ def test_ledger_1y_records_are_coherent():
     assert (np.sign(d["exp_ret"]) == np.sign(d["prob_up"] - 0.5)).all(), \
         "一年期的 exp_ret（中位數）正負與 P漲 不一致"
     assert d["sigma_annual"].notna().all(), "一年期紀錄缺 sigma_annual"
+
+
+def test_quartiles_are_ordered_with_the_rest():
+    for p in (0.35, 0.5, 0.62):
+        for sig in (0.15, 0.5, 0.9):
+            r = price(p, sig)
+            assert r["q10"] < r["q25"] < r["median"] < r["q75"] < r["q90"]
+            assert r["q25"] > -1.0
+
+
+def test_panel_one_year_cards_show_judgment_not_volatility():
+    """一年期卡片必須顯示中位價與五成區間，不是目標價／保守價。
+
+    2026-09-19 換掉的理由：目標價與 σ 的 Spearman 是 +0.972、與 P漲 只有 +0.045，
+    把所有標的的 P漲 換成同一個值，目標價的橫斷面差異只掉 1%。
+    那格數字有 97% 是波動度的讀數。中位價則是判斷：
+    中位價高於收盤 ⟺ P漲 > 50%。
+    """
+    import re
+    f = ROOT / "docs/index.html"
+    if not f.exists():
+        pytest.skip("尚無面板")
+    h = f.read_text(encoding="utf-8")
+    if 'id="vTW250"' not in h:
+        pytest.skip("面板沒有一年期分頁")
+    seg = h.split('id="vTW250"')[1].split('<div class="view"')[0]
+    assert "中位價" in seg and "五成區間" in seg, "一年期卡片沒有換成中位價／五成區間"
+    assert "獲利點" not in seg and "停損點" not in seg, "一年期不該出現可執行價位的字樣"
+    # 5／20 日分頁必須維持原樣
+    seg20 = h.split('id="vTW20"')[1].split('<div class="view"')[0]
+    assert "獲利點" in seg20 and "停損點" in seg20, "5／20 日的價位被誤改"
+    assert "中位價" not in seg20
+
+
+def test_median_price_sits_on_the_right_side_of_close():
+    """中位價高於收盤 ⟺ P漲 > 50%。這是這一格之所以是判斷的原因。"""
+    import json as _json
+    f = ROOT / "judgments/20260918_1y.json"
+    if not f.exists():
+        pytest.skip("尚無一年期判斷")
+    for j in _json.loads(f.read_text(encoding="utf-8"))["judgments"]:
+        if not j.get("sigma_annual"):
+            continue
+        r = price(j["prob_up"], j["sigma_annual"])
+        assert (r["median"] > 0) == (j["prob_up"] > 0.5), \
+            f"{j['code']} 中位價方向與 P漲 不一致"
