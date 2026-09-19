@@ -204,9 +204,14 @@ def roll(as_of: str | None = None, commit: bool = False) -> dict:
         sig = float(v) * math.sqrt(HORIZON_1Y)
         q10, q90 = quantiles(ev, sig)
         out.append({
-            **{k: j[k] for k in ("code", "stance", "thesis", "facts", "inference",
+            **{k: j[k] for k in ("code", "thesis", "facts", "inference",
                                  "falsifier", "conviction", "checkpoints",
                                  "researched")},
+            # stance 必須跟著重算後的 ev 走。沿用舊值會在重新定價讓 ev 跨過 0 時
+            # 產生「p>0.5、exp_ret>0 卻標 bearish」的矛盾，並讓 finalize 整條中止
+            # （2026-09-19 實際發生於 2395／4958／3443）。棄權不因定價而改變。
+            "stance": j["stance"] if j["stance"] == "abstain"
+                      else ("bullish" if ev >= 0 else "bearish"),
             "rationale": why,
             "prob_up": round(p_up, 4),
             "up_magnitude": round(up, 4), "dn_magnitude": round(dn, 4),
