@@ -148,12 +148,23 @@ def test_one_year_cards_are_not_all_pending():
         f"美股一年期有 {n_pd}/{n_all} 條檢查點待公告，疑似對錯資料源"
 
 
-def test_chart_last_candle_matches_panel_as_of():
-    """K 線的最後一根必須是面板當天的收盤。
+def test_chart_last_candle_matches_card_as_of():
+    """K 線的最後一根必須是卡片收盤價那一天。
 
     美股的圖表資料原本只讀一次性回補的 prices_5y.parquet，而每日流程
     更新的是 prices.parquet —— 最後一根永遠停在回補那天（實測停在 09-16，
     卡片已經是 09-18）。圖與卡片對不上，而且不會有任何錯誤訊息。
+
+    比對對象刻意用 briefing.parquet 而不是 panel.parquet：
+    一、briefing 才是卡片收盤價的實際來源，比的就是「圖 vs 卡」本身；
+    二、panel.parquet 在 .gitignore 內，CI 拿不到。第一版寫成讀 panel，
+        本機全綠而 CI 連三次失敗 —— 只在本機跑得動的測試，
+        等於在唯一會擋住錯誤的地方缺席。
+
+    `compared` 是必要的：第二版曾寫 `if not isinstance(want, str): continue`，
+    而 briefing 的 as_of 是 datetime64，於是迴圈跳過每一個市場、
+    一次比對都沒做就回報通過。空轉的測試比沒有測試更糟 ——
+    沒有測試至少不會讓人以為有防線（README 的 test_truncation_invariance 同型）。
     """
     import json
     import pandas as pd
@@ -161,9 +172,14 @@ def test_chart_last_candle_matches_panel_as_of():
     if not cj.exists():
         return
     d = json.loads(cj.read_text(encoding="utf-8"))
-    pnl = pd.read_parquet(ROOT / "data/features/panel.parquet",
-                          columns=["date", "market"])
-    for mk, as_of in d.get("as_of", {}).items():
-        want = pnl[pnl["market"] == mk]["date"].max()
-        assert pd.Timestamp(as_of) >= want, \
-            f"{mk} 的 K 線資料停在 {as_of}，面板已到 {want.date()}"
+    b = pd.read_parquet(ROOT / "data/briefing.parquet", columns=["as_of", "market"])
+    compared = 0
+    for mk, chart_as_of in d.get("as_of", {}).items():
+        col = b[b["market"] == mk]["as_of"]
+        if col.empty:
+            continue
+        want = pd.Timestamp(col.max())
+        assert pd.Timestamp(chart_as_of) >= want, \
+            f"{mk} 的 K 線停在 {chart_as_of}，卡片已到 {want.date()}"
+        compared += 1
+    assert compared >= 2, f"只比對了 {compared} 個市場，這個測試在空轉"
