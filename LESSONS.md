@@ -347,3 +347,41 @@ inline style（如橫桿的 `style="--o:left"`）也算宣告。
 
 → 看到這一行不要去修，也不要因此中止流程。真正該停下來的是**測試失敗**。
 判斷方式：摘要中除了 universe 以外還有別的 `✗`，或末段的 pytest 不是全綠。
+
+## 2026-09-19 ｜重算了衍生欄位，卻沒重算從它導出的標籤
+
+`roll_1y.roll()` 每天把一年期論點重新定價：`prob_up`、`exp_ret`、
+`up_magnitude`、`dn_magnitude` 全部重算。但輸出那一段是
+
+```python
+**{k: j[k] for k in ("code", "stance", "thesis", ...)},
+```
+
+`stance` 被原樣沿用。它是從 `exp_ret` 的正負導出的標籤，
+於是只要重新定價讓 `exp_ret` 跨過 0，標籤就和數字對不上。
+
+本日實際發生於 2395／4958／3443：`p=0.527`、`exp_ret=+0.0115`，
+`stance` 仍寫 `bearish`。`claude_judgment.load()` 的方向一致性檢查擋下整份檔案，
+`daily.py finalize` 在 ingest 階段中止 —— **這次是好的失敗**：
+它吵得夠大聲，所以被發現了。若沒有那道檢查，面板上會出現一批
+「看空但期望值為正」的紀錄，而且不會有任何症狀。
+
+→ **通則**：重算一組欄位時，把所有由這組欄位導出的欄位一起重算，
+不要用 `**{k: j[k] for k in (...)}` 這種「其餘照抄」的寫法夾帶衍生欄位。
+照抄的欄位只能是真正的輸入（論點、事實、否證條件），不能是結論。
+
+## 2026-09-19 ｜`finalize` 的自動提交白名單不含 `src/`
+
+`daily.py finalize` 的提交白名單是 `docs/`、`judgments/`、`config/`、
+`data/predictions.jsonl` 等產物路徑，**沒有 `src/`**。
+
+本日修好 `src/roll_1y.py` 之後跑 finalize，它照常 commit 並 push，
+訊息是「每日預測 2026-09-18」，看起來一切正常 —— 但那個修正一行都沒進版。
+若當時就回報「已修好並推上去」，那句話是假的（與 2026-09-18 那次同型）。
+
+當天的輸出裡還有一行 `error: cannot rebase: You have unstaged changes.`，
+那就是它在講這件事，只是不顯眼。
+
+→ 改到 `src/` 底下的任何東西，finalize 之後要自己補一次：
+`git add <明確檔名>` → `git diff --cached --stat` → commit →
+`git show --stat HEAD` 確認檔案真的在裡面 → push → `git status -sb` 確認已同步。
