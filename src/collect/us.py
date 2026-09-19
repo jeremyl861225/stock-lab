@@ -73,10 +73,37 @@ def build_universe(top_n: int = 50) -> dict:
 
 
 def load(as_of: str | None = None) -> dict:
-    p = CONFIG / "universe_us_latest.json"
-    if not p.exists():
-        raise FileNotFoundError("尚未建立美股 universe")
-    return json.loads(p.read_text(encoding="utf-8"))
+    """取用不晚於 as_of 的最近一份快照。as_of=None 才回傳最新的那份。
+
+    **這個參數原本是假的** —— 簽名收下 as_of 卻永遠回傳最新的 universe，
+    於是任何呼叫端以為自己做了 point-in-time，實際上拿的是今天的成分股。
+    那正是回測裡生存者偏差的入口，而且它不會報錯。
+    （台股那支 `universe.load` 一直是真的，兩邊介面看起來一樣但行為不同，
+    這種不對稱最難發現。2026-09-19 補上。）
+    """
+    if as_of is None:
+        p = CONFIG / "universe_us_latest.json"
+        if not p.exists():
+            raise FileNotFoundError("尚未建立美股 universe")
+        return json.loads(p.read_text(encoding="utf-8"))
+    out = CONFIG / "universe_us"
+    files = sorted(out.glob("*.json")) if out.exists() else []
+    key = str(as_of).replace("-", "")[:8]
+    ok = [f for f in files if f.stem <= key]
+    if not ok:
+        raise ValueError(f"{as_of} 之前沒有可用的美股 universe 快照（會造成前視偏誤）")
+    return json.loads(ok[-1].read_text(encoding="utf-8"))
+
+
+def codes_ever() -> set[str]:
+    """所有快照中曾入選過的代號 —— panel 必須涵蓋這整組，
+    否則「後來掉出去」的股票會在特徵計算時整批消失。"""
+    out = CONFIG / "universe_us"
+    ever: set[str] = set()
+    for f in sorted(out.glob("*.json")) if out.exists() else []:
+        d = json.loads(f.read_text(encoding="utf-8"))
+        ever |= {c["code"] for c in d.get("constituents", [])}
+    return ever
 
 
 def fetch_prices(codes: list[str], years: float = 2.1) -> pd.DataFrame:
@@ -133,8 +160,18 @@ if __name__ == "__main__":
     uni = build_universe(50)
     codes = [c["code"] for c in uni["constituents"]]
     print(f"美股 universe：{len(codes)} 檔 → {', '.join(codes)}")
-    px = fetch_prices(codes)
-    print(f"價量：{len(px):,} 列，{px['date'].min().date()} ~ {px['date'].max().date()}")
+    # 價量必須涵蓋「曾入選過」的全部代號，不只今天的 50 檔。
+    # 少了這一步，PIT 成分股只做了一半：回測知道 2024 年該算 INTC，
+    # 但 panel 裡沒有 INTC 的任何一列，那一檔還是靜默消失 ——
+    # 生存者偏差原封不動，只是換了個地方藏。台股在 predict.py:72
+    # 用 universe.codes_ever() 做了同一件事。
+    px_codes = sorted(set(codes) | codes_ever())
+    extra = sorted(set(px_codes) - set(codes))
+    if extra:
+        print(f"　另補 {len(extra)} 檔曾入選但已掉出的：{', '.join(extra)}")
+    px = fetch_prices(px_codes)
+    print(f"價量：{len(px):,} 列 × {px['code'].nunique()} 檔，"
+          f"{px['date'].min().date()} ~ {px['date'].max().date()}")
     fd = fetch_fundamentals(codes)
     print(f"基本面：{fd['PER'].notna().sum()}/{len(fd)} 檔有 PER、"
           f"{fd['rev_yoy'].notna().sum()} 檔有營收成長")

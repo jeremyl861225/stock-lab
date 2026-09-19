@@ -39,6 +39,9 @@ def prepare() -> None:
     # SEC 先跑：它是美股季報的主來源（真實申報日 + 15 年歷史）。
     # yfinance 那支仍照跑，負責 IFRS 申報人（TSM）與 SEC 掛掉時的退路。
     run("collect/sec_edgar.py", allow_fail=True)
+    # 美股 PIT 成分股：每月一份快照。價格快取超過 5 天會自動重抓，
+    # 所以跑每一天都安全，只有跨月那天會真的多出一份。
+    run("collect/pit_universe_us.py", allow_fail=True)
     run("collect/us_fundamentals.py", allow_fail=True)
     # 美股財報排程（yfinance）。內建 20 小時快取。台股的事件由法定期限推導，
     # 不需要抓 —— 見 src/events.py。

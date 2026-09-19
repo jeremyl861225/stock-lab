@@ -16,6 +16,11 @@ data/raw/*
 # 同一條：不進的話 GitHub Actions 每次從空的開始，roll_1y 的基礎雜湊與本機
 # 不同，每次排程都把全部美股判成「財報已更新」而重算 P漲。
 !data/raw/sec_fund/
+# 美股 PIT 成分股要用的申報股數（80 檔、556KB）。進版控的理由是
+# GitHub Actions 每天會跑 collect/pit_universe_us.py；不進的話它每天要向
+# SEC 重抓 80 家公司的 companyfacts（每份 1–10MB）才能算出同一份快照。
+# 未還原報價（us/prices_raw.parquet）維持不進版控，與 us/prices.parquet 一致。
+!data/raw/sec_shares/
 
 data/features/
 data/backtest/*.parquet

@@ -1,0 +1,434 @@
+{
+  "as_of": "20251215",
+  "built_at_utc": "2026-09-19T09:36:55.716476+00:00",
+  "market": "US",
+  "method": "sec_pit_shares_x_unadjusted_close",
+  "candidate_pool": 80,
+  "size": 53,
+  "shares_basis": {
+    "NVDA": "封面頁",
+    "AAPL": "封面頁",
+    "GOOGL": "資產負債表",
+    "MSFT": "封面頁",
+    "AMZN": "封面頁",
+    "META": "加權稀釋",
+    "AVGO": "封面頁",
+    "TSLA": "封面頁",
+    "TSM": "封面頁",
+    "BRK-B": "封面頁",
+    "LLY": "封面頁",
+    "WMT": "封面頁",
+    "JPM": "封面頁",
+    "V": "封面頁",
+    "ORCL": "封面頁",
+    "JNJ": "封面頁",
+    "MA": "封面頁",
+    "PLTR": "資產負債表",
+    "BAC": "封面頁",
+    "ABBV": "封面頁",
+    "NFLX": "封面頁",
+    "COST": "封面頁",
+    "HD": "封面頁",
+    "PG": "封面頁",
+    "AMD": "封面頁",
+    "GE": "封面頁",
+    "CSCO": "封面頁",
+    "UNH": "封面頁",
+    "KO": "封面頁",
+    "CVX": "封面頁",
+    "WFC": "封面頁",
+    "IBM": "封面頁",
+    "MS": "封面頁",
+    "CAT": "封面頁",
+    "GS": "封面頁",
+    "MU": "封面頁",
+    "AXP": "封面頁",
+    "MRK": "封面頁",
+    "PM": "封面頁",
+    "RTX": "封面頁",
+    "CRM": "封面頁",
+    "MCD": "封面頁",
+    "ABT": "封面頁",
+    "TMUS": "封面頁",
+    "PEP": "封面頁",
+    "C": "封面頁",
+    "ISRG": "封面頁",
+    "DIS": "封面頁",
+    "LIN": "封面頁",
+    "QCOM": "封面頁"
+  },
+  "note": "候選池是今天的大型股清單，已掉出池外或下市者還原不了；這份快照比台股 PCF 弱一級",
+  "constituents": [
+    {
+      "code": "NVDA",
+      "name": "NVDA",
+      "industry": "",
+      "mcap": 4283846836853.0273,
+      "weight": 0.10772598311264109
+    },
+    {
+      "code": "AAPL",
+      "name": "AAPL",
+      "industry": "",
+      "mcap": 4050345904379.5166,
+      "weight": 0.10185413043760336
+    },
+    {
+      "code": "GOOGL",
+      "name": "GOOGL",
+      "industry": "",
+      "mcap": 3722372954742.4316,
+      "weight": 0.0936065880348123
+    },
+    {
+      "code": "MSFT",
+      "name": "MSFT",
+      "industry": "",
+      "mcap": 3529041612583.46,
+      "weight": 0.0887448808604584
+    },
+    {
+      "code": "AMZN",
+      "name": "AMZN",
+      "industry": "",
+      "mcap": 2379000599315.2495,
+      "weight": 0.059824776222640236
+    },
+    {
+      "code": "META",
+      "name": "META",
+      "industry": "",
+      "mcap": 1665395745117.1875,
+      "weight": 0.04187974051055309
+    },
+    {
+      "code": "AVGO",
+      "name": "AVGO",
+      "industry": "",
+      "mcap": 1604706846596.6084,
+      "weight": 0.040353595551095245
+    },
+    {
+      "code": "TSLA",
+      "name": "TSLA",
+      "industry": "",
+      "mcap": 1580795100147.0942,
+      "weight": 0.039752286379148655
+    },
+    {
+      "code": "TSM",
+      "name": "TSM",
+      "industry": "",
+      "mcap": 1492369420076.3367,
+      "weight": 0.037528644012647994
+    },
+    {
+      "code": "BRK-B",
+      "name": "BRK-B",
+      "industry": "",
+      "mcap": 1084012586394.4005,
+      "weight": 0.027259686450788016
+    },
+    {
+      "code": "LLY",
+      "name": "LLY",
+      "industry": "",
+      "mcap": 1004177117454.2505,
+      "weight": 0.0252520622974571
+    },
+    {
+      "code": "WMT",
+      "name": "WMT",
+      "industry": "",
+      "mcap": 930835807022.4658,
+      "weight": 0.023407746879579694
+    },
+    {
+      "code": "JPM",
+      "name": "JPM",
+      "industry": "",
+      "mcap": 871178349738.2332,
+      "weight": 0.021907539593768916
+    },
+    {
+      "code": "V",
+      "name": "V",
+      "industry": "",
+      "mcap": 651235770308.4932,
+      "weight": 0.016376639097147875
+    },
+    {
+      "code": "ORCL",
+      "name": "ORCL",
+      "industry": "",
+      "mcap": 531299194339.14185,
+      "weight": 0.013360591593695638
+    },
+    {
+      "code": "JNJ",
+      "name": "JNJ",
+      "industry": "",
+      "mcap": 515998727583.78894,
+      "weight": 0.012975830446512909
+    },
+    {
+      "code": "MA",
+      "name": "MA",
+      "industry": "",
+      "mcap": 498563511545.95703,
+      "weight": 0.01253738671591574
+    },
+    {
+      "code": "PLTR",
+      "name": "PLTR",
+      "industry": "",
+      "mcap": 436742290500.0,
+      "weight": 0.010982767218993678
+    },
+    {
+      "code": "BAC",
+      "name": "BAC",
+      "industry": "",
+      "mcap": 404047092152.7687,
+      "weight": 0.010160580404395589
+    },
+    {
+      "code": "ABBV",
+      "name": "ABBV",
+      "industry": "",
+      "mcap": 401991629154.77014,
+      "weight": 0.010108891634781753
+    },
+    {
+      "code": "NFLX",
+      "name": "NFLX",
+      "industry": "",
+      "mcap": 397333795367.38696,
+      "weight": 0.009991760994254527
+    },
+    {
+      "code": "COST",
+      "name": "COST",
+      "industry": "",
+      "mcap": 381382270616.5796,
+      "weight": 0.009590627678482504
+    },
+    {
+      "code": "HD",
+      "name": "HD",
+      "industry": "",
+      "mcap": 355387635308.35815,
+      "weight": 0.008936940058247727
+    },
+    {
+      "code": "PG",
+      "name": "PG",
+      "industry": "",
+      "mcap": 339130151376.2018,
+      "weight": 0.008528112780749619
+    },
+    {
+      "code": "AMD",
+      "name": "AMD",
+      "industry": "",
+      "mcap": 337948865854.2331,
+      "weight": 0.00849840696981911
+    },
+    {
+      "code": "GE",
+      "name": "GE",
+      "industry": "",
+      "mcap": 317477902521.31177,
+      "weight": 0.007983623240547924
+    },
+    {
+      "code": "CSCO",
+      "name": "CSCO",
+      "industry": "",
+      "mcap": 309173149554.75,
+      "weight": 0.007774783449607196
+    },
+    {
+      "code": "UNH",
+      "name": "UNH",
+      "industry": "",
+      "mcap": 308981558810.8002,
+      "weight": 0.007769965513291238
+    },
+    {
+      "code": "KO",
+      "name": "KO",
+      "industry": "",
+      "mcap": 305285184980.6373,
+      "weight": 0.007677012725768458
+    },
+    {
+      "code": "CVX",
+      "name": "CVX",
+      "industry": "",
+      "mcap": 301625541375.38025,
+      "weight": 0.007584983593954814
+    },
+    {
+      "code": "WFC",
+      "name": "WFC",
+      "industry": "",
+      "mcap": 291620958741.6629,
+      "weight": 0.00733339815196908
+    },
+    {
+      "code": "IBM",
+      "name": "IBM",
+      "industry": "",
+      "mcap": 288515372107.06256,
+      "weight": 0.007255301902010815
+    },
+    {
+      "code": "MS",
+      "name": "MS",
+      "industry": "",
+      "mcap": 282563291732.2784,
+      "weight": 0.007105624816354289
+    },
+    {
+      "code": "CAT",
+      "name": "CAT",
+      "industry": "",
+      "mcap": 275995651107.07324,
+      "weight": 0.006940468224621312
+    },
+    {
+      "code": "GS",
+      "name": "GS",
+      "industry": "",
+      "mcap": 266813412155.21075,
+      "weight": 0.006709562275847656
+    },
+    {
+      "code": "MU",
+      "name": "MU",
+      "industry": "",
+      "mcap": 266585683312.5,
+      "weight": 0.006703835574030711
+    },
+    {
+      "code": "AXP",
+      "name": "AXP",
+      "industry": "",
+      "mcap": 263533981933.5102,
+      "weight": 0.006627094377685936
+    },
+    {
+      "code": "MRK",
+      "name": "MRK",
+      "industry": "",
+      "mcap": 248847584761.53217,
+      "weight": 0.0062577752507452815
+    },
+    {
+      "code": "PM",
+      "name": "PM",
+      "industry": "",
+      "mcap": 246587149929.67136,
+      "weight": 0.006200932050276623
+    },
+    {
+      "code": "RTX",
+      "name": "RTX",
+      "industry": "",
+      "mcap": 244167979175.96225,
+      "weight": 0.006140097114368385
+    },
+    {
+      "code": "CRM",
+      "name": "CRM",
+      "industry": "",
+      "mcap": 238541461715.69824,
+      "weight": 0.005998606965912787
+    },
+    {
+      "code": "MCD",
+      "name": "MCD",
+      "industry": "",
+      "mcap": 226984963799.46136,
+      "weight": 0.00570799547890632
+    },
+    {
+      "code": "ABT",
+      "name": "ABT",
+      "industry": "",
+      "mcap": 223392881153.73642,
+      "weight": 0.005617665303909484
+    },
+    {
+      "code": "TMUS",
+      "name": "TMUS",
+      "industry": "",
+      "mcap": 219406263852.2536,
+      "weight": 0.0055174137579388095
+    },
+    {
+      "code": "PEP",
+      "name": "PEP",
+      "industry": "",
+      "mcap": 206769174917.95636,
+      "weight": 0.005199628626729705
+    },
+    {
+      "code": "C",
+      "name": "C",
+      "industry": "",
+      "mcap": 201829228195.607,
+      "weight": 0.0050754036865168365
+    },
+    {
+      "code": "ISRG",
+      "name": "ISRG",
+      "industry": "",
+      "mcap": 198347649688.71143,
+      "weight": 0.004987852361335778
+    },
+    {
+      "code": "DIS",
+      "name": "DIS",
+      "industry": "",
+      "mcap": 197256560780.7516,
+      "weight": 0.004960414726483358
+    },
+    {
+      "code": "LIN",
+      "name": "LIN",
+      "industry": "",
+      "mcap": 194713029760.65186,
+      "weight": 0.004896452500439107
+    },
+    {
+      "code": "QCOM",
+      "name": "QCOM",
+      "industry": "",
+      "mcap": 191987454116.8213,
+      "weight": 0.00482791239455726
+    },
+    {
+      "code": "BTCO",
+      "name": "BTCO",
+      "industry": "ETF",
+      "mcap": null,
+      "weight": null
+    },
+    {
+      "code": "QQQ",
+      "name": "QQQ",
+      "industry": "ETF",
+      "mcap": null,
+      "weight": null
+    },
+    {
+      "code": "VOO",
+      "name": "VOO",
+      "industry": "ETF",
+      "mcap": null,
+      "weight": null
+    }
+  ]
+}

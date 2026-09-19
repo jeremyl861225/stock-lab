@@ -40,11 +40,22 @@ OUT = DATA / "backtest"
 
 def _pit_members(market: str, d) -> set[str] | None:
     """該日的成分股。回傳 None 代表「沒有快照，無法還原」——
-    這時不要用今天的成分股頂替，那正是生存者偏差本身。"""
-    if market != "TW":
-        return None
+    這時不要用今天的成分股頂替，那正是生存者偏差本身。
+
+    兩個市場的快照品質不同，讀數字時要記得（`METHOD.md` §6.2）：
+      台股　0050 的每日申購買回籃子，零生存者偏差是結構上成立的。
+      美股　SEC 申報股數 × 當時未還原收盤價重算市值排序。候選池是
+            今天的大型股清單，已掉出池外或下市的公司還原不了 —— 弱一級。
+    """
+    key = pd.Timestamp(d).strftime("%Y%m%d")
     try:
-        uni = universe.load(pd.Timestamp(d).strftime("%Y%m%d"))
+        if market == "TW":
+            uni = universe.load(key)
+        elif market == "US":
+            from collect import us as us_mod
+            uni = us_mod.load(key)
+        else:
+            return None
     except Exception:  # noqa: BLE001
         return None
     return {c["code"] for c in uni["constituents"]}
