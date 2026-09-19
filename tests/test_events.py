@@ -80,3 +80,28 @@ def test_adr_gives_taiwan_issuers_their_real_earnings_date():
     e = EV.upcoming(["2330"], ["TW"], pd.Timestamp("2026-09-18")).iloc[0]
     assert "財報" in (e["evt_types_20"] or ""), \
         f"2330 的 20 日視窗內沒有帶到 ADR 的財報日：{e['evt_types_20']}"
+
+
+def test_verifier_flags_unmentioned_earnings_but_not_routine_revenue():
+    """視窗內有財報卻沒提到 → 要警告；但月營收是台股每檔每月都有的例行事件，
+    逐檔警告等於 50 項噪音（WEEKLY.md：噪音太多的警報等於沒有警報）。"""
+    import verify_judgment as V
+    assert "月營收" not in V.EVENT_WORTH_FLAGGING
+    assert set(V.EVENT_WORTH_FLAGGING) == {"財報", "除權息"}
+
+    b = pd.DataFrame({
+        "code": ["AAA", "BBB", "CCC"],
+        "evt_in_20": [True, True, True],
+        "evt_in_5": [False, False, False],
+        "evt_types_20": ["財報", "財報", "月營收"],
+        "evt_date": ["2026-10-13", "2026-10-13", "2026-10-10"],
+        "evt_days": [17.0, 17.0, 16.0],
+    })
+    js = [{"horizon": 20, "judgments": [
+        {"code": "AAA", "thesis": "估值偏高", "inference": "", "rationale": ""},
+        {"code": "BBB", "thesis": "10/13 財報是關鍵", "inference": "", "rationale": ""},
+        {"code": "CCC", "thesis": "估值偏高", "inference": "", "rationale": ""},
+    ]}]
+    out = V.check_event_window(b, js)
+    flagged = {x.split()[1] for x in out}
+    assert flagged == {"AAA"}, f"應只警告 AAA，實際 {flagged}"

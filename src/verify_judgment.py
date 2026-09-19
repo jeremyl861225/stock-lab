@@ -239,6 +239,50 @@ def check_news_coverage(b: pd.DataFrame, judgments: list[dict], as_of: str) -> l
     return out
 
 
+# 只有這兩類事件值得逐檔提醒。月營收刻意排除：台股每一檔每個月 10 日都有，
+# 20 日視窗內 50 檔全中，逐檔警告等於 50 項噪音 ——
+# 而「噪音太多的警報等於沒有警報」（WEEKLY.md，第一版查核器曾產生 121 項誤報）。
+EVENT_WORTH_FLAGGING = ("財報", "除權息")
+EVENT_WORDS = ("財報", "法說", "財測", "業績", "除權", "除息", "earnings")
+
+
+def check_event_window(b: pd.DataFrame, judgments: list[dict]) -> list[str]:
+    """視窗內有財報或除權息，判斷卻沒提到 —— 那是兩個不同的賭局。
+
+    2026-09-18 的實例：美股六家金融（JPM／BAC／MS／GS／WFC／C）全部在 10/13–14
+    公布財報、落在 20 日視窗內，而當天的判斷沒有一檔提到這件事；
+    COST 更只剩 4 個營業日。以往只有台積電那種大事會被人記在 why 裡，
+    103 檔記不住 —— 這一條就是把「記不住」交給機器。
+
+    注意 `_load()` 只回傳 h=20 那一批，所以實際只會檢查 20 日視窗。
+    這是對的：5 日的 p 與 why 都由 20 日導出（METHOD §4.2），重複檢查只是噪音。
+    """
+    out = []
+    if "evt_types_20" not in b.columns:
+        return out
+    for d in judgments:
+        h = int(d.get("horizon", 20))
+        col = "evt_in_5" if h <= 5 else "evt_in_20"
+        if col not in b.columns:
+            continue
+        for j in d["judgments"]:
+            row = b[b["code"] == j["code"]]
+            if row.empty or not bool(row[col].fillna(False).iloc[0]):
+                continue
+            kinds = str(row["evt_types_20"].iloc[0] or "")
+            hit = [k for k in EVENT_WORTH_FLAGGING if k in kinds]
+            if not hit:
+                continue
+            txt = f"{j.get('thesis', '')}{j.get('inference', '')}{j.get('rationale', '')}"
+            if any(w in txt for w in EVENT_WORDS):
+                continue
+            days = row["evt_days"].iloc[0]
+            out.append(f"[事件] {j['code']} {h} 日視窗內有{'／'.join(hit)}"
+                       f"（{row['evt_date'].iloc[0]}，{days:.0f} 個營業日後），"
+                       f"判斷未提及 —— 有無財報是兩個不同的賭局")
+    return out
+
+
 def run(as_of: str) -> dict:
     b, js = _load(as_of)
     if not js:
@@ -250,6 +294,7 @@ def run(as_of: str) -> dict:
         "論述一致性": check_thesis_alignment(b, js),
         "單邊採證": check_one_sided(b, js),
         "新聞覆蓋": check_news_coverage(b, js, as_of),
+        "事件視窗": check_event_window(b, js),
     }
     print(f"═══ 判斷品質查核（{as_of}）═══")
     total = 0
