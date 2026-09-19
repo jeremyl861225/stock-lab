@@ -37,6 +37,9 @@ def prepare() -> None:
     # collect/us.py 的 .info 只有當下快照，沒有期別也沒有歷史。
     # 內建 20 小時快取，同一天重複觸發不會重抓。
     run("collect/us_fundamentals.py", allow_fail=True)
+    # 美股財報排程（yfinance）。內建 20 小時快取。台股的事件由法定期限推導，
+    # 不需要抓 —— 見 src/events.py。
+    run("events.py", "--fetch", allow_fail=True)
     run("features/panel.py")                          # 含除權息還原
     run("collect/news_daily.py", allow_fail=True)     # 新聞面（未納入時明天會是空的）
     run("briefing.py")                                # 四面向簡報

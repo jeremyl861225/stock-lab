@@ -142,6 +142,20 @@ def build_briefing(as_of: str | None = None) -> pd.DataFrame:
         _p.groupby("code")["_r"].apply(lambda s: s.tail(60).std()))
     if "market" not in f.columns:
         f["market"] = "TW"
+
+    # 事件日曆：視窗內有沒有財報／月營收／除權息。
+    # 這是 5／20 日最大的遺漏條件變數 —— 同一檔股票，視窗內有沒有法說會
+    # 是兩個不同的賭局，而系統對兩者給出一樣的幅度。
+    # **刻意只進 briefing，不進 FEATURE_COLS**：未來的財報日是「今天查得到」
+    # 而非「as_of 當天查得到」的資訊（yfinance 沒有歷史版本的排程表），
+    # 放進統計模型的訓練集就是前視偏差。人做的是今天這一筆判斷，不回測。
+    try:
+        import events as EV
+        ev = EV.upcoming(f["code"], f["market"], as_of_ts)
+        f = f.merge(ev, on="code", how="left")
+    except Exception as e:  # noqa: BLE001
+        print(f"  事件日曆未併入（{type(e).__name__}: {e}）")
+
     return f.sort_values(["market", "權重"], ascending=[True, False]).reset_index(drop=True)
 
 
