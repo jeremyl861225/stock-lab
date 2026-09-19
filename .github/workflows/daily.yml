@@ -31,6 +31,7 @@ jobs:
       - name: 準備（收資料 → 特徵 → 簡報 → 模型 → 一年期滾動 → 結算 → 測試）
         env:
           FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+          SEC_UA: ${{ secrets.SEC_UA }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}

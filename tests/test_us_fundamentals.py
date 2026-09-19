@@ -26,31 +26,73 @@ def test_avail_date_is_always_after_period_end(f):
     assert (f["avail_date"] > f["date"]).all()
 
 
-def test_filing_lag_matches_legal_deadline(f):
-    """申報落後天數只能是四個法定值之一。
-    出現其他數字代表 _avail 被繞過，或年度／季度判斷錯了。"""
-    lag = (f["avail_date"] - f["date"]).dt.days.unique()
+def test_avail_basis_is_declared_and_consistent(f):
+    """可用日必須說得出自己是哪來的，而且與那個來源一致。
+
+    2026-09-19 起可用日有兩種來源：SEC 的真實申報日，以及取不到時退回的
+    法定上限。這一條擋的是「退回發生了但沒人知道」—— 退回本身沒問題，
+    靜默退回才有問題（`eps_yoy_basis` 是同一個道理）。
+    """
+    assert set(f["avail_basis"]) <= {"SEC申報日", "法定上限"}
+
+    legal_rows = f[f["avail_basis"] == "法定上限"]
+    lag = (legal_rows["avail_date"] - legal_rows["date"]).dt.days.unique()
     allowed = {UF.LAG_Q, UF.LAG_FY, UF.LAG_Q_FPI, UF.LAG_FY_FPI}
-    assert set(lag) <= allowed, f"出現非法定落後天數：{sorted(set(lag) - allowed)}"
+    assert set(lag) <= allowed, f"退回法定上限卻不是法定天數：{sorted(set(lag) - allowed)}"
+
+    sec_rows = f[f["avail_basis"] == "SEC申報日"]
+    sec_lag = (sec_rows["avail_date"] - sec_rows["date"]).dt.days
+    assert (sec_lag <= UF.MAX_FILED_LAG).all(), "採信了離期末過遠的申報日"
+
+
+def test_sec_avail_date_equals_first_filing(f):
+    """標成 SEC申報日 的列，日期必須真的等於該季首次申報日。
+
+    中間只要有一個地方把它換成推估值（例如順手 fillna 成法定上限），
+    整套就退回舊行為而外觀不變 —— 這正是這個 repo 最常見的失效方式。
+    """
+    checked = 0
+    for code, path in UF._sources():
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        qs = raw.get("quarters") or {}
+        if not qs or "filed_first" not in next(iter(qs.values())):
+            continue
+        rows = f[(f["code"] == code) & (f["avail_basis"] == "SEC申報日")]
+        for _, r in rows.iterrows():
+            q = qs.get(str(r["date"].date()))
+            assert q is not None, f"{code} {r['date']} 在原始檔找不到"
+            assert r["avail_date"] == pd.Timestamp(q["filed_first"]), \
+                f"{code} {r['date']} 可用日不等於首次申報日"
+            checked += 1
+    assert checked > 0, "沒有任何一列走 SEC 申報日，這個測試等於沒跑"
 
 
 def test_negative_equity_voids_roe(f):
-    """平均股東權益為負時 ROE 必須作廢。
+    """**平均**股東權益為負時 ROE 必須作廢。
 
-    ABBV 的權益是 −59 億美元（長年大額買回），照算會得到 −206%，
+    ABBV 的權益一度是 −59 億美元（長年大額買回），照算會得到 −206%，
     而它其實穩定獲利 —— 負分母會把訊號的正負號整個翻過來，
     在橫斷面百分位裡直接把最賺錢的一批排到最後。
+
+    判準是**平均**（(當期 + 四季前) / 2），因為那才是 roe_ttm 的分母。
+    這裡原本寫成「單季權益為負」—— 在 yfinance 只給 5–7 季的時候兩者
+    剛好等價，換成 SEC 的 18 年歷史之後就不等價了：ABBV 2018Q2 的權益
+    由 +60 億翻成 −34 億，平均仍是 +13 億，分母沒有翻號，ROE 該算。
+    對著實作沒有主張的東西下斷言，遲早會擋掉正確的改動。
     """
-    for p in sorted((ROOT / "data/raw/us_fund").glob("*.json")):
+    for _code, p in UF._sources():
         q, _ = UF._load_one(p)
         if q.empty or "equity" not in q.columns:
             continue
         code = q["code"].iloc[0]
-        neg = q[q["equity"] < 0]
+        q = q.sort_values("date")
+        eq = q["equity"].astype(float)
+        avg = (eq + eq.shift(4)) / 2
+        neg = q[avg <= 0]
         if neg.empty:
             continue
         rows = f[(f["code"] == code) & f["date"].isin(neg["date"])]
-        assert rows["roe_ttm"].isna().all(), f"{code} 權益為負卻算出了 ROE"
+        assert rows["roe_ttm"].isna().all(), f"{code} 平均權益為負卻算出了 ROE"
 
 
 def test_ratios_stay_inside_physical_bounds(f):
@@ -72,12 +114,18 @@ def test_quarterly_sums_reconcile_with_annual():
     這個測試會在判斷被寫壞之前先失敗。
     """
     bad = []
-    for p in sorted((ROOT / "data/raw/us_fund").glob("*.json")):
+    for _code, p in UF._sources():
         q, a = UF._load_one(p)
         if q.empty or a.empty or "revenue" not in q.columns or "revenue" not in a.columns:
             continue
         a = a.dropna(subset=["revenue"]).sort_values("date")
         for _, ar in a.iterrows():
+            # 2012 年之前不檢查。XBRL 是 2009–2011 分階段強制的，更早的期別
+            # 只以「後來財報的比較欄」進入 companyfacts，季與年常常來自
+            # 不同次重編（AAPL FY2009 的遞延收入重編、GE 2009 的停業部門）。
+            # 那不是這支程式的錯，而回測期間也從來用不到 2012 以前。
+            if ar["date"] < pd.Timestamp("2012-01-01"):
+                continue
             w = q[(q["date"] > ar["date"] - pd.Timedelta(days=370))
                   & (q["date"] <= ar["date"])].dropna(subset=["revenue"])
             if len(w) != 4 or not float(ar["revenue"]):

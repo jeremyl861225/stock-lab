@@ -36,6 +36,9 @@ def prepare() -> None:
     # 美股季報（yfinance）。一年期判斷與檢查點全靠它 ——
     # collect/us.py 的 .info 只有當下快照，沒有期別也沒有歷史。
     # 內建 20 小時快取，同一天重複觸發不會重抓。
+    # SEC 先跑：它是美股季報的主來源（真實申報日 + 15 年歷史）。
+    # yfinance 那支仍照跑，負責 IFRS 申報人（TSM）與 SEC 掛掉時的退路。
+    run("collect/sec_edgar.py", allow_fail=True)
     run("collect/us_fundamentals.py", allow_fail=True)
     # 美股財報排程（yfinance）。內建 20 小時快取。台股的事件由法定期限推導，
     # 不需要抓 —— 見 src/events.py。

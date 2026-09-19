@@ -12,6 +12,10 @@ logs/
 # 判成「財報已更新」而重算 P漲 —— 實際上什麼都沒更新。200KB，值得。
 data/raw/*
 !data/raw/us_fund/
+# SEC companyfacts 蒸餾後的季別檔（49 檔、1.6MB）。進版控的理由與 us_fund
+# 同一條：不進的話 GitHub Actions 每次從空的開始，roll_1y 的基礎雜湊與本機
+# 不同，每次排程都把全部美股判成「財報已更新」而重算 P漲。
+!data/raw/sec_fund/
 
 data/features/
 data/backtest/*.parquet

@@ -29,6 +29,8 @@ PINS = [
     ("≥5 檔命中",         "src/news_gate.py",               r"len\(events\)\s*>=\s*5"),
     ("10-Q 季末後 40 天", "src/features/us_fundamentals.py", r"LAG_Q,\s*LAG_FY\s*=\s*40,\s*60"),
     ("外國發行人 45／90", "src/features/us_fundamentals.py", r"LAG_Q_FPI,\s*LAG_FY_FPI\s*=\s*45,\s*90"),
+    ("`MAX_FILED_LAG = 120` 天", "src/features/us_fundamentals.py", r"MAX_FILED_LAG\s*=\s*120"),
+    ("重疊期別上數值差 <1%", "src/collect/sec_edgar.py", r"SPLICE_TOL\s*=\s*0\.01"),
     ("HORIZON_1Y",        "src/config.py",                  r"HORIZON_1Y\s*=\s*250"),
     # 一年期定價：只有 P漲 與 σ 兩個輸入（2026-09-19 起）
     ("W_SHORT = 0.6",     "src/models/price_1y.py",         r"W_SHORT\s*=\s*0\.6"),

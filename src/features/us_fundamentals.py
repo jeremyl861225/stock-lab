@@ -13,10 +13,21 @@
 外國發行人（本清單只有 TSM）不適用 10-Q，實際走本國規則：
   季末後 45 天　·　年度結束後 90 天（與台股 Q4 → 次年 3/31 一致）
 
-**這裡的可用日是法定上限，不是實際申報日。**
-實際上多數公司提早 2–3 週公布，所以我們會比真實世界晚知道前提翻掉。
-要拿到真正的申報日得走 SEC EDGAR 的 XBRL companyfacts（欄位 `filed`），
-那需要在 User-Agent 放一個聯絡信箱才不會被擋，未取得同意前不做。
+**可用日優先用 SEC EDGAR 的真實申報日，取不到才退回上面的法定上限。**
+（2026-09-19 起，見 `collect/sec_edgar.py`。）法定上限是法律容許的最晚一天，
+實測 49 檔美股 2015 年後的真實申報落後中位數是 **32 天**，比 10-Q 的 40 天
+早 8 天 —— 也就是說舊做法讓我們比真實世界晚 8 天才知道前提翻掉。
+
+退回法定上限的兩種情況，逐列記在 `avail_basis`，不靜默：
+  1. 該檔沒有 SEC 資料 —— TSM 用 IFRS 申報，companyfacts 裡 us-gaap 概念是 0 個。
+  2. 申報日離期末超過 `MAX_FILED_LAG` 天 —— companyfacts 只回溯到 XBRL 強制申報
+     （2009–2011 分階段），更早的期別只以「後來財報的比較欄」出現，
+     首次出現日會晚好幾年。2018 年換收入準則標籤那兩年也有同樣的假落後。
+     實測 2015 年後只有 0.9% 的季別命中這條。
+
+**同一檔不混用兩個來源。** 期末日（SEC 用真正的財報週期末 2026-06-27，
+yfinance 用月底 2026-06-30）與銀行的營收定義兩邊都不一樣，
+混著用會讓 rev_yoy 在換源那一季憑空跳一段。
 """
 from __future__ import annotations
 import json, sys
@@ -26,6 +37,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import RAW
 
 SRC = RAW / "us_fund"
+SEC_SRC = RAW / "sec_fund"
+# 申報日離期末超過這個天數就不採信，退回法定上限。120 天 > 任何一種法定期限
+# （10-K 60 天、外國發行人 90 天），所以正常申報一律不會被這條擋掉。
+MAX_FILED_LAG = 120
 FPI = {"TSM"}                     # 外國發行人：走本國期限，不是 10-Q
 LAG_Q, LAG_FY = 40, 60            # 天
 LAG_Q_FPI, LAG_FY_FPI = 45, 90
@@ -56,6 +71,16 @@ def _avail(period_end: pd.Timestamp, is_fy: bool, code: str) -> pd.Timestamp:
     if code in FPI:
         return period_end + pd.Timedelta(days=LAG_FY_FPI if is_fy else LAG_Q_FPI)
     return period_end + pd.Timedelta(days=LAG_FY if is_fy else LAG_Q)
+
+
+def _sources() -> list[tuple[str, Path]]:
+    """每檔挑一個來源，SEC 優先。回傳 [(code, path), ...]。"""
+    out: dict[str, Path] = {}
+    for f in sorted(SRC.glob("*.json")):
+        out[f.stem] = f
+    for f in sorted(SEC_SRC.glob("*.json")):
+        out[f.stem] = f
+    return sorted(out.items())
 
 
 def _load_one(f: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -90,9 +115,9 @@ _CACHE: dict[str, pd.DataFrame] = {}
 
 def build(refresh: bool = False) -> pd.DataFrame:
     """回傳 [code, date, avail_date, *FUND_COLS, eps_yoy_basis]。"""
-    if not SRC.exists():
-        return pd.DataFrame(columns=["code", "date", "avail_date", *FUND_COLS])
-    stamp = str(sorted((f.name, int(f.stat().st_mtime)) for f in SRC.glob("*.json")))
+    if not SRC.exists() and not SEC_SRC.exists():
+        return pd.DataFrame(columns=["code", "date", "avail_date", "avail_basis", *FUND_COLS])
+    stamp = str(sorted((str(f), int(f.stat().st_mtime)) for _c, f in _sources()))
     if not refresh and stamp in _CACHE:
         return _CACHE[stamp].copy()
     out = _build_uncached()
@@ -103,7 +128,7 @@ def build(refresh: bool = False) -> pd.DataFrame:
 
 def _build_uncached() -> pd.DataFrame:
     frames = []
-    for f in sorted(SRC.glob("*.json")):
+    for _code, f in _sources():
         q, a = _load_one(f)
         if q.empty or "revenue" not in q.columns:
             continue
@@ -193,13 +218,22 @@ def _build_uncached() -> pd.DataFrame:
             min_periods=SELF_PCT_MIN_Q).apply(
                 lambda w: float((w <= w.iloc[-1]).mean()), raw=False)
 
-        q["avail_date"] = [
-            _avail(d, str(pd.Timestamp(d).date()) in fy_ends, code) for d in q["date"]]
-        frames.append(q[["code", "date", "avail_date", *FUND_COLS,
+        legal = pd.Series(
+            [_avail(d, str(pd.Timestamp(d).date()) in fy_ends, code) for d in q["date"]],
+            index=q.index)
+        if "filed_first" in q.columns:
+            filed = pd.to_datetime(q["filed_first"], errors="coerce")
+            ok = filed.notna() & ((filed - q["date"]).dt.days.le(MAX_FILED_LAG))
+            q["avail_date"] = filed.where(ok, legal)
+            q["avail_basis"] = np.where(ok, "SEC申報日", "法定上限")
+        else:
+            q["avail_date"] = legal
+            q["avail_basis"] = "法定上限"
+        frames.append(q[["code", "date", "avail_date", "avail_basis", *FUND_COLS,
                          "eps_yoy_basis", "nonop_heavy", "eps_op_ttm", "revenue"]])
 
     if not frames:
-        return pd.DataFrame(columns=["code", "date", "avail_date", *FUND_COLS])
+        return pd.DataFrame(columns=["code", "date", "avail_date", "avail_basis", *FUND_COLS])
     return pd.concat(frames, ignore_index=True).sort_values(["code", "date"])
 
 
@@ -228,13 +262,16 @@ if __name__ == "__main__":
     f = build()
     print(f"美股基本面：{len(f):,} 列 × {f['code'].nunique()} 檔　"
           f"季別 {f['date'].min().date()} → {f['date'].max().date()}")
+    print("可用日來源：" + "　".join(
+        f"{k} {v:,}（{v/len(f)*100:.1f}%）"
+        for k, v in f["avail_basis"].value_counts().items()))
     cov = f[FUND_COLS].notna().mean().sort_values(ascending=False)
     print("\n覆蓋率：")
     for k, v in cov.items():
         print(f"  {k:<18}{v*100:>5.1f}%")
     print("\n守恆檢查（四季加總 vs 年報，偏離 >3% 才列出）：")
     bad = 0
-    for p in sorted(SRC.glob("*.json")):
+    for _c, p in _sources():
         q, a = _load_one(p)
         if q.empty or a.empty or "revenue" not in q.columns or "revenue" not in a.columns:
             continue
