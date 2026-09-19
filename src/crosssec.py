@@ -32,7 +32,15 @@ def evaluate(df: pd.DataFrame, quantile: float = 0.2, stride: int = 5) -> pd.Dat
       一個「t=3.6 高度顯著」的發現，調整後其實是「t=1.8 不顯著」。
     """
     out = []
-    for (h, m), g in df.groupby(["horizon", "model"]):
+    # 必須把 market 納入分組鍵。台美的交易日與漲跌互不相干，
+    # 把兩地擠進同一天的橫斷面排名，等於拿台股的跌幅去決定美股的名次。
+    keys = ["horizon", "model"] + (["market"] if "market" in df.columns else [])
+    for gk, g in df.groupby(keys):
+        h, m = gk[0], gk[1]
+        # 不要叫 mkt —— 迴圈內已經有一個 mkt 是「當日市場平均報酬」，
+        # 撞名會讓 market 欄位被寫成報酬數字（2026-09-19 實際發生，
+        # 而且不拋錯：欄位照樣存在，只是內容變成 −0.0065 這種數字）。
+        market_name = gk[2] if len(gk) > 2 else None
         ics, spreads, tops = [], [], []
         for d, gd in g.groupby("as_of"):
             if len(gd) < 10 or gd["prob_up"].nunique() < 3:
@@ -42,11 +50,11 @@ def evaluate(df: pd.DataFrame, quantile: float = 0.2, stride: int = 5) -> pd.Dat
                 ics.append(ic)
             k = max(int(len(gd) * quantile), 3)
             s = gd.sort_values("prob_up", ascending=False)
-            mkt = gd["actual_return"].mean()
+            mkt_ret = gd["actual_return"].mean()     # 當日該市場的平均報酬
             top = s.head(k)["actual_return"].mean()
             bot = s.tail(k)["actual_return"].mean()
             spreads.append(top - bot)
-            tops.append(top - mkt)          # 相對市場的超額
+            tops.append(top - mkt_ret)      # 相對市場的超額
         if not ics:
             continue
         ics, spreads, tops = np.array(ics), np.array(spreads), np.array(tops)
@@ -60,7 +68,7 @@ def evaluate(df: pd.DataFrame, quantile: float = 0.2, stride: int = 5) -> pd.Dat
                  if ics.std() > 0 else np.nan)
         t_adj = t_raw / np.sqrt(overlap) if pd.notna(t_raw) else np.nan
         out.append({
-            "horizon": h, "model": m, "days": len(ics),
+            "horizon": h, "model": m, "market": market_name, "days": len(ics),
             "n_eff": round(n_eff, 1), "t_adj": round(t_adj, 2) if pd.notna(t_adj) else np.nan,
             "spread_t": round(t_sp, 2) if pd.notna(t_sp) else np.nan,
             "spread_t_adj": (round(t_sp / np.sqrt(overlap), 2) if pd.notna(t_sp) else np.nan),
@@ -71,14 +79,20 @@ def evaluate(df: pd.DataFrame, quantile: float = 0.2, stride: int = 5) -> pd.Dat
             "top_excess": round(float(tops.mean()), 5),
             "t_stat": round(t_raw, 2) if pd.notna(t_raw) else np.nan,
         })
-    return pd.DataFrame(out).sort_values(["horizon", "rank_ic"], ascending=[True, False])
+    cols = ["horizon"] + (["market"] if "market" in df.columns else [])
+    return pd.DataFrame(out).sort_values(cols + ["rank_ic"],
+                                         ascending=[True] * len(cols) + [False])
 
 
 def report(res: pd.DataFrame) -> str:
     lines = []
-    for h, g in res.groupby("horizon"):
+    gk = ["horizon"] + (["market"] if "market" in res.columns
+                        and res["market"].notna().any() else [])
+    for key, g in res.groupby(gk):
+        h = key if isinstance(key, (int, float)) else key[0]
+        mk = "" if not isinstance(key, tuple) or len(key) < 2 else f"   {key[1]}"
         lines.append(f"\n{'='*86}")
-        lines.append(f"  橫斷面選股能力   期間 {h} 個交易日   "
+        lines.append(f"  橫斷面選股能力{mk}   期間 {h} 個交易日   "
                      f"（問的是「挑得準不準」，不是「猜方向準不準」）")
         lines.append(f"{'='*86}")
         lines.append(f"  {'模型':<12}{'RankIC':>9}{'IC>0':>8}{'ICのt調整':>10}"
