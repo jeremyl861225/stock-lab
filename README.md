@@ -1,7 +1,13 @@
-# stock-lab — 每日台股預測與驗證
+# stock-lab — 每日台股與美股預測、驗證
 
-每天對市值前 50 大台股產生「未來 5 日 / 20 日的報酬分布」，把預測**事前鎖死**，
+每天對**台股市值前 50 大**與**美股市值前 50 大＋ETF**產生
+「未來 5 日 / 20 日 / 250 日（一年）的報酬分布」，把預測**事前鎖死**，
 到期後自動對答案，並與笨基準線並排計分。
+
+**方法的完整規格在 [`METHOD.md`](METHOD.md)** —— 每一種預測怎麼做、
+每個常數怎麼來的，自足且有測試守著與程式碼同步。
+每日流程在 [`DAILY.md`](DAILY.md)，現況與待辦在 [`HANDOFF.md`](HANDOFF.md)，
+已踩過的坑在 [`LESSONS.md`](LESSONS.md)。
 
 **這個系統的目的不是賺錢，是防止自我欺騙。**
 人腦有後見之明偏誤：三個月後你只會記得自己看對的那幾次。
@@ -71,19 +77,35 @@ RankIC 衡量「整體排序的相關性」，spread 衡量「頭尾兩端的差
 
 ---
 
+## 三種期間，更新方式完全不同
+
+| 期間 | 問的問題 | 誰產生 | 多久換一次判斷 |
+|---|---|---|---|
+| 5／20 日 | 這批資金會不會繼續進來（技術面、籌碼面、動能） | 每日重寫 | 每個交易日 |
+| **250 日（一年）** | 這家公司一年後會不會比現在賺得多，而現在的價格有沒有先反映 | 建置一次，之後每日**滾動** | 見下 |
+
+一年期每天都在更新，但更新的是**三件不同的事**，不可混為一談：
+
+| 更新的東西 | 台股 | 美股 | 誰做 |
+|---|---|---|---|
+| 目標價、保守價、幅度（重新定價） | 每個交易日 | 每個交易日 | 機器 |
+| P漲（重新判斷） | 每檔約 16 次／年 | 每檔約 4.2 次／年 | 機器，僅限規則推導的標的 |
+| 論點本身（重寫） | 被標記時 | 被標記時 | 人，讀完資料再寫 |
+
+差四倍的原因很單純：**台灣有月營收，美國沒有**。
+
+每一檔一年期判斷都必須附**檢查點** —— 把論點拆成每季可自動對帳的前提，
+前提被推翻當下就知道論點壞了，不必等到 2027 年。
+說不出前提的看多，通常不是判斷，是氛圍。
+
 ## 使用
 
 ```bash
 python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
-./.venv/bin/python src/collect/universe.py   # universe（市值前 50）
-./.venv/bin/python src/collect/finmind.py    # 回補價量／法人／融資券／除權息／估值／月營收
-./.venv/bin/python src/features/panel.py     # 組 panel（含除權息還原）
-./.venv/bin/python src/briefing.py           # 四面向簡報
-./.venv/bin/python src/predict.py            # 今日預測
-./.venv/bin/python src/settle.py             # 結算到期預測
-./.venv/bin/python src/ranking.py            # 期望值排序
-./.venv/bin/python src/panel.py              # 手機面板 → docs/index.html
-./.venv/bin/python -m pytest tests/ -q       # 12 項防線測試
+./.venv/bin/python src/daily.py prepare      # 收資料→特徵→簡報→K線→模型→一年期滾動→結算→測試
+#   <此處由人／Claude 讀簡報做判斷，見 DAILY.md>
+./.venv/bin/python src/daily.py finalize     # 寫入判斷→面板→測試→commit→push
+./.venv/bin/python -m pytest tests/ -q       # 全套防線測試
 ```
 
 GitHub Actions 每交易日台北 18:00 自動執行並 commit，**git 歷史即不可竄改的稽核軌跡**。
