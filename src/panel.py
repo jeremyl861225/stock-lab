@@ -196,19 +196,34 @@ def _score_checkpoints(jdir: Path) -> dict:
     """讀最新的一年期判斷檔，逐檔重評檢查點。評分失敗不能讓整張面板倒 ——
     一年期是附加分頁，5／20 日才是每天要看的東西。"""
     out = {}
-    fs = sorted(jdir.glob("*_1y*.json"))
-    if not fs:
+    # 必須逐市場各取最新一份。字典序下 20260918_us_1y.json 排在
+    # 20260918_1y.json 之後，只取 [-1] 會讓台股的檢查點整組消失 ——
+    # 而且是靜默的：面板照樣渲染，只是所有台股都變成「待驗」。
+    latest: dict[str, tuple] = {}
+    for f in jdir.glob("*_1y*.json"):
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if "judgments" not in d:
+            continue
+        mk = d.get("market", "TW")
+        if mk not in latest or str(d.get("as_of", "")) > str(latest[mk][0]):
+            latest[mk] = (str(d.get("as_of", "")), d)
+    if not latest:
         return out
     try:
         import checkpoints as CP
         today = pd.Timestamp.today()
-        for j in json.loads(fs[-1].read_text(encoding="utf-8")).get("judgments", []):
+        for _, doc in latest.values():
+          for j in doc.get("judgments", []):
             try:
-                r = CP.score_all(j, today)
+                r = CP.score_all(j, today, j.get("market") or doc.get("market"))
                 # 滾動出處：一年期每天都會重新定價，但論點本身多數日子沒動。
                 # 不標出「這個論點是哪天下的」，讀者會以為今天有新判斷。
                 r["thesis_as_of"] = j.get("thesis_as_of")
                 r["repriced_only"] = j.get("repriced_only")
+                r["news_flag"] = j.get("news_flag")
                 out[str(j["code"])] = r
             except Exception:  # noqa: BLE001
                 continue
@@ -276,6 +291,8 @@ def _vdt(r: dict | None) -> str:
     n = f'{r["holding"]} 條成立'
     if r["broken"]:
         n += f"、{r['broken']} 條已被推翻"
+    if r.get("unmet"):
+        n += f"、{r['unmet']} 條轉機尚未發生"
     if r["pending"]:
         n += f"、{r['pending']} 條尚未公告"
     src = ""
@@ -294,7 +311,8 @@ def _cp_html(r: dict | None) -> str:
     if not r:
         return ('<div class="cps"><div class="cp pd"><s>·</s>'
                 '<b>此判斷未寫檢查點，一年內無法驗證對錯</b></div></div>')
-    mark = {"holding": ("ok", "✓"), "broken": ("no", "✗"), "pending": ("pd", "·")}
+    mark = {"holding": ("ok", "✓"), "broken": ("no", "✗"), "pending": ("pd", "·"),
+            "未達成": ("pd", "○")}
     rows = []
     for c in r["checkpoints"]:
         cls, sym = mark[c["status"]]

@@ -32,15 +32,22 @@ def prepare() -> None:
     print("═══ 準備階段 ═══")
     run("collect/universe.py", allow_fail=True)      # 台股 universe（市值前 50）
     run("collect/finmind.py", allow_fail=True)       # 台股價量／法人／融資／除權息／估值／營收
-    run("collect/us.py", allow_fail=True)            # 美股價量／基本面
+    run("collect/us.py", allow_fail=True)            # 美股價量／估值快照
+    # 美股季報（yfinance）。一年期判斷與檢查點全靠它 ——
+    # collect/us.py 的 .info 只有當下快照，沒有期別也沒有歷史。
+    # 內建 20 小時快取，同一天重複觸發不會重抓。
+    run("collect/us_fundamentals.py", allow_fail=True)
     run("features/panel.py")                          # 含除權息還原
     run("collect/news_daily.py", allow_fail=True)     # 新聞面（未納入時明天會是空的）
     run("briefing.py")                                # 四面向簡報
     run("charts.py", allow_fail=True)                 # K 線資料（docs/charts.json）
     run("predict.py")                                 # 基準線＋統計模型（LLM 無 key 則跳過）
-    # 一年期滾動。多數日子只重新定價（收盤與 vol_60 變了），
-    # 只有月營收或季報更新的那約 16 天會真正重算 P漲。
-    # 已實查的論點不自動改，只標記待複核。
+    # 一年期滾動（台股＋美股）。多數日子只重新定價（收盤與 vol_60 變了）；
+    # 只有財報輸入真的更新的日子才重算 P漲 ——
+    # 台股約 16 天／年（月營收 12 ＋ 季報 4），美股約 4 天／年（只有季報）。
+    # 新聞閘在這一步內執行：併購、財測調整、法規、經營層異動會標記
+    # 「論點待重讀」，但**不會自動改 P漲**（財報規則讀不了新聞）。
+    # 已實查的論點一律不自動改，只標記待複核。
     run("roll_1y.py", allow_fail=True)
     run("settle.py")                                  # 結算到期預測
     # 測試失敗必須擋下來 —— 那些測試在擋未來函數、除權息還原不完整、
@@ -81,7 +88,7 @@ def finalize(push: bool = True) -> None:
         # 20260917_1y.json 會被歸成 ("tw","h20") 而與當天的台股 20 日判斷
         # 撞在同一格，兩份只會活一份 —— 而且是靜默的。
         if "_1y" in f.name:
-            key = ("tw", "h250")
+            key = ("us" if "_us" in f.name else "tw", "h250")
         else:
             key = ("us" if "_us" in f.name else "tw",
                    "h5" if f.name.endswith("h5.json") else "h20")

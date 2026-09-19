@@ -2,8 +2,16 @@
 __pycache__/
 *.pyc
 logs/
-data/raw/
+.DS_Store
+
+# 原始快取一律不進版控（finmind 92MB、news 1.8MB），
+# 唯獨美股季報例外 —— 它不是快取，是**逐日累積的 point-in-time 檔案庫**。
+# yfinance 一次只給最近 5–7 季，這份檔案把每次抓到的期別併起來保存；
+# 不進版控的話，GitHub Actions 每次都從空的開始，只看得到 7 季，
+# 算出來的基礎雜湊會與本機不同，於是每一次排程滾動都把全部美股
+# 判成「財報已更新」而重算 P漲 —— 實際上什麼都沒更新。200KB，值得。
+data/raw/*
+!data/raw/us_fund/
+
 data/features/
 data/backtest/*.parquet
-.DS_Store
-data/roll_1y_state.json

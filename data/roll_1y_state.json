@@ -1,0 +1,271 @@
+{
+ "as_of": "20260918",
+ "stocks": {
+  "2408": {
+   "basis": "9a50e6f96e16afb3",
+   "prob_up": 0.631,
+   "skew": 0.096952,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2344": {
+   "basis": "3be72ac11e43073a",
+   "prob_up": 0.621,
+   "skew": 0.084999,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "3017": {
+   "basis": "b9ace6e271528e08",
+   "prob_up": 0.609,
+   "skew": 0.070989,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2368": {
+   "basis": "b8f6c649aebda1e5",
+   "prob_up": 0.599,
+   "skew": 0.058993,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "6505": {
+   "basis": "41aac92e319ec115",
+   "prob_up": 0.584,
+   "skew": 0.041022,
+   "thesis_as_of": "20260916",
+   "broken": 0
+  },
+  "6446": {
+   "basis": "1cb47cbb468fd67b",
+   "prob_up": 0.581,
+   "skew": 0.037055,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2308": {
+   "basis": "c54d0c687e63bd4c",
+   "prob_up": 0.57,
+   "skew": 0.060049,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2345": {
+   "basis": "b294f9929fceb0d7",
+   "prob_up": 0.577,
+   "skew": 0.032031,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2383": {
+   "basis": "8f3975d1878879d8",
+   "prob_up": 0.579,
+   "skew": 0.035013,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2330": {
+   "basis": "e3af238f432dbf18",
+   "prob_up": 0.6,
+   "skew": 0.079655,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "3653": {
+   "basis": "230c8a6a13ef0d13",
+   "prob_up": 0.566,
+   "skew": 0.019032,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2303": {
+   "basis": "438331beaef52eae",
+   "prob_up": 0.565,
+   "skew": 0.018036,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "1303": {
+   "basis": "2900aa6cfbf3d963",
+   "prob_up": 0.553,
+   "skew": 0.003968,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2301": {
+   "basis": "6ee25c808ed0802d",
+   "prob_up": 0.566,
+   "skew": 0.019017,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2059": {
+   "basis": "384255705877ceee",
+   "prob_up": 0.561,
+   "skew": 0.012954,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2317": {
+   "basis": "83a3bd166a48428a",
+   "prob_up": 0.58,
+   "skew": 0.059928,
+   "thesis_as_of": "20260916",
+   "broken": 0
+  },
+  "2382": {
+   "basis": "6eaf8bfa3556471f",
+   "prob_up": 0.57,
+   "skew": 0.049971,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2357": {
+   "basis": "cd6bf78447db8cf0",
+   "prob_up": 0.576,
+   "skew": 0.031057,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2360": {
+   "basis": "bfa3dc9cf20fbb4f",
+   "prob_up": 0.55,
+   "skew": 0.0,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "3037": {
+   "basis": "4cdbdd4316d9472e",
+   "prob_up": 0.53,
+   "skew": 0.019976,
+   "thesis_as_of": "20260918",
+   "broken": 1
+  },
+  "3231": {
+   "basis": "319c761b565b5006",
+   "prob_up": 0.55,
+   "skew": 0.030028,
+   "thesis_as_of": "20260916",
+   "broken": 0
+  },
+  "3665": {
+   "basis": "35eba97f3cf57572",
+   "prob_up": 0.544,
+   "skew": -0.00702,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "3711": {
+   "basis": "ca035e7fd503fc3a",
+   "prob_up": 0.55,
+   "skew": 0.0,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "1326": {
+   "basis": "022f62f8a9c8e826",
+   "prob_up": 0.544,
+   "skew": -0.006993,
+   "thesis_as_of": "20260918",
+   "broken": 1
+  },
+  "8046": {
+   "basis": "c11c7aa10a8b1e62",
+   "prob_up": 0.533,
+   "skew": -0.019993,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2327": {
+   "basis": "06aada5b3f49576f",
+   "prob_up": 0.538,
+   "skew": -0.014028,
+   "thesis_as_of": "20260918",
+   "broken": 1
+  },
+  "1216": {
+   "basis": "c667d625730732bb",
+   "prob_up": 0.555,
+   "skew": 0.006143,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "1301": {
+   "basis": "056f0d98e95b66b7",
+   "prob_up": 0.536,
+   "skew": -0.016993,
+   "thesis_as_of": "20260918",
+   "broken": 1
+  },
+  "2454": {
+   "basis": "5e69b06ee6b86e4a",
+   "prob_up": 0.52,
+   "skew": -0.020056,
+   "thesis_as_of": "20260918",
+   "broken": 2
+  },
+  "7769": {
+   "basis": "138c0727303e3698",
+   "prob_up": 0.522,
+   "skew": -0.033987,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "3045": {
+   "basis": "8a76bb596e4b62a5",
+   "prob_up": 0.531,
+   "skew": -0.023343,
+   "thesis_as_of": "20260916",
+   "broken": 0
+  },
+  "2603": {
+   "basis": "1d2cb4995221060d",
+   "prob_up": 0.526,
+   "skew": -0.02907,
+   "thesis_as_of": "20260918",
+   "broken": 2
+  },
+  "3189": {
+   "basis": "70ea37ef071afa73",
+   "prob_up": 0.5,
+   "skew": 0.0,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2395": {
+   "basis": "15a0479eabf11b5d",
+   "prob_up": 0.527,
+   "skew": -0.02801,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "2412": {
+   "basis": "71951dbf463f2888",
+   "prob_up": 0.512,
+   "skew": -0.045932,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "4958": {
+   "basis": "6ba35d09e42240f0",
+   "prob_up": 0.528,
+   "skew": -0.02601,
+   "thesis_as_of": "20260918",
+   "broken": 1
+  },
+  "3443": {
+   "basis": "795c1e0b63ef62bb",
+   "prob_up": 0.524,
+   "skew": -0.030987,
+   "thesis_as_of": "20260918",
+   "broken": 0
+  },
+  "3008": {
+   "basis": "bb0157a9de304330",
+   "prob_up": 0.514,
+   "skew": -0.042971,
+   "thesis_as_of": "20260918",
+   "broken": 1
+  }
+ }
+}

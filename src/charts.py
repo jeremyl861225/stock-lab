@@ -69,17 +69,35 @@ def _tw_prices() -> pd.DataFrame:
 
 
 def _us_prices() -> pd.DataFrame:
-    f = RAW / "us" / "prices_5y.parquet"
-    if not f.exists():
-        f = RAW / "us" / "prices.parquet"
-    if not f.exists():
-        return pd.DataFrame()
-    df = pd.read_parquet(f)
-    df["date"] = pd.to_datetime(df["date"])
+    """五年回補檔 ＋ 每日檔，兩份合併。
+
+    原本是「有 prices_5y.parquet 就只用它」。但那份是一次性回補的產物，
+    每日流程只更新 prices.parquet —— 於是美股 K 線的最後一根永遠停在
+    回補那天（實測停在 2026-09-16，而面板卡片已經是 09-18 的收盤）。
+    圖與卡片對不上，讀者無從對帳，而且不會有任何錯誤訊息。
+
+    合併時以每日檔為準（同一天兩邊都有就取每日檔），因為它才是
+    每天被驗證過的那一份。
+    """
     need = {"open", "high", "low", "close"}
-    if not need <= set(df.columns):
+    parts = []
+    for name in ("prices_5y.parquet", "prices.parquet"):
+        f = RAW / "us" / name
+        if not f.exists():
+            continue
+        df = pd.read_parquet(f)
+        if not need <= set(df.columns):
+            continue
+        df["date"] = pd.to_datetime(df["date"])
+        df["_src"] = 0 if name.startswith("prices_5y") else 1
+        parts.append(df.dropna(subset=["close"]))
+    if not parts:
         return pd.DataFrame()
-    return df.dropna(subset=["close"]).sort_values(["code", "date"])
+    df = pd.concat(parts, ignore_index=True)
+    df = (df.sort_values(["code", "date", "_src"])
+            .drop_duplicates(["code", "date"], keep="last")
+            .drop(columns="_src"))
+    return df.sort_values(["code", "date"])
 
 
 def build() -> Path:

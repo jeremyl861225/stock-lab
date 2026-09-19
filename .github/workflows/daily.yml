@@ -21,48 +21,44 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: 收集當日資料
+      # 刻意直接呼叫 daily.py prepare，而不是在這裡逐步重寫一次。
+      #
+      # 起因：這個檔案原本把 collect → panel → briefing → predict → settle
+      # 一步一步展開，而 daily.py 後來加了新聞收集、K 線、美股季報與一年期滾動。
+      # 兩邊於是安靜地分岔 —— 本機跑出來的面板有一年期論點與 K 線，
+      # 排程跑出來的沒有，而且沒有任何一個環節會報錯。
+      # 流程只能有一個定義。要改流程就改 src/daily.py。
+      - name: 準備（收資料 → 特徵 → 簡報 → 模型 → 一年期滾動 → 結算 → 測試）
         env:
           FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
-        run: |
-          python src/collect/universe.py || echo "universe 更新失敗，沿用既有"
-          python src/collect/finmind.py
-
-      - name: 收集美股（yfinance）
-        run: python src/collect/us.py || echo "美股收集失敗，沿用既有快取"
-
-      - name: 建 panel（含除權息還原）
-        run: python src/features/panel.py
-
-      - name: 建四面向簡報（基本面／籌碼／技術／新聞）
-        run: python src/briefing.py
-
-      - name: 產生預測（append-only）
-        env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
-        run: python src/predict.py
+        run: python src/daily.py prepare
 
-      - name: 結算到期預測
-        run: python src/settle.py
-
-      - name: 驗證未來函數防線
-        run: python -m pytest tests/ -q
-
-      - name: 產生期望值排序
-        run: python src/ranking.py
-
-      - name: 產生面板（PWA 主頁）
-        run: python src/panel.py
+      # 排程不做判斷 —— 判斷需要查證新聞、交叉驗證數字、發現資料異常，
+      # 那是 DAILY.md 裡由人（或有工具的 Claude）走的流程。
+      # 這裡只把既有判斷重新定價後呈現出來。
+      - name: 產生期望值排序與面板
+        run: |
+          python src/ranking.py
+          python src/panel.py
 
       - name: 提交（git 歷史＝不可竄改的稽核軌跡）
         run: |
           git config user.name  "stock-lab-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add data/predictions.jsonl data/settlements.jsonl data/reasoning.jsonl \
-                  data/revisions.jsonl docs/ config/universe_latest.json \
-                  config/universe/ config/universe_us/ config/universe_us_latest.json \
-                  judgments/ || true
-          git diff --staged --quiet || git commit -m "daily: $(date -u +%Y-%m-%d)"
+          # 只 add 實際存在的路徑。git add 對任何一個不存在的 pathspec 會整批
+          # fatal 而**什麼都不暫存**，接著 commit「無事可提交」、push 回報
+          # "Everything up-to-date"，整條鏈沒有一個環節出聲（2026-09-18 實際發生）。
+          for p in data/predictions.jsonl data/settlements.jsonl \
+                   data/reasoning.jsonl data/revisions.jsonl data/roll_1y_state.json \
+                   data/news_seen.json docs judgments config/universe_latest.json \
+                   config/universe config/universe_us config/universe_us_latest.json; do
+            [ -e "$p" ] && git add "$p"
+          done
+          git diff --staged --quiet && { echo "沒有變更可提交"; exit 0; }
+          git commit -m "daily: $(date -u +%Y-%m-%d)"
           git push
+          # 提交後自驗，不要相信上一行的退出碼。
+          git show --stat HEAD | head -30

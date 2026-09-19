@@ -7,7 +7,8 @@ div 不閉合，整個 app 版面垮掉。程式不會報錯，測試也全過�
 """
 import re, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "src"))
 
 CHIPS = ["P漲", "漲幅", "跌幅", "年化波動", "收盤價", "信心"]
 
@@ -118,3 +119,51 @@ def test_no_undefined_css_variables():
                 | set(re.findall(r'style="[^"]*--([a-z0-9]+)\s*:', h)))
     missing = used - declared
     assert not missing, f"用到但未定義的 CSS 變數：{sorted(missing)}"
+
+
+def test_both_markets_keep_their_one_year_checkpoints():
+    """兩個市場的一年期檢查點必須同時存在。
+
+    判斷檔的字典序是 20260918_1y.json < 20260918_us_1y.json，
+    原本的 `sorted(glob)[-1]` 只取最後一份 —— 加進美股之後，
+    台股的檢查點會整組消失，而且是靜默的：面板照樣渲染，
+    只是所有台股都變成「待驗」，左緣色條也跟著不見。
+    """
+    h = _html()
+    for key in ("vTW250", "vUS250"):
+        assert f'id="{key}"' in h, f"{key} 分頁不存在"
+        seg = h.split(f'id="{key}"')[1].split('<div class="view"')[0]
+        assert seg.count('data-vd=') > 10, f"{key} 幾乎沒有論點判定，檢查點可能被蓋掉"
+        assert seg.count('class="cp ') > 20, f"{key} 幾乎沒有檢查點"
+
+
+def test_one_year_cards_are_not_all_pending():
+    """檢查點全數 pending 代表查錯了資料源（例如拿台股的月營收去對美股）。
+    那在畫面上看起來像「還沒到期」，實際上是永遠不會有答案。"""
+    h = _html()
+    seg = h.split('id="vUS250"')[1].split('<div class="view"')[0]
+    n_pd = seg.count('class="cp pd"')
+    n_all = seg.count('class="cp ')
+    assert n_all > 0 and n_pd < n_all * 0.5, \
+        f"美股一年期有 {n_pd}/{n_all} 條檢查點待公告，疑似對錯資料源"
+
+
+def test_chart_last_candle_matches_panel_as_of():
+    """K 線的最後一根必須是面板當天的收盤。
+
+    美股的圖表資料原本只讀一次性回補的 prices_5y.parquet，而每日流程
+    更新的是 prices.parquet —— 最後一根永遠停在回補那天（實測停在 09-16，
+    卡片已經是 09-18）。圖與卡片對不上，而且不會有任何錯誤訊息。
+    """
+    import json
+    import pandas as pd
+    cj = ROOT / "docs/charts.json"
+    if not cj.exists():
+        return
+    d = json.loads(cj.read_text(encoding="utf-8"))
+    pnl = pd.read_parquet(ROOT / "data/features/panel.parquet",
+                          columns=["date", "market"])
+    for mk, as_of in d.get("as_of", {}).items():
+        want = pnl[pnl["market"] == mk]["date"].max()
+        assert pd.Timestamp(as_of) >= want, \
+            f"{mk} 的 K 線資料停在 {as_of}，面板已到 {want.date()}"
