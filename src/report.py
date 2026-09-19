@@ -61,9 +61,14 @@ def build() -> Path:
     grade = ""
     if sc.get("rows"):
         for h, d in sc["by_horizon"].items():
-            rows = [{"模型": m["model"], "筆數": m["n"], "準確率": f"{m['accuracy']:.1%}",
-                     "Brier": m["brier"],
-                     "對猜漲超額": "—" if m["edge_vs_always_up"] is None
+            # 用 .get()：成績單的列有兩種（彙總與分版本），schema 已統一，
+            # 但下游不該因為上游多一種列就整份報表掛掉。
+            rows = [{"模型": m["model"], "筆數": m["n"],
+                     "準確率": f"{m.get('accuracy', float('nan')):.1%}",
+                     "Brier": m.get("brier"),
+                     "技能分數": ("—" if m.get("brier_skill") is None
+                                else f"{m['brier_skill']:+.3f}"),
+                     "對猜漲超額": "—" if m.get("edge_vs_always_up") is None
                                   else f"{m['edge_vs_always_up']:+.1%}"}
                     for m in d["models"]]
             grade += (f"<h3>期間 {h} 日 · 實際上漲率 {d['base_rate_up']:.1%}</h3>"

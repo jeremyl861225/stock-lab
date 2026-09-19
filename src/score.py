@@ -70,8 +70,10 @@ def summary() -> dict:
         # 0.55 ≠ 真實基本率而「贏」。技能分數 > 0 才代表比基本率多知道一點什麼。
         clim = float((gh["actual_direction"] > 0).mean())
         brier_clim = clim * (1 - clim)
-        models = []
-        for m, g in gh.groupby("model"):
+        def _row(name: str, g: pd.DataFrame, version_split: bool = False) -> dict:
+            """一列成績。**兩種列（彙總與分版本）必須是同一個 schema** ——
+            少一個鍵，下游就會 KeyError，而那要等到有結算資料才會炸。
+            report.py 讀 edge_vs_always_up 就是這樣差點掛掉。"""
             n, k = len(g), int(g["correct"].sum())
             acc = k / n if n else float("nan")
             brier = float(g["brier"].mean())
@@ -81,13 +83,13 @@ def summary() -> dict:
                       if "interval_score" in g and g["interval_score"].notna().any() else None)
             # 與 always_up 相同 (as_of, code) 配對比較，避免樣本不同造成假差距
             paired = None
-            if len(base) and m != "always_up":
+            if len(base) and g["model"].iloc[0] != "always_up":
                 j = g.merge(base[["as_of", "code", "correct"]], on=["as_of", "code"],
                             suffixes=("", "_base"))
                 if len(j):
                     paired = float(j["correct"].mean() - j["correct_base"].mean())
-            models.append({
-                "model": m, "family": g["model_family"].iloc[0], "n": n,
+            return {
+                "model": name, "family": g["model_family"].iloc[0], "n": n,
                 "accuracy": round(acc, 4),
                 "brier": round(brier, 4),
                 "brier_skill": (round(1 - brier / brier_clim, 4) if brier_clim > 0 else None),
@@ -103,26 +105,21 @@ def summary() -> dict:
                     g[g["predicted_direction"] == 1]["actual_return"].mean()), 5)
                     if (g["predicted_direction"] == 1).any() else None,
                 "calibration": calibration(g),
-            })
+                "version_split": version_split,
+            }
+
+        models = [_row(m, g) for m, g in gh.groupby("model")]
         # 同一個模型名底下若有多個版本，各版本另外分列。
         # 不分列的話，改過方法的模型會與舊版混在同一個平均裡，
         # 而那個平均不對應任何一套實際跑過的方法。
+        # 實例：stat_* 於 2026-09-19 由台美混訓改為分市場訓練（1.2.0 → 1.3.0）。
         if "model_version" in gh.columns:
             for m, g in gh.groupby("model"):
                 vs = sorted(v for v in g["model_version"].dropna().unique() if v)
                 if len(vs) < 2:
                     continue
-                for v in vs:
-                    gv = g[g["model_version"] == v]
-                    models.append({
-                        "model": f"{m}@{v}", "family": gv["model_family"].iloc[0],
-                        "n": int(len(gv)), "accuracy": round(float(gv["correct"].mean()), 4),
-                        "brier": round(float(gv["brier"].mean()), 4),
-                        "brier_skill": (round(1 - float(gv["brier"].mean()) / brier_clim, 4)
-                                        if brier_clim > 0 else None),
-                        "mean_prob": round(float(gv["prob_up"].mean()), 4),
-                        "version_split": True,
-                    })
+                models += [_row(f"{m}@{v}", g[g["model_version"] == v], True)
+                           for v in vs]
         models.sort(key=lambda x: x["brier"])
         res["by_horizon"][str(h)] = {
             "base_rate_up": round(clim, 4),
