@@ -79,6 +79,11 @@ def run() -> dict:
         recs.append({
             "pid": p["pid"], "settled_at_utc": dt.datetime.now(dt.UTC).isoformat(),
             "model": p["model"], "model_family": p.get("model_family", ""),
+            # 版本要進結算記錄，否則改過方法的模型會與舊版靜默混在同一個平均裡。
+            # 實例：stat_* 於 2026-09-19 由台美混訓改為分市場訓練（v1.2.0 → v1.3.0），
+            # 而 _pid 不含版本（憲法 B），舊列依憲法保留並照常結算 ——
+            # 少了這一欄，成績單會把兩套不同的模型算成同一個。
+            "model_version": p.get("model_version", ""),
             "horizon": p["horizon"], "code": p["code"], "as_of": p["as_of"],
             "target_date": sub.loc[j, "ds"], "price_start": p0, "price_end": p1,
             "actual_return": round(ret, 6), "actual_direction": actual,

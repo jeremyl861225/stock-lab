@@ -104,6 +104,25 @@ def summary() -> dict:
                     if (g["predicted_direction"] == 1).any() else None,
                 "calibration": calibration(g),
             })
+        # 同一個模型名底下若有多個版本，各版本另外分列。
+        # 不分列的話，改過方法的模型會與舊版混在同一個平均裡，
+        # 而那個平均不對應任何一套實際跑過的方法。
+        if "model_version" in gh.columns:
+            for m, g in gh.groupby("model"):
+                vs = sorted(v for v in g["model_version"].dropna().unique() if v)
+                if len(vs) < 2:
+                    continue
+                for v in vs:
+                    gv = g[g["model_version"] == v]
+                    models.append({
+                        "model": f"{m}@{v}", "family": gv["model_family"].iloc[0],
+                        "n": int(len(gv)), "accuracy": round(float(gv["correct"].mean()), 4),
+                        "brier": round(float(gv["brier"].mean()), 4),
+                        "brier_skill": (round(1 - float(gv["brier"].mean()) / brier_clim, 4)
+                                        if brier_clim > 0 else None),
+                        "mean_prob": round(float(gv["prob_up"].mean()), 4),
+                        "version_split": True,
+                    })
         models.sort(key=lambda x: x["brier"])
         res["by_horizon"][str(h)] = {
             "base_rate_up": round(clim, 4),

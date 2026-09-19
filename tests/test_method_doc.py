@@ -34,6 +34,9 @@ PINS = [
     ("W_SHORT = 0.6",     "src/models/price_1y.py",         r"W_SHORT\s*=\s*0\.6"),
     ("LR_MIN, LR_MAX = 250, 1000", "src/models/price_1y.py", r"LR_MIN,\s*LR_MAX\s*=\s*250,\s*1000"),
     ("price_1y.price()",  "src/roll_1y.py",                 r"price_1y\("),
+    # 統計模型分市場訓練（2026-09-19 起）
+    ("MIN_FEATURE_COVERAGE = 0.2", "src/models/statistical.py", r"MIN_FEATURE_COVERAGE\s*=\s*0\.2"),
+    ("VERSION 1.3.0",     "src/models/statistical.py",      r'VERSION\s*=\s*"1\.3\.0"'),
 ]
 
 
