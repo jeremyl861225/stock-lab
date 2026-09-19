@@ -85,6 +85,9 @@ def run(path: str, revise: bool = False) -> dict:
             "dn_magnitude": j.get("dn_magnitude"),
             "reward_risk": j.get("reward_risk"),
             "asymmetry": j.get("asymmetry"),
+            # 一年期才有：exp_ret 是中位數，平均數與 σ 另記（models/price_1y.py）
+            "mean_ret": j.get("mean_ret"),
+            "sigma_annual": j.get("sigma_annual"),
             "conviction": j.get("conviction"),
             "direction": int(r["direction"]),
             "rationale": str(r["rationale"])[:200],

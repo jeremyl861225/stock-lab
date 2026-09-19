@@ -45,6 +45,7 @@ def run() -> dict:
 
     by_code = {c: g.sort_values("date").reset_index(drop=True)
                for c, g in pnl.groupby("code", sort=False)}
+    mkt_of = (dict(zip(pnl["code"], pnl["market"])) if "market" in pnl.columns else {})
     latest = pnl["date"].max()
 
     recs, pending, missing = [], 0, 0
@@ -73,6 +74,8 @@ def run() -> dict:
         actual = 1 if ret > 0 else -1
         prob = float(p["prob_up"])
         y = 1 if ret > 0 else 0
+        q10 = None if p.get("ret_q10") is None else float(p["ret_q10"])
+        q90 = None if p.get("ret_q90") is None else float(p["ret_q90"])
         recs.append({
             "pid": p["pid"], "settled_at_utc": dt.datetime.now(dt.UTC).isoformat(),
             "model": p["model"], "model_family": p.get("model_family", ""),
@@ -86,8 +89,20 @@ def run() -> dict:
             "exp_ret": p.get("exp_ret"),
             "ret_error": (None if p.get("exp_ret") is None
                           else round(ret - float(p["exp_ret"]), 6)),
-            "in_interval": (None if p.get("ret_q10") is None or p.get("ret_q90") is None
-                            else int(float(p["ret_q10"]) <= ret <= float(p["ret_q90"]))),
+            "in_interval": (None if q10 is None or q90 is None
+                            else int(q10 <= ret <= q90)),
+            # 覆蓋率單獨看會獎勵「開到不可能不覆蓋」的區間（一年期曾出現
+            # [−80%, +140%]）。加上寬度會被扣分的評分規則，寬區間才有代價：
+            #   interval score = (q90−q10) + (2/α)·(q10−y)⁺ + (2/α)·(y−q90)⁺，α=0.2
+            #   pinball(τ)     = (y−q)·(τ − 1{y<q})，分別對 τ=0.1 與 0.9
+            # 兩者都是越低越好，且都是嚴格恰當的評分規則（Gneiting & Raftery 2007）。
+            "interval_score": (None if q10 is None or q90 is None else round(
+                (q90 - q10) + 10.0 * max(q10 - ret, 0.0) + 10.0 * max(ret - q90, 0.0), 6)),
+            "pinball_q10": (None if q10 is None else round(
+                (ret - q10) * (0.1 - (1.0 if ret < q10 else 0.0)), 6)),
+            "pinball_q90": (None if q90 is None else round(
+                (ret - q90) * (0.9 - (1.0 if ret < q90 else 0.0)), 6)),
+            "market": mkt_of.get(p["code"], "TW" if str(p["code"]).isdigit() else "US"),
         })
 
     if recs:

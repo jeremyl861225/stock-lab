@@ -9,8 +9,8 @@
 所以每日滾動嚴格拆成三件事，而且後兩件絕不偽裝成第一件：
 
   1 重新定價（每天）
-    收盤價與 vol_60 每天都在動，目標價、保守價、幅度跟著動。
-    論點沒變，只是它在今天的價格上對應到不同的數字。
+    收盤價與 σ（vol_60 與長期波動的混合，見 models/price_1y.py）每天都在動，
+    目標價、保守價、幅度跟著動。論點沒變，只是它在今天的價格上對應到不同的數字。
 
   2 重新判斷（只在財報輸入真的變了）
     P漲 依據的是季報、月營收（台股）與估值。季報一季換一次、
@@ -45,7 +45,7 @@ from config import DATA, ROOT, HORIZON_1Y
 from features import fundamentals as F
 from features import us_fundamentals as UF
 from models.rule_1y import prob_up as rule_prob_up
-from models.quantiles import quantiles
+from models.price_1y import price as price_1y, sigma_daily
 import checkpoints as CP
 import news_gate
 
@@ -73,11 +73,14 @@ def _latest_judgment(market: str) -> tuple[Path, dict]:
             continue
         if "judgments" not in d or (d.get("market") or "TW") != market:
             continue
-        if best is None or str(d.get("as_of", "")) > str(best[1].get("as_of", "")):
-            best = (f, d)
+        # 同一個 as_of 可能有兩份（修訂會改寫同名檔、或另存新檔）：取 mtime 較新的。
+        # 不加這條，glob 的順序決定誰贏，而那個順序沒有任何保證。
+        key = (str(d.get("as_of", "")), f.stat().st_mtime)
+        if best is None or key > best[2]:
+            best = (f, d, key)
     if best is None:
         raise RuntimeError(f"找不到 {market} 的一年期判斷檔（judgments/*_1y*.json）")
-    return best
+    return best[0], best[1]
 
 
 def _load_state() -> dict:
@@ -159,8 +162,11 @@ def roll(market: str = "TW", as_of: str | None = None,
 
     pnl = pnl[pnl["date"] <= as_of_ts]
     last = pnl.groupby("code").last()
-    pnl["_r"] = pnl.groupby("code")["close"].pct_change()
-    vol60 = pnl.groupby("code")["_r"].apply(lambda s: s.tail(60).std())
+    # σ 走 models/price_1y.sigma_daily：vol_60 與長期波動的變異數混合（對數報酬）。
+    # 單用 vol_60 是 regime 讀數，外推一年會把區間開到 [−80%, +140%] 這種
+    # 不可能不覆蓋的寬度（2026-09-19 實測台股一年期 82% 的 q10 < −50%）。
+    pnl["_lr"] = np.log(pnl["close"]).groupby(pnl["code"]).diff()
+    sigd = pnl.groupby("code")["_lr"].apply(sigma_daily)
 
     snap = _fund(market).as_of(as_of_ts)
     mrev = pd.DataFrame()
@@ -193,7 +199,7 @@ def roll(market: str = "TW", as_of: str | None = None,
     out, changed, revise, repriced = [], [], [], 0
     for j in d["judgments"]:
         code = j["code"]
-        v = vol60.get(code)
+        v = sigd.get(code)
         if v is None or pd.isna(v) or v <= 0 or code not in last.index:
             continue
 
@@ -201,8 +207,6 @@ def roll(market: str = "TW", as_of: str | None = None,
         pj = prev.get(code, {})
         base_basis = pj.get("basis")
         p_up = float(pj.get("prob_up", j["prob_up"]))
-        skew = float(pj.get("skew", (j["up_magnitude"] + j["dn_magnitude"])
-                     / (j["up_magnitude"] - j["dn_magnitude"])))
         thesis_as_of = pj.get("thesis_as_of", d["as_of"])
 
         score = CP.score_all(j, as_of_ts, market)
@@ -230,8 +234,6 @@ def roll(market: str = "TW", as_of: str | None = None,
                 else:
                     note = "財報已更新，重算後 P漲 未變"
                 p_up, why = new_p, new_why
-                # 偏度沿用 P漲 相對錨點的偏離，與建置時同一條式子
-                skew = round((new_p - 0.55) * 1.2, 3)
             else:
                 note = "財報已更新，但財報不足以重算，沿用原判斷"
         else:
@@ -258,11 +260,11 @@ def roll(market: str = "TW", as_of: str | None = None,
             note += f"；出現{cats}新聞，論點待重讀"
 
         close = float(last.loc[code, "close"])
-        base = 0.85 * float(v) * math.sqrt(HORIZON_1Y)
-        up, dn = base * (1 + skew), -base * (1 - skew)
-        ev_ret = p_up * up + (1 - p_up) * dn
-        sig = float(v) * math.sqrt(HORIZON_1Y)
-        q10, q90 = quantiles(ev_ret, sig)
+        # 一年期只有一個原始量 P漲，其餘全由同一個對數常態導出（models/price_1y.py）。
+        # 舊版的兩點模型＋獨立區間，在 σ≈0.8 時會讓 P漲 0.53 的標的自帶一個
+        # 隱含 P漲 0.33 的區間 —— Brier 與覆蓋率打的不是同一個預測。
+        pr = price_1y(p_up, float(v) * math.sqrt(HORIZON_1Y))
+        ev_ret, up, dn, q10, q90 = pr["median"], pr["up"], pr["dn"], pr["q10"], pr["q90"]
         out.append({
             **{k: j[k] for k in ("code", "thesis", "facts", "inference",
                                  "falsifier", "conviction", "checkpoints",
@@ -270,13 +272,16 @@ def roll(market: str = "TW", as_of: str | None = None,
             # stance 必須跟著重算後的 ev 走。沿用舊值會在重新定價讓 ev 跨過 0 時
             # 產生「p>0.5、exp_ret>0 卻標 bearish」的矛盾，並讓 finalize 整條中止
             # （2026-09-19 實際發生於 2395／4958／3443）。棄權不因定價而改變。
+            # 中位數 > 0 ⟺ P漲 > 0.5，所以由 ev_ret 定 stance 與由 P漲 定是同一件事。
             "stance": j["stance"] if j["stance"] == "abstain"
                       else ("bullish" if ev_ret >= 0 else "bearish"),
             "market": market,
             "rationale": why,
             "prob_up": round(p_up, 4),
             "up_magnitude": round(up, 4), "dn_magnitude": round(dn, 4),
-            "exp_ret": round(ev_ret, 6),
+            "exp_ret": round(ev_ret, 6),            # 一年期：中位數（見 price_1y.py）
+            "mean_ret": round(pr["mean"], 6),       # 對數常態平均數，僅記錄
+            "sigma_annual": round(float(v) * math.sqrt(HORIZON_1Y), 4),
             "ret_q10": round(q10, 6), "ret_q90": round(q90, 6),
             # 帳本要能分辨「新判斷」與「同一個判斷換了價格」。
             # 少了這兩欄，250 筆重疊預測看起來就像 250 次獨立下注。
@@ -301,8 +306,6 @@ def roll(market: str = "TW", as_of: str | None = None,
     st["markets"][market] = {
         "as_of": as_of_str,
         "stocks": {x["code"]: {"basis": x["basis"], "prob_up": x["prob_up"],
-                               "skew": round((x["up_magnitude"] + x["dn_magnitude"])
-                                             / (x["up_magnitude"] - x["dn_magnitude"]), 6),
                                "thesis_as_of": x["thesis_as_of"],
                                "broken": CP.score_all(x, as_of_ts, market)["broken"]}
                    for x in out}}

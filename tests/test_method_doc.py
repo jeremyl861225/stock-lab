@@ -30,6 +30,10 @@ PINS = [
     ("10-Q 季末後 40 天", "src/features/us_fundamentals.py", r"LAG_Q,\s*LAG_FY\s*=\s*40,\s*60"),
     ("外國發行人 45／90", "src/features/us_fundamentals.py", r"LAG_Q_FPI,\s*LAG_FY_FPI\s*=\s*45,\s*90"),
     ("HORIZON_1Y",        "src/config.py",                  r"HORIZON_1Y\s*=\s*250"),
+    # 一年期定價：只有 P漲 與 σ 兩個輸入（2026-09-19 起）
+    ("W_SHORT = 0.6",     "src/models/price_1y.py",         r"W_SHORT\s*=\s*0\.6"),
+    ("LR_MIN, LR_MAX = 250, 1000", "src/models/price_1y.py", r"LR_MIN,\s*LR_MAX\s*=\s*250,\s*1000"),
+    ("price_1y.price()",  "src/roll_1y.py",                 r"price_1y\("),
 ]
 
 

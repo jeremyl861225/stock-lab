@@ -355,6 +355,10 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
         if pd.isna(vraw):
             vraw = r.get("vol_20")
         vol = float(vraw) * (252 ** 0.5) if pd.notna(vraw) else float("nan")
+        # 一年期的幅度自 2026-09-19 起用 vol_60 與長期波動的混合 σ 算
+        # （models/price_1y.py），卡片就要顯示那個 σ，否則又是兩個對不上的數字。
+        if horizon >= 250 and pd.notna(r.get("sigma_annual")):
+            vol = float(r["sigma_annual"])
         # 一定要先算成字串再放進 f-string 鏈。把 `A if c else B` 直接寫在
         # 隱式字串串接裡，Python 會把條件套用到「整條鏈」而不是那一格 ——
         # 條件成立時整張卡在這裡截斷、div 不閉合，版面全垮。已中招一次。
