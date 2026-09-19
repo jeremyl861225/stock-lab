@@ -84,6 +84,7 @@ def run() -> dict:
             # 而 _pid 不含版本（憲法 B），舊列依憲法保留並照常結算 ——
             # 少了這一欄，成績單會把兩套不同的模型算成同一個。
             "model_version": p.get("model_version", ""),
+            "anchor": p.get("anchor"),
             "horizon": p["horizon"], "code": p["code"], "as_of": p["as_of"],
             "target_date": sub.loc[j, "ds"], "price_start": p0, "price_end": p1,
             "actual_return": round(ret, 6), "actual_direction": actual,

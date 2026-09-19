@@ -43,6 +43,9 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from models.quantiles import quantiles
 
+# 本批的中性錨（整批判斷的共同平移項，見 METHOD.md §4.3 與 src/attribution.py）
+ANCHOR = 0.52
+
 MACRO = (
     "基準日 9/18：等權 -0.09%、25/53 檔收紅、VOO +0.11%、QQQ +0.63% —— "
     "大盤幾乎不動，但**內部分化很乾淨**，這是本日判斷的起點。\n\n"
@@ -197,7 +200,7 @@ def build(horizon: int, vol: dict) -> dict:
                 "則本檔『獲利了結』的歸因錯誤，正偏應撤回。",
         })
     return {"as_of": "20260918", "horizon": horizon, "analyst": "claude-opus-5",
-            "market": "US", "version": "v1", "market_context": MACRO, "judgments": out}
+            "market": "US", "anchor": ANCHOR, "version": "v1", "market_context": MACRO, "judgments": out}
 
 
 if __name__ == "__main__":

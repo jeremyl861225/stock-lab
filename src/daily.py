@@ -50,6 +50,10 @@ def prepare() -> None:
     # 已實查的論點一律不自動改，只標記待複核。
     run("roll_1y.py", allow_fail=True)
     run("settle.py")                                  # 結算到期預測
+    # 市場判斷 vs 選股判斷分開計分。手寫 p 的橫斷面標準差只有 0.02–0.03，
+    # 而錨點是 0.52–0.53 —— 混在一起算，量到的幾乎全是「錨點對不對」，
+    # 而錨點一天只有一個決定、選股一天有 50 個，兩者累積證據的速度差 50 倍。
+    run("attribution.py", allow_fail=True)
     # 測試失敗必須擋下來 —— 那些測試在擋未來函數、除權息還原不完整、
     # universe 空檔、跨市場 as_of 錯置，每一項都會讓當天的判斷建立在壞資料上。
     if subprocess.run([PY, "-m", "pytest", "tests/", "-q"], cwd=ROOT).returncode != 0:

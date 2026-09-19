@@ -50,6 +50,11 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from models.quantiles import quantiles
 
+# 本批的中性錨。它是整批判斷的共同平移項，影響大於任何單一個股 ——
+# 必須進判斷檔，否則事後無法把「市場判斷錯」與「選股判斷錯」分開歸因
+# （見 src/attribution.py 與 METHOD.md §4.3）。
+ANCHOR = 0.53
+
 MACRO = (
     "基準日 9/18：本系統資料為等權 +2.13%、權重加權 +1.99%、中位 +1.06%、31/50 檔收紅。"
     "等權遠高於中位，代表**漲幅極度集中而非全面上漲** —— 這是本日判斷的起點。\n\n"
@@ -197,7 +202,8 @@ def build(horizon: int, vol: dict) -> dict:
                 "代表市場認定 CPO 降規為真，『傳言已被大廠駁斥』的立論失效。",
         })
     return {"as_of": "20260918", "horizon": horizon, "analyst": "claude-opus-5",
-            "market": "TW", "version": "v1", "market_context": MACRO, "judgments": out}
+            "market": "TW", "version": "v1", "anchor": ANCHOR,
+            "market_context": MACRO, "judgments": out}
 
 
 if __name__ == "__main__":

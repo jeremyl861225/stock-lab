@@ -10,6 +10,9 @@ import json, math
 from pathlib import Path
 import pandas as pd
 
+# 本批的中性錨（整批判斷的共同平移項，見 METHOD.md §4.3 與 src/attribution.py）
+ANCHOR = 0.52
+
 MACRO = (
  "基準日 9/17：等權 +0.76%、36/53 檔收紅、QQQ +1.73%、VOO +1.12% —— "
  "**這是升息後的反彈日，不是恐慌日**（前一日 9/16 才是 Fed 決議日，當天 VOO −0.43%、QQQ +0.03%）。\n\n"
@@ -131,7 +134,7 @@ def build(horizon: int, vol: dict) -> dict:
                 "則本輪是升息引發的系統性重評價，所有『個股背離』的判斷都只是雜訊。",
         })
     return {"as_of": "20260917", "horizon": horizon, "analyst": "claude-opus-5",
-            "market": "US", "version": "v1", "market_context": MACRO, "judgments": out}
+            "market": "US", "anchor": ANCHOR, "version": "v1", "market_context": MACRO, "judgments": out}
 
 
 if __name__ == "__main__":

@@ -24,6 +24,10 @@ def run(path: str, revise: bool = False) -> dict:
         return {"written": 0, "reason": "全部棄權"}
 
     as_of, h = d["as_of"], d["horizon"]
+    # 錨點是整批判斷的共同平移項，影響大於任何單一個股。進帳本才能事後把
+    # 「市場判斷錯」與「選股判斷錯」分開歸因（src/attribution.py）。
+    # 沒寫就是 None —— 不臆測，沒有錨點就是拆不開，該說出來。
+    anchor = d.get("anchor")
     seen = _existing()
     run_id = dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%SZ")
     created = dt.datetime.now(dt.UTC).isoformat()
@@ -89,6 +93,7 @@ def run(path: str, revise: bool = False) -> dict:
             "mean_ret": j.get("mean_ret"),
             "sigma_annual": j.get("sigma_annual"),
             "conviction": j.get("conviction"),
+            "anchor": (None if anchor is None else round(float(anchor), 4)),
             "direction": int(r["direction"]),
             "rationale": str(r["rationale"])[:200],
             "feature_hash": "",
