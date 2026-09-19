@@ -45,11 +45,14 @@ from config import DATA, ROOT, HORIZON_1Y
 from features import fundamentals as F
 from features import us_fundamentals as UF
 from models.rule_1y import prob_up as rule_prob_up
+from models import rule_1y as RULE
 from models.price_1y import price as price_1y, sigma_daily
 import checkpoints as CP
 import news_gate
 
 JDIR = ROOT / "judgments"
+# 不進基礎雜湊的欄位：衍生自已入雜湊欄位的，加進去只會在改版當天造成全面失配。
+HASH_EXCLUDE = {"gm_self_pct"}
 STATE = DATA / "roll_1y_state.json"
 SUFFIX = {"TW": "_1y", "US": "_us_1y"}
 
@@ -109,7 +112,12 @@ def _basis(code: str, snap: pd.DataFrame, per: float | None,
     刻意不納入：收盤價、vol_60。那兩個歸「重新定價」管；
     也不納入新聞 —— 新聞走 news_gate，它不改數字只標記重寫。
     """
-    cols = _fund(market).FUND_COLS
+    # gm_self_pct 刻意**不**進雜湊：它是 gross_margin 歷史的確定性函數，
+    # 而 gross_margin 與該季的季別本來就在雜湊裡 —— 新的一季到了，
+    # 季別就變了，雜湊自然跟著變。把衍生欄位也放進去，唯一的效果是
+    # 在「新增這個欄位」的那一天讓全部標的的雜湊失配，被誤記成「財報已更新」
+    # （METHOD §5.4 警告過的那件事，2026-09-19 差點又發生一次）。
+    cols = [c for c in _fund(market).FUND_COLS if c not in HASH_EXCLUDE]
     # 刻意**不**把 market 放進雜湊。狀態檔本來就是分市場存的，放進去是多餘的，
     # 而多餘的那一格會讓所有既有雜湊在改版當天全部失配 ——
     # 下一次滾動會把 38 檔台股全部判成「財報已更新」而重算 P漲，
@@ -206,6 +214,14 @@ def roll(market: str = "TW", as_of: str | None = None,
         cur_basis = _basis(code, snap, pers.get(code), mrev, market)
         pj = prev.get(code, {})
         base_basis = pj.get("basis")
+        # 規則本身改版也必須重算 P漲，但那**不是**「財報已更新」。
+        # 兩者混為一談會在帳本裡留下一句假話：讀者以為有新財報，實際上
+        # 是我改了模型。規則版本因此與資料雜湊分開追蹤。
+        # 狀態檔沒有 rule 欄位＝它早於這個機制，一律視為舊版本並觸發一次重算。
+        # 把「沒記錄」當成「不用重算」會讓改版悄悄不生效，
+        # 而下一次真的有財報更新時才補上 —— 帳本會把改版的效果記到那一天的財報頭上。
+        rule_changed = (base_basis is not None
+                        and pj.get("rule") != RULE.VERSION)
         p_up = float(pj.get("prob_up", j["prob_up"]))
         thesis_as_of = pj.get("thesis_as_of", d["as_of"])
 
@@ -216,6 +232,18 @@ def roll(market: str = "TW", as_of: str | None = None,
         why = j["rationale"]
         if base_basis is None:
             note = "首次滾動，沿用原判斷"
+        elif rule_changed and cur_basis == base_basis:
+            # 財報沒動，是規則改版。已實查的論點照樣不自動改。
+            if j.get("researched"):
+                note = f"規則改版 {pj.get('rule')}→{RULE.VERSION}；此為已實查論點，P漲 不變"
+            elif code in rule_p:
+                new_p, new_why = rule_p[code]
+                note = (f"規則改版 {pj.get('rule')}→{RULE.VERSION}，"
+                        f"P漲 {p_up:.3f}→{new_p:.3f}")
+                p_up, why = new_p, new_why
+                changed.append(code)
+            else:
+                note = f"規則改版 {pj.get('rule')}→{RULE.VERSION}，但財報不足以重算"
         elif cur_basis != base_basis:
             changed.append(code)
             thesis_as_of = as_of_str
@@ -287,7 +315,7 @@ def roll(market: str = "TW", as_of: str | None = None,
             # 少了這兩欄，250 筆重疊預測看起來就像 250 次獨立下注。
             "thesis_as_of": thesis_as_of,
             "repriced_only": cur_basis == base_basis and not ev,
-            "basis": cur_basis, "roll_note": note,
+            "basis": cur_basis, "rule_version": RULE.VERSION, "roll_note": note,
             "news_flag": [e["cat"] for e in ev] or None,
             "close_at_call": round(close, 4),
         })
@@ -305,7 +333,8 @@ def roll(market: str = "TW", as_of: str | None = None,
     st = _load_state()
     st["markets"][market] = {
         "as_of": as_of_str,
-        "stocks": {x["code"]: {"basis": x["basis"], "prob_up": x["prob_up"],
+        "stocks": {x["code"]: {"basis": x["basis"], "rule": RULE.VERSION,
+                               "prob_up": x["prob_up"],
                                "thesis_as_of": x["thesis_as_of"],
                                "broken": CP.score_all(x, as_of_ts, market)["broken"]}
                    for x in out}}

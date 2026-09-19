@@ -35,7 +35,13 @@ LAG_Q_FPI, LAG_FY_FPI = 45, 90
 # 退回與否逐列記在 eps_yoy_basis，不藏起來。
 FUND_COLS = ["gross_margin", "op_margin", "gm_chg_4q", "eps_ttm", "eps_yoy",
              "roe_ttm", "rev_cagr_3y", "fcf_margin", "capex_intensity",
-             "debt_ratio", "rev_yoy", "rev_yoy_ttm"]
+             "debt_ratio", "rev_yoy", "rev_yoy_ttm", "gm_self_pct"]
+
+# 自身歷史百分位的最少季數（與台股同一個門檻，名字一樣定義就要一樣）。
+# yfinance 一次只給 5–7 季，data/raw/us_fund/ 要累積到 8 季以上才會有值；
+# 在那之前美股的週期位置修正一律不生效（NaN → 不修正），這是刻意的：
+# 用 5 季的歷史去講「相對自身歷史的極值」是沒有意義的。
+SELF_PCT_MIN_Q = 8
 
 # 淨利相對營業利益的倍數。超過這個倍數就代表當季獲利主要來自非營業項目
 # （處分利益、投資評價、稅務一次性），拿它算出來的 EPS 年增不是獲利能力。
@@ -181,6 +187,11 @@ def _build_uncached() -> pd.DataFrame:
                                                 if i + 1 < len(av)
                                                 else pd.Timestamp("2100-01-01"))),
                               "rev_cagr_3y"] = g
+
+        # 當期毛利率相對自身歷史的百分位（擴張視窗，天生 PIT）。理由見台股那支。
+        q["gm_self_pct"] = q["gross_margin"].expanding(
+            min_periods=SELF_PCT_MIN_Q).apply(
+                lambda w: float((w <= w.iloc[-1]).mean()), raw=False)
 
         q["avail_date"] = [
             _avail(d, str(pd.Timestamp(d).date()) in fy_ends, code) for d in q["date"]]

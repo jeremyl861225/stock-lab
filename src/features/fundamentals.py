@@ -23,7 +23,10 @@ PUB = {(3, 31): (0, 5, 15), (6, 30): (0, 8, 14),
 
 FUND_COLS = ["gross_margin", "op_margin", "gm_chg_4q", "eps_ttm", "eps_yoy",
              "roe_ttm", "rev_cagr_3y", "fcf_margin", "capex_intensity",
-             "debt_ratio", "inv_days_chg"]
+             "debt_ratio", "inv_days_chg", "gm_self_pct"]
+
+# 自身歷史百分位的最少季數。少於這個數字，「相對自己的歷史」沒有意義。
+SELF_PCT_MIN_Q = 8
 
 
 def _pub_date(q: pd.Timestamp) -> pd.Timestamp:
@@ -255,6 +258,26 @@ def _build_uncached() -> pd.DataFrame:
     # 那不是成長，是除以零。基期絕對值小於 0.5 元就不給數字。
     base = out.groupby("code")["eps_ttm"].shift(4)
     out.loc[base.abs() < 0.5, "eps_yoy"] = np.nan
+
+    # 當期毛利率相對**該公司自身歷史**的百分位（擴張視窗，天生 PIT）。
+    #
+    # 為什麼需要它：rule_1y 的訊號全部是橫斷面百分位，對「這是景氣循環的
+    # 哪個位置」完全沒有辨識力。2026-09-19 的實例：華邦電毛利率 66.2%
+    # （自身歷史長期在 20–35%）、EPS 年增 +1232%，因而拿到橫斷面第 98、
+    # 第 100 百分位、被排到台股一年期最前段；而同一天手寫的美光論點講的
+    # 正是這組數字的反面（「本益比最低的時候最貴，因為分母是週期高點的獲利」）。
+    # 兩檔同屬一個記憶體循環卻被判到兩端，差別只在覆蓋率不在判斷。
+    #
+    # 實證（2026-09-19，台股 52 檔、1,427 個季度觀測）：
+    #   Spearman(自身毛利率百分位, 後四季毛利率變化) = **−0.143**
+    #   自身百分位 ≥0.95 的後四季毛利率中位 +0.32pp、<0.95 者 +0.45pp
+    # → 毛利率相對自身歷史確實均值回歸，這個機制站得住。
+    # **必須放在對帳作廢之後**：對不起來的季別已被設成 NaN，
+    # 那些毛利率是壞數字（實測 2059 某季是月營收加總的 1.30 倍，毛利率由 76% 跳到 87%）。
+    # 拿壞季別去算「相對自身歷史的百分位」，等於用一個假的歷史高點去判斷現在的位置。
+    out["gm_self_pct"] = out.groupby("code")["gross_margin"].transform(
+        lambda s: s.expanding(min_periods=SELF_PCT_MIN_Q).apply(
+            lambda w: float((w <= w.iloc[-1]).mean()), raw=False))
 
     return out[["code", "date", "avail_date", *FUND_COLS]].reset_index(drop=True)
 

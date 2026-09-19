@@ -37,6 +37,11 @@ PINS = [
     # 統計模型分市場訓練（2026-09-19 起）
     ("MIN_FEATURE_COVERAGE = 0.2", "src/models/statistical.py", r"MIN_FEATURE_COVERAGE\s*=\s*0\.2"),
     ("VERSION 1.3.0",     "src/models/statistical.py",      r'VERSION\s*=\s*"1\.3\.0"'),
+    # 一年期規則的週期位置修正（2026-09-19 起）
+    ("CYC_PENALTY = 0.05", "src/models/rule_1y.py",         r"CYC_PENALTY\s*=\s*0\.05"),
+    ("SELF_PCT_MIN_Q = 8", "src/features/fundamentals.py",  r"SELF_PCT_MIN_Q\s*=\s*8"),
+    ('`VERSION = "1.1.0"`', "src/models/rule_1y.py",        r'VERSION\s*=\s*"1\.1\.0"'),
+    ("roll_1y.HASH_EXCLUDE", "src/roll_1y.py",              r"HASH_EXCLUDE\s*=\s*\{"),
 ]
 
 
