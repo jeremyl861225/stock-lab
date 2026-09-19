@@ -10,8 +10,8 @@
   },
   "2344": {
    "basis": "3be72ac11e43073a",
-   "prob_up": 0.621,
-   "skew": 0.084999,
+   "prob_up": 0.5,
+   "skew": -0.03,
    "thesis_as_of": "20260918",
    "broken": 0
   },
