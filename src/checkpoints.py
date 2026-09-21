@@ -56,8 +56,15 @@ def _monthly_rev() -> pd.DataFrame:
     df["rev_yoy_ttm"] = df.assign(t=ttm).groupby("code")["t"].transform(
         lambda s: s / s.shift(12) - 1)
     # 法定公告日：次月 10 日。用它當可用日，不用資料月份。
-    df["avail_date"] = (df["date"] + pd.offsets.MonthBegin(1)
-                        + pd.Timedelta(days=9))
+    #
+    # FinMind 這份表的 `date` **已經是營收月的次月**（8 月營收那一列
+    # date=2026-09-01，revenue_month=8），8,419 列無一例外。所以法定公告日
+    # 就是 date 當月的 10 日，也就是 date + 9 天 —— 再加一次 MonthBegin(1)
+    # 會把可用日推遲整整一個月，於是每一條 rev_yoy／rev_yoy_ttm 檢查點
+    # 都拿上上個月的營收在對帳。features/panel.py 用 revenue_year／
+    # revenue_month 自己重算，是對的；兩邊對同一件事有兩套定義，錯的是這邊。
+    # （2026-09-21 修：修正前 3037／3008／1326 三檔因此誤報「動搖」。）
+    df["avail_date"] = df["date"] + pd.Timedelta(days=9)
     return df[["code", "date", "avail_date", "rev_yoy", "rev_yoy_ttm"]]
 
 
