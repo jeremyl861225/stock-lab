@@ -133,8 +133,14 @@ def finalize(push: bool = True) -> None:
     if push:
         # 用白名單而非 -A：同一個 repo 可能有其他 session 正在改原始碼，
         # git add -A 會把進行中的改動一起掃進「每日預測」這個 commit。
+        # data/briefing.parquet 必須在白名單內：它有版控、每天重產，而且是
+        # docs 卡片收盤價的實際來源與 tests/test_panel_render.py 的比對基準。
+        # 漏掉它，版控裡的簡報會停在舊交易日而工作區一直往前 ——
+        # 2026-09-21 實測落後三天，且沒有任何測試會紅：那條斷言寫的是
+        # 「K 線 >= 卡片」，只擋得住 K 線落後，擋不住卡片落後。
         paths = ["data/predictions.jsonl", "data/settlements.jsonl",
                  "data/reasoning.jsonl", "data/revisions.jsonl",
+                 "data/briefing.parquet", "data/roll_1y_state.json",
                  "docs/", "judgments/", "config/universe_latest.json",
                  "config/universe/", "config/universe_us/",
                  "config/universe_us_latest.json", "LESSONS.md"]
