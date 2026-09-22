@@ -1,168 +1,112 @@
 {
  "markets": {
   "TW": {
-   "as_of": "20260921",
+   "as_of": "20260922",
    "stocks": {
-    "2408": {
-     "basis": "1ef2b57ed81bc8d5",
-     "rule": "1.1.0",
-     "prob_up": 0.557,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3017": {
-     "basis": "d93a28a3b81b9681",
-     "rule": "1.1.0",
-     "prob_up": 0.54,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "2368": {
-     "basis": "9b2754342aa065c7",
-     "rule": "1.1.0",
-     "prob_up": 0.541,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
     "6446": {
-     "basis": "2f0155d8b65ed1d1",
+     "basis": "c05675858683de5a",
      "rule": "1.1.0",
-     "prob_up": 0.582,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.583,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "6505": {
-     "basis": "46e4edf62f3edf49",
+     "basis": "147067c22e2a3ba0",
      "rule": "1.1.0",
      "prob_up": 0.581,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "2383": {
-     "basis": "56f565350ccb4ceb",
-     "rule": "1.1.0",
-     "prob_up": 0.532,
-     "thesis_as_of": "20260918",
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2345": {
-     "basis": "48b7937a84907837",
+     "basis": "55bd871d30e709d4",
      "rule": "1.1.0",
      "prob_up": 0.577,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
      "broken": 0
     },
-    "2308": {
-     "basis": "a615966694dfeff9",
+    "2408": {
+     "basis": "75a5aeb2907c8209",
      "rule": "1.1.0",
-     "prob_up": 0.57,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.557,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2303": {
-     "basis": "2975934bfe503682",
+     "basis": "42ecaedd60dc1b29",
      "rule": "1.1.0",
      "prob_up": 0.564,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3653": {
-     "basis": "b08000fd0d3536e9",
-     "rule": "1.1.0",
-     "prob_up": 0.517,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "2301": {
-     "basis": "ba8d77270f2c49bd",
-     "rule": "1.1.0",
-     "prob_up": 0.497,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "1303": {
-     "basis": "088a249c689a827e",
-     "rule": "1.1.0",
-     "prob_up": 0.524,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2059": {
-     "basis": "b9431dfe861eab4d",
+     "basis": "b9ebfaf1be1fa458",
      "rule": "1.1.0",
      "prob_up": 0.561,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
      "broken": 0
     },
-    "2330": {
-     "basis": "f61f2c4f8a3b5087",
+    "2308": {
+     "basis": "6c7387860edac4e1",
      "rule": "1.1.0",
-     "prob_up": 0.6,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.57,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2357": {
-     "basis": "5bdb41d7f29e38b0",
+     "basis": "c0d1aea71c6d3634",
      "rule": "1.1.0",
-     "prob_up": 0.576,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.577,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
-    "2317": {
-     "basis": "94700c6ec2587ca0",
+    "2330": {
+     "basis": "6812543d3666dc17",
      "rule": "1.1.0",
-     "prob_up": 0.58,
-     "thesis_as_of": "20260916",
-     "broken": 0
-    },
-    "2382": {
-     "basis": "8d2293a9a77a3abd",
-     "rule": "1.1.0",
-     "prob_up": 0.57,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "2360": {
-     "basis": "7bbefebea6655694",
-     "rule": "1.1.0",
-     "prob_up": 0.545,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3711": {
-     "basis": "303832244584464e",
-     "rule": "1.1.0",
-     "prob_up": 0.523,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3037": {
-     "basis": "7ba8fe01f249aec6",
-     "rule": "1.1.0",
-     "prob_up": 0.53,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3231": {
-     "basis": "c9ca57d3f1707666",
-     "rule": "1.1.0",
-     "prob_up": 0.55,
-     "thesis_as_of": "20260916",
-     "broken": 0
-    },
-    "3665": {
-     "basis": "acbb2a971c7eb73e",
-     "rule": "1.1.0",
-     "prob_up": 0.53,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.6,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2327": {
-     "basis": "379269994661c1c0",
+     "basis": "c6a4f4bf5cf10026",
+     "rule": "1.1.0",
+     "prob_up": 0.539,
+     "thesis_as_of": "20260922",
+     "broken": 1
+    },
+    "2360": {
+     "basis": "b8c9d34211717b49",
+     "rule": "1.1.0",
+     "prob_up": 0.545,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2368": {
+     "basis": "1cf0323a478a6be1",
      "rule": "1.1.0",
      "prob_up": 0.541,
-     "thesis_as_of": "20260921",
-     "broken": 1
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2317": {
+     "basis": "066a1e3c6079ae3f",
+     "rule": "1.1.0",
+     "prob_up": 0.58,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2382": {
+     "basis": "aed0a46c8e6be18f",
+     "rule": "1.1.0",
+     "prob_up": 0.57,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "3017": {
+     "basis": "fc2ac2d1b1328157",
+     "rule": "1.1.0",
+     "prob_up": 0.54,
+     "thesis_as_of": "20260922",
+     "broken": 0
     },
     "1326": {
      "basis": "e79e3481a0e9dc33",
@@ -171,59 +115,115 @@
      "thesis_as_of": "20260921",
      "broken": 0
     },
-    "8046": {
-     "basis": "15c23ecca8059808",
+    "3231": {
+     "basis": "b04c0416a4fe2c2a",
      "rule": "1.1.0",
-     "prob_up": 0.522,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.55,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "3037": {
+     "basis": "e93a52cfc3ba6caf",
+     "rule": "1.1.0",
+     "prob_up": 0.53,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "4958": {
+     "basis": "f9df8232a39939a7",
+     "rule": "1.1.0",
+     "prob_up": 0.528,
+     "thesis_as_of": "20260922",
+     "broken": 1
+    },
+    "3665": {
+     "basis": "a68f5e52b579fe46",
+     "rule": "1.1.0",
+     "prob_up": 0.53,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2383": {
+     "basis": "242eba74a483c715",
+     "rule": "1.1.0",
+     "prob_up": 0.532,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "1303": {
+     "basis": "d60ec71f2445916c",
+     "rule": "1.1.0",
+     "prob_up": 0.525,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "1301": {
-     "basis": "874ee860577ecbfd",
+     "basis": "d7075fd43e286cf3",
      "rule": "1.1.0",
      "prob_up": 0.538,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
      "broken": 1
     },
-    "4958": {
-     "basis": "4fa5202f81fdf0b9",
+    "3443": {
+     "basis": "b5e2ab0f0e515b35",
      "rule": "1.1.0",
-     "prob_up": 0.53,
-     "thesis_as_of": "20260921",
-     "broken": 1
+     "prob_up": 0.525,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "8046": {
+     "basis": "c339835010834e09",
+     "rule": "1.1.0",
+     "prob_up": 0.521,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "7769": {
+     "basis": "44a0400af789c18b",
+     "rule": "1.1.0",
+     "prob_up": 0.523,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "3711": {
+     "basis": "466aa11340d0a964",
+     "rule": "1.1.0",
+     "prob_up": 0.523,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2395": {
+     "basis": "1ae701319ecb3549",
+     "rule": "1.1.0",
+     "prob_up": 0.529,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2454": {
+     "basis": "be3c66af17a603a2",
+     "rule": "1.1.0",
+     "prob_up": 0.52,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "3653": {
+     "basis": "0064b7cd21079058",
+     "rule": "1.1.0",
+     "prob_up": 0.517,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "3008": {
+     "basis": "8b62b5fd1295bd0d",
+     "rule": "1.1.0",
+     "prob_up": 0.518,
+     "thesis_as_of": "20260922",
+     "broken": 0
     },
     "1216": {
      "basis": "e139449bb0cfb4a3",
      "rule": "1.1.0",
      "prob_up": 0.556,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3443": {
-     "basis": "b37cd68638d6ec8c",
-     "rule": "1.1.0",
-     "prob_up": 0.525,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "2454": {
-     "basis": "20ab417774a388c1",
-     "rule": "1.1.0",
-     "prob_up": 0.52,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "2395": {
-     "basis": "286ef3e29f1231f4",
-     "rule": "1.1.0",
-     "prob_up": 0.53,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "7769": {
-     "basis": "7711c6dc0452015a",
-     "rule": "1.1.0",
-     "prob_up": 0.523,
      "thesis_as_of": "20260921",
      "broken": 0
     },
@@ -235,38 +235,316 @@
      "broken": 2
     },
     "3045": {
-     "basis": "60204c72d7788201",
+     "basis": "6d177b27d9f25855",
      "rule": "1.1.0",
      "prob_up": 0.543,
-     "thesis_as_of": "20260921",
-     "broken": 0
-    },
-    "3189": {
-     "basis": "33b8743fd024629f",
-     "rule": "1.1.0",
-     "prob_up": 0.5,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2412": {
-     "basis": "953afb6b1a60223a",
+     "basis": "acc00a2ebf55d2e8",
      "rule": "1.1.0",
      "prob_up": 0.514,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
      "broken": 0
     },
-    "3008": {
-     "basis": "157e0a3c0f4cfd42",
+    "3189": {
+     "basis": "2348ab1f7266f31a",
      "rule": "1.1.0",
-     "prob_up": 0.517,
-     "thesis_as_of": "20260921",
+     "prob_up": 0.5,
+     "thesis_as_of": "20260922",
      "broken": 0
     },
     "2344": {
-     "basis": "5b9c3986de5e47da",
+     "basis": "78d59e4a9cece45d",
      "rule": "1.1.0",
      "prob_up": 0.5,
-     "thesis_as_of": "20260921",
+     "thesis_as_of": "20260922",
+     "broken": 0
+    },
+    "2301": {
+     "basis": "f778a0f3c794ce5c",
+     "rule": "1.1.0",
+     "prob_up": 0.497,
+     "thesis_as_of": "20260922",
+     "broken": 0
+    }
+   }
+  },
+  "US": {
+   "as_of": "20260921",
+   "stocks": {
+    "PLTR": {
+     "basis": "a99e023bb7be7ee6",
+     "rule": "1.1.0",
+     "prob_up": 0.584,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "TSM": {
+     "basis": "f05a05d4ac6c9fec",
+     "rule": "1.1.0",
+     "prob_up": 0.6,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "NVDA": {
+     "basis": "f19e32af87079114",
+     "rule": "1.1.0",
+     "prob_up": 0.6,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "AMD": {
+     "basis": "beaf0b3f25b7c963",
+     "rule": "1.1.0",
+     "prob_up": 0.563,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "AMGN": {
+     "basis": "196d6b37f799b6b9",
+     "rule": "1.1.0",
+     "prob_up": 0.608,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "AVGO": {
+     "basis": "f46b28e87c8525b0",
+     "rule": "1.1.0",
+     "prob_up": 0.58,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "CAT": {
+     "basis": "1901412dce3eb088",
+     "rule": "1.1.0",
+     "prob_up": 0.576,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "AMZN": {
+     "basis": "dc5e290b02001e4e",
+     "rule": "1.1.0",
+     "prob_up": 0.55,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "LLY": {
+     "basis": "e6a8a8ff5295a44f",
+     "rule": "1.1.0",
+     "prob_up": 0.574,
+     "thesis_as_of": "20260918",
+     "broken": 1
+    },
+    "NFLX": {
+     "basis": "970ed8bafcccf169",
+     "rule": "1.1.0",
+     "prob_up": 0.564,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "CRM": {
+     "basis": "cbce5f0c2f0a3075",
+     "rule": "1.1.0",
+     "prob_up": 0.543,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "CVX": {
+     "basis": "62da472a22a0bb69",
+     "rule": "1.1.0",
+     "prob_up": 0.58,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "GOOGL": {
+     "basis": "09d4936c3e4af5fe",
+     "rule": "1.1.0",
+     "prob_up": 0.55,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "MA": {
+     "basis": "b837e649c1468dfe",
+     "rule": "1.1.0",
+     "prob_up": 0.585,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "TXN": {
+     "basis": "c1c147aacb6867bb",
+     "rule": "1.1.0",
+     "prob_up": 0.552,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "UNH": {
+     "basis": "b7a622ed549cec1d",
+     "rule": "1.1.0",
+     "prob_up": 0.568,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "MSFT": {
+     "basis": "17e27881c3f8956a",
+     "rule": "1.1.0",
+     "prob_up": 0.53,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "HD": {
+     "basis": "78e5239d065c21c4",
+     "rule": "1.1.0",
+     "prob_up": 0.561,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "IBM": {
+     "basis": "c1198f8fd1aaffeb",
+     "rule": "1.1.0",
+     "prob_up": 0.534,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "ABBV": {
+     "basis": "e0ddccb0215bd85d",
+     "rule": "1.1.0",
+     "prob_up": 0.554,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "GE": {
+     "basis": "c860020da74956b8",
+     "rule": "1.1.0",
+     "prob_up": 0.547,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "PM": {
+     "basis": "ba7746a1f615f34d",
+     "rule": "1.1.0",
+     "prob_up": 0.546,
+     "thesis_as_of": "20260918",
+     "broken": 3
+    },
+    "KO": {
+     "basis": "fcf9ca4321d9300a",
+     "rule": "1.1.0",
+     "prob_up": 0.551,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "VZ": {
+     "basis": "38f56320d6967828",
+     "rule": "1.1.0",
+     "prob_up": 0.544,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "XOM": {
+     "basis": "e4b267276ac16f3c",
+     "rule": "1.1.0",
+     "prob_up": 0.537,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "ANET": {
+     "basis": "88906f9b0291cdae",
+     "rule": "1.1.0",
+     "prob_up": 0.527,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "RTX": {
+     "basis": "3be6074a427caa57",
+     "rule": "1.1.0",
+     "prob_up": 0.53,
+     "thesis_as_of": "20260918",
+     "broken": 1
+    },
+    "JNJ": {
+     "basis": "2b10d07c3c61e526",
+     "rule": "1.1.0",
+     "prob_up": 0.53,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "V": {
+     "basis": "11b14d32d7c87151",
+     "rule": "1.1.0",
+     "prob_up": 0.53,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "PG": {
+     "basis": "0ed74bed9bc049de",
+     "rule": "1.1.0",
+     "prob_up": 0.525,
+     "thesis_as_of": "20260918",
+     "broken": 1
+    },
+    "WMT": {
+     "basis": "84da7494b744434a",
+     "rule": "1.1.0",
+     "prob_up": 0.522,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "META": {
+     "basis": "e3c924208f8e998a",
+     "rule": "1.1.0",
+     "prob_up": 0.5,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "COST": {
+     "basis": "5bbb0ae99b354549",
+     "rule": "1.1.0",
+     "prob_up": 0.518,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "QCOM": {
+     "basis": "4324ab438382b742",
+     "rule": "1.1.0",
+     "prob_up": 0.516,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "AAPL": {
+     "basis": "aaee9316656ee5c4",
+     "rule": "1.1.0",
+     "prob_up": 0.5,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "LIN": {
+     "basis": "0e596157d2c9081c",
+     "rule": "1.1.0",
+     "prob_up": 0.503,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "TSLA": {
+     "basis": "3f9ce976a23e8fa4",
+     "rule": "1.1.0",
+     "prob_up": 0.488,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "MRK": {
+     "basis": "6f618a01bbbc72cd",
+     "rule": "1.1.0",
+     "prob_up": 0.469,
+     "thesis_as_of": "20260918",
+     "broken": 0
+    },
+    "MU": {
+     "basis": "a6f3f7e78007c3b9",
+     "rule": "1.1.0",
+     "prob_up": 0.48,
+     "thesis_as_of": "20260918",
      "broken": 0
     }
    }
