@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 import datetime as dt, json, sys, time
+from zoneinfo import ZoneInfo
 from pathlib import Path
 import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -44,7 +45,7 @@ def build_universe(top_n: int = 50) -> dict:
                              "mcap": float(i["marketCap"])})
         except Exception:  # noqa: BLE001
             continue
-        time.sleep(0.1)
+        time.sleep(THROTTLE)
     rows.sort(key=lambda r: r["mcap"], reverse=True)
     top = rows[:top_n]
 
@@ -106,29 +107,137 @@ def codes_ever() -> set[str]:
     return ever
 
 
-def fetch_prices(codes: list[str], years: float = 2.1) -> pd.DataFrame:
-    """auto_adjust=True：分割與股息已還原，不需自行處理公司行動。"""
+# Yahoo 在被連打時會靜默改吐舊資料（見 fetch_prices），實測每請求間隔
+# 0.8 秒就不會發生。68 檔約 55 秒，這個代價遠小於靜默短給一天。
+THROTTLE = 0.8
+
+
+def _history(code: str, start: str | None = None, period: str | None = None,
+             tries: int = 2) -> pd.DataFrame | None:
+    """逐檔取 K 棒，失敗重試。回傳 None 代表這一檔真的拿不到。"""
     import yfinance as yf
-    end = dt.date.today()
-    start = end - dt.timedelta(days=int(365 * years))
-    df = yf.download(codes, start=start.isoformat(), end=end.isoformat(),
-                     auto_adjust=True, progress=False, group_by="ticker",
-                     threads=True)
-    rows = []
-    for c in codes:
+    kw = {"start": start} if start else {"period": period or "1mo"}
+    for _ in range(tries):
         try:
-            g = df[c].dropna(subset=["Close"]) if len(codes) > 1 else df.dropna(subset=["Close"])
-        except KeyError:
-            continue
-        for d, r in g.iterrows():
-            rows.append({"date": pd.Timestamp(d).tz_localize(None), "code": c,
-                         "open": r["Open"], "high": r["High"], "low": r["Low"],
-                         "close": r["Close"], "volume": r["Volume"],
-                         "value": r["Close"] * r["Volume"]})
-    out = pd.DataFrame(rows)
+            h = yf.Ticker(code).history(auto_adjust=True, **kw)
+            if len(h):
+                return h.dropna(subset=["Close"])
+        except Exception:  # noqa: BLE001
+            pass
+        time.sleep(1.0)
+    return None
+
+
+def _to_rows(g: pd.DataFrame, code: str) -> pd.DataFrame:
+    out = pd.DataFrame({
+        "date": [pd.Timestamp(pd.Timestamp(i).date()) for i in g.index],
+        "code": code,
+        "open": g["Open"].to_numpy(), "high": g["High"].to_numpy(),
+        "low": g["Low"].to_numpy(), "close": g["Close"].to_numpy(),
+        "volume": g["Volume"].to_numpy(),
+    })
+    out["value"] = out["close"] * out["volume"]
+    return out
+
+
+def latest_session(refs: tuple[str, ...] = ("AAPL", "MSFT", "QQQ", "NVDA", "JPM"),
+                   rounds: int = 4) -> pd.Timestamp:
+    """用幾檔一定有量的標的問出「最新的交易日」，當作後面的驗收基準。
+
+    不能拿本批抓回來的最大日期當基準 —— 來源鬧脾氣的時候整批一起舊，
+    那個基準會跟著錯，守門就永遠過得去（2026-09-24 就是這樣過了兩天才發現）。
+    來源發舊貨時連基準也會舊，所以這裡退避重問，取歷次看過的最大值。
+    """
+    best: pd.Timestamp | None = None
+    for r in range(rounds):
+        for c in refs:
+            g = _history(c, period="5d")
+            if g is not None and len(g):
+                d = pd.Timestamp(pd.Timestamp(g.index[-1]).date())
+                best = d if best is None or d > best else best
+            time.sleep(THROTTLE)
+        # 基準要用紐約的今天，不是這台機器的今天 —— 機器在 JST，
+        # 台北早上跑的時候紐約還在前一天的盤後，兩邊差一天。
+        ny_today = dt.datetime.now(ZoneInfo("America/New_York")).date()
+        if best is not None and (ny_today - best.date()).days <= 1:
+            break
+        time.sleep(15 * (r + 1))
+    if best is None:
+        raise RuntimeError("連基準標的都抓不到，來源不可用")
+    return best
+
+
+def fetch_prices(codes: list[str], years: float = 2.1, rounds: int = 3) -> pd.DataFrame:
+    """auto_adjust=True：分割與股息已還原，不需自行處理公司行動。
+
+    **2026-09-24 查出的來源行為**：Yahoo 被連續請求時會靜默改吐舊資料 ——
+    `yf.download` 批次、以及間隔太短的 `Ticker.history`，都可能少給最後一兩天，
+    而且**不報錯**。那天 68 檔一度全部只到 09-21/09-22，隔一分鐘單獨重抓
+    同一檔立刻拿到 09-23。表現出來只是「美股 as_of 卡在舊日期、briefing
+    只剩 21 檔」，美股判斷因此連續兩天沒做成，中間沒有任何錯誤訊息。
+
+    對策三層：每請求間隔 `THROTTLE` 秒、拿 `latest_session()` 當外部基準
+    驗收、落後的退避重抓。最後仍不合格就丟例外 —— 寧可讓 prepare 停下來，
+    也不要靜默寫進一份 as_of 是假的價量檔。
+    """
+    long_start = (dt.date.today() - dt.timedelta(days=int(365 * years))).isoformat()
+    target = latest_session()
+
+    parts: dict[str, pd.DataFrame] = {}
+    for c in codes:
+        g = _history(c, start=long_start)
+        if g is not None:
+            parts[c] = _to_rows(g, c)
+        time.sleep(THROTTLE)
+    empty = [c for c in codes if c not in parts]
+    if not parts:
+        raise RuntimeError("美股價量一檔都沒抓到，拒絕覆寫既有檔案")
+
+    for r in range(rounds):
+        lag = [c for c, df in parts.items() if df["date"].max() < target]
+        if not lag:
+            break
+        wait = 15 * (r + 1)
+        print(f"　{len(lag)} 檔尚未到 {target.date()}，等 {wait}s 再補抓")
+        time.sleep(wait)
+        for c in lag:
+            g = _history(c, period="1mo", tries=1)
+            if g is not None:
+                parts[c] = (pd.concat([parts[c], _to_rows(g, c)])
+                            .drop_duplicates(subset=["date"], keep="last"))
+            time.sleep(THROTTLE)
+
+    out = pd.concat(parts.values())
+
+    # 與既有檔合併：來源發舊貨那天，已經收到的日子不可以倒退不見。
+    # （原本整份覆寫，所以來源短給一次就等於把那幾天從歷史裡刪掉。）
+    prev_path = RAW / "us/prices.parquet"
+    if prev_path.exists():
+        prev = pd.read_parquet(prev_path)
+        out = pd.concat([prev, out])          # 新抓的排後面，重複時留新的
+    out = (out.drop_duplicates(subset=["date", "code"], keep="last")
+              .sort_values(["code", "date"]).reset_index(drop=True))
+
     d = RAW / "us"
     d.mkdir(parents=True, exist_ok=True)
-    out.to_parquet(d / "prices.parquet", index=False)
+    out.to_parquet(d / "prices.parquet", index=False)      # 先落地，守門再擋
+    if empty:
+        print(f"　⚠ {len(empty)} 檔抓不到價量：{', '.join(empty)}")
+
+    # 守門：最新一個「收盤已定案」的交易日要有夠多檔。
+    # 當天尚未定案的那根（Close 為 NaN 的空殼）已在 _history 裡被 dropna 濾掉，
+    # 所以 target 一定是已完成的交易日；它若只有零星幾檔，就是來源缺資料，
+    # 不是停牌。這種時候 briefing 會只剩那幾檔，而且不會有人發現。
+    have = out.loc[out["date"] == target, "code"].nunique()
+    got_n = out["code"].nunique()
+    if have < 0.8 * got_n:
+        miss = sorted(set(out["code"].unique()) - set(out.loc[out["date"] == target, "code"]))
+        raise RuntimeError(
+            f"美股基準交易日 {target.date()} 只有 {have}/{got_n} 檔有 K 棒 —— "
+            f"來源缺資料，不是停牌。既有檔已保留（只增不減），"
+            f"但今天不要拿這份做美股判斷。缺：{', '.join(miss[:15])}"
+            f"{' …' if len(miss) > 15 else ''}")
+
     return out
 
 
@@ -149,7 +258,7 @@ def fetch_fundamentals(codes: list[str]) -> pd.DataFrame:
             })
         except Exception:  # noqa: BLE001
             rows.append({"code": c})
-        time.sleep(0.1)
+        time.sleep(THROTTLE)
     out = pd.DataFrame(rows)
     (RAW / "us").mkdir(parents=True, exist_ok=True)
     out.to_parquet(RAW / "us/fundamentals.parquet", index=False)
