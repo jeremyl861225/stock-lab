@@ -74,6 +74,15 @@ def run() -> dict:
         actual = 1 if ret > 0 else -1
         prob = float(p["prob_up"])
         y = 1 if ret > 0 else 0
+        # 中性判斷（機率恰 0.5 且期望值 0）：判斷檔明寫「不做方向判斷」，
+        # 卻因 direction=sign(exp_ret)=+1 被記成看多。首批 8/49 筆如此，
+        # 命中率因此多出 1.9pp（拿的是 always_up 的答案）。這裡記成棄權：
+        # 方向 0、correct 空白；Brier 與區間照算（棄權不能逃掉機率的罰分）。
+        # 讀取端（score.is_abstain）也會從 prob_up／exp_ret 推導同一件事，
+        # 因為已結算的列是 append-only，改不了。
+        abstain = (abs(prob - 0.5) < 1e-9
+                   and abs(float(p.get("exp_ret") or 0.0)) < 1e-6)
+        pdir = 0 if abstain else int(p["direction"])
         q10 = None if p.get("ret_q10") is None else float(p["ret_q10"])
         q90 = None if p.get("ret_q90") is None else float(p["ret_q90"])
         recs.append({
@@ -88,8 +97,8 @@ def run() -> dict:
             "horizon": p["horizon"], "code": p["code"], "as_of": p["as_of"],
             "target_date": sub.loc[j, "ds"], "price_start": p0, "price_end": p1,
             "actual_return": round(ret, 6), "actual_direction": actual,
-            "predicted_direction": int(p["direction"]), "prob_up": prob,
-            "correct": int(p["direction"] == actual),
+            "predicted_direction": pdir, "prob_up": prob,
+            "correct": None if abstain else int(pdir == actual),
             "brier": round((prob - y) ** 2, 6),
             # 幅度面：方向對但幅度錯的模型一樣沒有用
             "exp_ret": p.get("exp_ret"),

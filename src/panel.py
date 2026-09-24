@@ -11,7 +11,7 @@
 年化波動是這兩個價位拉多開的原因，也是全卡唯一與方向判斷無關的數字。
 """
 from __future__ import annotations
-import datetime as dt, html, json, sys
+import datetime as dt, html, json, re, sys
 from pathlib import Path
 import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -49,9 +49,23 @@ color:var(--mut);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
 transition:background .14s var(--e),color .14s var(--e)}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
 .tabs.h button{font-size:12px;font-weight:600}
-.read{background:var(--card);border-radius:var(--r);padding:13px 15px;margin:0 0 12px;
+/* 市場判讀：原生 <details>，預設收合。它一天 1,800 字，在手機上是兩個螢幕高，
+   展開才看得到清單；收合時只留一行預覽，開合偏好記在本機（見 rd()）。 */
+.read{background:var(--card);border-radius:var(--r);padding:0;margin:0 0 12px;
 font-size:11.5px;line-height:1.65;box-shadow:0 1px 2px rgba(19,62,80,.07)}
 .read b{font-weight:700}
+.read summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;
+padding:12px 15px;user-select:none;-webkit-user-select:none}
+.read summary::-webkit-details-marker{display:none}
+.read summary b{flex:0 0 auto;font-size:12px}
+.rd-pv{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+color:var(--mut)}
+.rd-ch{flex:0 0 auto;margin-left:auto;width:14px;text-align:center;color:var(--faint);
+font-size:11px;transition:transform .18s var(--e)}
+.read[open] .rd-ch{transform:rotate(180deg)}
+.read[open] .rd-pv{display:none}
+.rd-body{padding:0 15px 13px}
+.rd-body p{margin:0 0 8px}.rd-body p:last-child{margin:0}
 .list{background:var(--card);border-radius:var(--r);overflow:hidden;
 box-shadow:0 1px 2px rgba(19,62,80,.07)}
 .row{display:block;width:100%;border:none;background:none;padding:0;font:inherit;
@@ -373,6 +387,13 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
     out = []
     for i, r in t.iterrows():
         ev, close = float(r["exp_ret"]), float(r["close"])
+        # 價位（獲利點／停損點／中位價）以判斷日的收盤為基準；收盤價那格顯示最新值。
+        # 兩者不同日時（某市場當天沒做新判斷），在收盤價格子標明日期，
+        # 否則卡片會把 9/22 的收盤配 9/21 的幅度，21 檔價位最多偏 5%（FLOW-05）。
+        cj = r.get("close_judged")
+        close_j = float(cj) if pd.notna(cj) else close
+        b_as = r.get("briefing_as_of")
+        stale = isinstance(b_as, str) and b_as != str(r["as_of"])
         up, dn = float(r["up_magnitude"]), float(r["dn_magnitude"])
         # 獲利點用條件期望漲幅（合理可達的目標）；
         # 停損點用下檔 10% 分位，而非條件期望跌幅 ——
@@ -432,8 +453,9 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
             f'<div class="c u"><b>漲幅</b><i>{up*100:+.1f}%</i></div>'
             f'<div class="c d"><b>跌幅</b><i>{dn*100:+.1f}%</i></div>'
             f'<div class="c"><b>年化波動</b><i>{voltxt}</i></div>'
-            f'<div class="c"><b>收盤價</b><i>{cur}{close:,.{dec}f}</i></div>'
-            f'{_price_chips(horizon, r, close, up, q10, cur, dec)}'
+            f'<div class="c"><b>收盤價{("（" + b_as[4:6].lstrip("0") + "/" + b_as[6:].lstrip("0") + "）") if stale else ""}</b>'
+            f'<i>{cur}{close:,.{dec}f}</i></div>'
+            f'{_price_chips(horizon, r, close_j, up, q10, cur, dec)}'
             f'<div class="c h"><b>信心·準確</b><i>{conf} {acc}</i></div>'
             f'</div><div class="why">{why}</div>'
             f'<div class="kw" data-kc="{r["code"]}">'
@@ -449,6 +471,52 @@ def _cards(t: pd.DataFrame, cur: str, hist: dict | None = None, horizon: int = 2
     return "".join(out)
 
 
+def _market_context(jd: Path, view_as_of: dict[str, str]) -> dict[tuple[str, str], str]:
+    """回傳 {(市場, 期別桶): 判讀}，桶只有兩種：'d' = 5／20 日、'y' = 一年期。
+
+    為什麼要分桶：同一個 as_of 有三份判斷檔（h20、h5、_1y）各帶自己的
+    market_context。原本用 {市場: 文字} 收，glob 排序後最後一份蓋掉前面的 ——
+    一年期分頁顯示的其實是 5／20 日的判讀，一年期自己寫的那份從來沒上過面板。
+    5 日與 20 日共用同一份（DAILY.md：兩者由同一批 p20 推導，判讀本來就是同一段）。
+    """
+    out: dict[tuple[str, str], str] = {}
+    for f in sorted(jd.glob("*.json")):
+        try:
+            j = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        mk = j.get("market", "TW")
+        if not j.get("market_context") or j.get("as_of") != view_as_of.get(mk):
+            continue
+        bucket = "y" if int(j.get("horizon", 20)) >= 250 else "d"
+        # 5／20 日兩份文字相同；若哪天不同，以 20 日那份為準（h5 檔不覆蓋）。
+        if bucket == "d" and f.name.endswith("h5.json") and (mk, "d") in out:
+            continue
+        out[(mk, bucket)] = j["market_context"]
+    return out
+
+
+def _ctx_html(text: str) -> str:
+    """判斷檔的 market_context 是輕量 markdown：**粗體** 與空行分段。
+    先 escape 再轉，粗體只認成對的雙星號，不會讓內容注入標籤。"""
+    t = html.escape(text or "").replace("\r\n", "\n")
+    t = re.sub(r"\*\*(.+?)\*\*", r"<b>\1</b>", t, flags=re.S)
+    paras = [p.strip() for p in re.split(r"\n\s*\n", t) if p.strip()]
+    return "".join(f"<p>{p.replace(chr(10), '<br>')}</p>" for p in paras)
+
+
+def _read_html(text: str) -> str:
+    """市場判讀區塊：<details> 收合，summary 留一行預覽（去掉 markdown 記號）。"""
+    if not text:
+        return ('<details class="read"><summary><b>市場判讀</b>'
+                '<span class="rd-pv">今日尚無判讀</span></summary></details>')
+    first = re.sub(r"\*\*", "", text.strip().split("\n")[0])
+    pv = html.escape(first[:90])
+    return (f'<details class="read" ontoggle="rd(this)"><summary><b>市場判讀</b>'
+            f'<span class="rd-pv">{pv}</span><span class="rd-ch">▾</span></summary>'
+            f'<div class="rd-body">{_ctx_html(text)}</div></details>')
+
+
 def _acc_block(a: dict) -> str:
     if a.get("status") != "ok":
         n = a.get("pending", 0)
@@ -458,15 +526,25 @@ def _acc_block(a: dict) -> str:
                 '首批 5 日預測於 2026-09-23 結算、20 日於 10-15。<br>'
                 '在那之前沒有分數可報 —— 事前鎖死、到期才對答案，是這套系統的重點。</div></div>')
     wh = a.get("weighted_hit")
-    parts = []
+    parts, extra = [], ""
     for h, d in sorted(a.get("by_horizon", {}).items(), key=lambda x: int(x[0])):
-        parts.append(f"{h}日 {d['weighted_hit']*100:.0f}%（{d['n']} 筆）")
-    slope = a.get("calib_slope")
-    extra = f" · 幅度校準斜率 {slope}" if slope is not None else ""
+        parts.append(f"{h}日 {d['weighted_hit']*100:.0f}%（{d['n_scored']} 筆）")
+        mz = d.get("mz") or {}
+        # 選股層只印 rank IC（去均值、對平移不變）；MZ 斜率要有效天數夠才印，
+        # 單日的斜率是雜訊（首批 −0.746 的 95% CI 是 [−6.6, +4.6]）。
+        if mz.get("rank_ic") is not None:
+            extra += f" · {h}日選股 IC {mz['rank_ic']:+.2f}"
+            if mz.get("slope") is not None:
+                extra += f"（幅度斜率 {mz['slope']:+.2f}）"
+        extra += (f" · {h}日市場層 預測 {d['mean_pred']*100:+.2f}% / 實際 "
+                  f"{d['mean_actual']*100:+.2f}%")
+    ab = f"、{a['abstain']} 筆中性不計" if a.get("abstain") else ""
+    hit = a.get("hit_rate")
+    hit_txt = f"{hit*100:.1f}%" if hit is not None else "—"
     return ('<div class="acc"><div class="t">期望值加權準確率</div>'
             f'<div class="v">{wh*100:.1f}%</div>'
-            f'<div class="n">未加權命中率 {a["hit_rate"]*100:.1f}% · '
-            f'已結算 {a["settled"]} 筆{extra}<br>{" · ".join(parts)}</div></div>')
+            f'<div class="n">未加權命中率 {hit_txt} · '
+            f'已結算 {a["settled"]} 筆{ab}{extra}<br>{" · ".join(parts)}</div></div>')
 
 
 def build() -> Path:
@@ -485,15 +563,14 @@ def build() -> Path:
 
     # 市場判讀直接讀判斷檔，不經 reasoning.jsonl ——
     # 早期的推理記錄沒寫 market 欄位，會讓美股的判讀覆蓋台股。
-    ctx = {}
     jd = Path(__file__).resolve().parent.parent / "judgments"
-    for f in sorted(jd.glob("*.json")):
-        try:
-            j = json.loads(f.read_text(encoding="utf-8"))
-        except Exception:  # noqa: BLE001
-            continue
-        if j.get("as_of") == as_of and j.get("market_context"):
-            ctx[j.get("market", "TW")] = j["market_context"]
+    # 每個市場用自己的基準日。台股 13:30 收盤、美股隔天清晨才收，兩邊的 as_of
+    # 常差一天；原本用台股的 as_of 去找美股判斷檔，美股那格會整天空白。
+    view_as_of: dict[str, str] = {}
+    for key, (t, _) in views.items():
+        if not t.empty:
+            view_as_of.setdefault(key[:2], t["as_of"].iloc[0])
+    ctx = _market_context(jd, view_as_of)
 
     # 一年期的論點檢查點。每次建面板都重評 —— 前提可能昨天還成立、
     # 今天月營收一出就翻掉，這正是這套機制存在的理由。
@@ -506,7 +583,7 @@ def build() -> Path:
                 if hz < 250 else
                 '點任一列展開　·　左緣色條＝論點狀態（深＝成立／琥珀＝動搖／淡＝失效）　·　✓前提成立　✗已被推翻')
         body += (f'<div class="view" id="v{key}" hidden>'
-                 f'<div class="read"><b>市場判讀</b><br>{html.escape(ctx.get(mk, ""))}</div>'
+                 f'{_read_html(ctx.get((mk, "y" if hz >= 250 else "d"), ""))}'
                  f'<p class="hint">{hint}</p>'
                  f'<div class="list">{_cards(t, cur, hist, hz, cps)}</div></div>')
 
@@ -580,6 +657,18 @@ function t(e){{
  if(open) kinit(e);          /* 展開才畫圖 —— 見 kload 的說明 */
 }}
 function kd(e,el){{if(e.key==='Enter'||e.key===' '){{e.preventDefault();t(el);}}}}
+/* 市場判讀的開合偏好。三個市場×期別的區塊同步：在台股開了，切到美股也是開的。
+   存本機，只屬於這台裝置。沒存過＝收合（它一天 1,800 字，預設展開會把清單推到兩個螢幕外）。 */
+let RDSYNC=false;
+function rd(d){{
+ if(RDSYNC) return;
+ RDSYNC=true;
+ document.querySelectorAll('details.read').forEach(x=>{{ if(x!==d) x.open=d.open; }});
+ RDSYNC=false;
+ try{{localStorage.setItem('rd', d.open?'1':'0')}}catch(e){{}}
+}}
+try{{ if(localStorage.getItem('rd')==='1'){{ RDSYNC=true;
+ document.querySelectorAll('details.read').forEach(x=>x.open=true); RDSYNC=false; }} }}catch(e){{}}
 
 /* ── K 線 ────────────────────────────────────────────────────────
    資料放在同目錄的 charts.json，第一次展開任一列時才抓（約 160 KB 壓縮後），

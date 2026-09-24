@@ -1,0 +1,103 @@
+{
+ "as_of": "20260923",
+ "months": 12,
+ "stride": 5,
+ "ic_ceiling": 0.3,
+ "oracles": [
+  {
+   "market": "TW",
+   "horizon": 5,
+   "days": 50,
+   "n": 2499,
+   "always_up": 0.5614,
+   "perfect_market_timing": 0.6631,
+   "perfect_relative_strength_mean": 0.7523,
+   "perfect_relative_strength_median": 0.8175,
+   "perfect_with_magnitude": 1.0
+  },
+  {
+   "market": "TW",
+   "horizon": 20,
+   "days": 47,
+   "n": 2347,
+   "always_up": 0.6383,
+   "perfect_market_timing": 0.6809,
+   "perfect_relative_strength_mean": 0.7354,
+   "perfect_relative_strength_median": 0.8108,
+   "perfect_with_magnitude": 1.0
+  },
+  {
+   "market": "US",
+   "horizon": 5,
+   "days": 50,
+   "n": 2650,
+   "always_up": 0.5147,
+   "perfect_market_timing": 0.6053,
+   "perfect_relative_strength_mean": 0.8732,
+   "perfect_relative_strength_median": 0.886,
+   "perfect_with_magnitude": 1.0
+  },
+  {
+   "market": "US",
+   "horizon": 20,
+   "days": 47,
+   "n": 2491,
+   "always_up": 0.5163,
+   "perfect_market_timing": 0.6018,
+   "perfect_relative_strength_mean": 0.8583,
+   "perfect_relative_strength_median": 0.8876,
+   "perfect_with_magnitude": 1.0
+  }
+ ],
+ "canaries": [
+  {
+   "market": "TW",
+   "horizon": 5,
+   "honest": 0.5191,
+   "honest_rank_ic": 0.0209,
+   "leak_fwd_ret": 0.996,
+   "leak_fwd_ret_rank_ic": 0.9991,
+   "leak_sign_noise_sd1": 0.8471,
+   "leak_sign_noise_sd1_rank_ic": 0.5285,
+   "leak_market_direction": 0.6627,
+   "leak_market_direction_rank_ic": 0.013
+  },
+  {
+   "market": "TW",
+   "horizon": 20,
+   "honest": 0.5934,
+   "honest_rank_ic": 0.04,
+   "leak_fwd_ret": 0.997,
+   "leak_fwd_ret_rank_ic": 0.9985,
+   "leak_sign_noise_sd1": 0.842,
+   "leak_sign_noise_sd1_rank_ic": 0.5068,
+   "leak_market_direction": 0.6738,
+   "leak_market_direction_rank_ic": 0.0398
+  },
+  {
+   "market": "US",
+   "horizon": 5,
+   "honest": 0.5143,
+   "honest_rank_ic": 0.0426,
+   "leak_fwd_ret": 0.9958,
+   "leak_fwd_ret_rank_ic": 0.9996,
+   "leak_sign_noise_sd1": 0.8351,
+   "leak_sign_noise_sd1_rank_ic": 0.5745,
+   "leak_market_direction": 0.6053,
+   "leak_market_direction_rank_ic": 0.033
+  },
+  {
+   "market": "US",
+   "horizon": 20,
+   "honest": 0.5082,
+   "honest_rank_ic": -0.0705,
+   "leak_fwd_ret": 0.9948,
+   "leak_fwd_ret_rank_ic": 0.9993,
+   "leak_sign_noise_sd1": 0.827,
+   "leak_sign_noise_sd1_rank_ic": 0.5751,
+   "leak_market_direction": 0.5994,
+   "leak_market_direction_rank_ic": -0.0188
+  }
+ ],
+ "flags": []
+}

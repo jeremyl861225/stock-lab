@@ -44,7 +44,40 @@ def table(horizon: int = 20, market: str | None = None) -> pd.DataFrame:
         m = m[m["as_of"] == m.groupby("market")["as_of"].transform("max")]
     if market:
         m = m[m["market"] == market]
+    m = _attach_judged_close(m, b)
     return m.sort_values("exp_ret", ascending=False).reset_index(drop=True)
+
+
+def _attach_judged_close(m: pd.DataFrame, b: pd.DataFrame) -> pd.DataFrame:
+    """補上 close_judged（判斷日的收盤）與 briefing_as_of。
+
+    上面那道 as_of 篩選比的是帳本 as_of 在各市場內的最大值，從來沒比 briefing 的 as_of。
+    某個市場當天沒做新判斷、briefing 卻照常重建時（2026-09-21～23 美股連續如此），
+    卡片會拿 9/22 的收盤配 9/21 的幅度：21 檔價位最多偏 5%（MU），JPM 的價位漂移
+    等於整段預估漲幅 —— 獲利點幾乎只是隔天的收盤價。
+    修法不是把 close 換掉（那會讓收盤價與同列的 RSI、K 線最後一根對不上），
+    而是另給一個「判斷日收盤」：獲利點／停損點／中位價以它為基準，
+    收盤價那格照顯示最新值並標日期。panel 不在版控內（CI 沒有）時退回 briefing 的 close。
+    """
+    if m.empty:
+        return m
+    m = m.copy()
+    b_as_of = (b.groupby("market")["as_of"].max() if "market" in b.columns and "as_of" in b.columns
+               else pd.Series(dtype="datetime64[ns]"))
+    m["briefing_as_of"] = m["market"].map(
+        lambda mk: pd.Timestamp(b_as_of[mk]).strftime("%Y%m%d") if mk in b_as_of.index else None)
+    m["close_judged"] = m["close"]
+    pnl_p = DATA / "features/panel.parquet"
+    stale = m["briefing_as_of"].notna() & (m["briefing_as_of"] != m["as_of"])
+    if stale.any() and pnl_p.exists():
+        pnl = pd.read_parquet(pnl_p, columns=["date", "code", "close"])
+        pnl["ds"] = pnl["date"].dt.strftime("%Y%m%d")
+        px = pnl.set_index(["code", "ds"])["close"]
+        for i in m.index[stale]:
+            key = (str(m.at[i, "code"]), str(m.at[i, "as_of"]))
+            if key in px.index:
+                m.at[i, "close_judged"] = float(px[key])
+    return m
 
 
 def render(horizon: int = 20) -> str:

@@ -35,7 +35,9 @@ self.addEventListener('activate', e => {
  */
 // 判準是「這個檔案裝不裝當天的資料」：HTML 都裝（index 是預測、
 // detail 是驗證明細，兩者都帶當日日期），icons／manifest 都不裝。
-const FRESH = /\/stock-lab\/([^/]*\.html)?$/;
+// charts.json 也每日重產（K 線的最後一根）；走 SWR 的話首開的 K 線是前一天的，
+// 與同一張卡片的收盤價對不上（2026-09-24 審核 FLOW-07）。
+const FRESH = /\/stock-lab\/([^/]*\.html|charts\.json)?$/;
 
 function netFirst(req, c) {
   return new Promise(resolve => {

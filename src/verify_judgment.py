@@ -12,6 +12,10 @@
   4. 論述一致性   機率與宣稱的主導維度，相關方向對不對            （F1：部位沒實作論述）
   5. 單邊採證     與判斷方向相反的極端值是否被略過                （D1：集中在信心最高的檔位）
   6. 新聞覆蓋     漲跌幅前十與 high/medium 判斷是否有新聞可查     （C1：歸因錯誤的根源）
+  7. 事件視窗     視窗內有財報／除權息卻沒提                      （2026-09-19）
+  8. 結構         否證整批共用一句、事實推論不分欄、文字無方向但 p≠錨（2026-09-24 CJ-03）
+  9. 分散度       p 的橫斷面標準差太小或太大                      （2026-09-24 CJ-06）
+ 10. 反轉         整批賭反轉卻沒說明                              （2026-09-24 CJ-02）
 """
 from __future__ import annotations
 import json, re, sys
@@ -283,6 +287,85 @@ def check_event_window(b: pd.DataFrame, judgments: list[dict]) -> list[str]:
     return out
 
 
+
+# ── 2026-09-24 新增的四類（每一條對應審核抓到、而舊查核器 0 命中的型態） ──
+NO_DIRECTION_WORDS = ("相抵", "無方向", "不做方向", "沒有判斷", "無依據", "無法判斷")
+DISPERSION_TARGET = 0.015     # p20 橫斷面標準差的預設目標（≈0.4×IC，IC 取 0.04；ITERATE.md §分散度）
+DISPERSION_BAND = (0.5, 2.0)  # 目標的 [0.5, 2] 倍以外才警告
+REVERSAL_CORR = -0.30         # corr(p, ret_20) 低於此值＝整批在賭反轉
+CONTEXT_MAX_CHARS = 2500      # 市場判讀超過此長度在手機上是三個螢幕以上
+
+
+def check_structure(b: pd.DataFrame, judgments: list[dict]) -> list[str]:
+    """否證條件與事實欄的結構：整批共用同一句、facts 沒有自身數字、thesis==inference。
+
+    首批（9/16）錯最大的 7 檔沒有任何一條否證涵蓋；9/16 到 9/23 每個 5／20 日檔的
+    falsifier 與 facts 都是整批 50 檔同一句。WEEKLY §二 的三分法在這種結構下只能靠 thesis 硬做。
+    """
+    out = []
+    for d in judgments:
+        js = d["judgments"]
+        n = len(js)
+        if n < 5:
+            continue
+        fals = [str(j.get("falsifier", "")).strip() for j in js]
+        uniq = len(set(fals))
+        if uniq <= max(1, n // 10):
+            out.append(f"[結構] {d.get('market','TW')} {n} 檔只有 {uniq} 種否證條件 —— 整批共用一句，"
+                       "錯的那幾檔不會有任何一條否證涵蓋它")
+        same = sum(1 for j in js if str(j.get("thesis", "")).strip() == str(j.get("inference", "")).strip())
+        if same > n * 0.8:
+            out.append(f"[結構] {d.get('market','TW')} {same}/{n} 檔 thesis 與 inference 逐字相同："
+                       "事實與推論沒有分欄，事後分不出「事實錯」還是「推論錯」")
+        a = d.get("anchor")
+        for j in js:
+            why = str(j.get("thesis", ""))
+            if a is not None and any(w in why for w in NO_DIRECTION_WORDS) \
+                    and abs(float(j["prob_up"]) - float(a)) > 1e-9:
+                out.append(f"[結構] {j['code']} 文字說「{next(w for w in NO_DIRECTION_WORDS if w in why)}」"
+                           f"但 p={j['prob_up']:.3f} ≠ 錨點 {a}：部位與論述不符，會被算成方向判斷")
+        ctx = d.get("market_context", "") or ""
+        if len(ctx) > CONTEXT_MAX_CHARS:
+            out.append(f"[結構] {d.get('market','TW')} 市場判讀 {len(ctx)} 字（>{CONTEXT_MAX_CHARS}）")
+    return out
+
+
+def check_dispersion(b: pd.DataFrame, judgments: list[dict]) -> list[str]:
+    """p 的橫斷面分散度：太大被 Brier 罰，太小等於放棄選股線（唯一累積證據快的線）。
+
+    2026-09-24 實測：最佳 sd ≈ 0.4×IC；手寫 sd 由 9/16 的 0.030 縮到 9/23 的 0.008，
+    而 9/23 的內容偏 mech_core 型（IC≈0.03），對應的目標約 0.012。
+    """
+    out = []
+    for d in judgments:
+        ps = pd.Series([float(j["prob_up"]) for j in d["judgments"]])
+        if len(ps) < 10:
+            continue
+        sd = float(ps.std(ddof=1))
+        lo, hi = DISPERSION_TARGET * DISPERSION_BAND[0], DISPERSION_TARGET * DISPERSION_BAND[1]
+        tag = "太膽小（有訊號也量不到）" if sd < lo else ("太大膽（Brier 會被罰）" if sd > hi else "")
+        line = f"[分散] {d.get('market','TW')} p 標準差 {sd:.4f}（目標約 {DISPERSION_TARGET}，帶 [{lo:.4f}, {hi:.4f}]）"
+        out.append(line + (f" ！{tag}" if tag else ""))
+    return out
+
+
+def check_reversal(b: pd.DataFrame, judgments: list[dict]) -> list[str]:
+    """整批在賭反轉時要說出來：這段樣本反轉的 IC 是負的（LESSONS 2026-09-19），
+    首批錯最大的 10 檔有 5 檔是把「已漲多」當 5 日空方理由。"""
+    out = []
+    for d in judgments:
+        mk = d.get("market", "TW")
+        df = pd.DataFrame([{"code": j["code"], "p": float(j["prob_up"])} for j in d["judgments"]])
+        m = df.merge(b[b["market"] == mk][["code", "ret_20"]], on="code").dropna()
+        if len(m) < 10:
+            continue
+        r = float(m["p"].corr(m["ret_20"], method="spearman"))
+        macro = d.get("market_context", "") or ""
+        if r < REVERSAL_CORR and not any(w in macro for w in ("反轉", "動能", "均值回歸")):
+            out.append(f"[反轉] {mk} corr(p, ret_20) = {r:+.3f}：整批在賭反轉，但市場判讀沒有說明為什麼"
+                       "（這段樣本反轉的 IC 為負，LESSONS 2026-09-19）")
+    return out
+
 def run(as_of: str) -> dict:
     b, js = _load(as_of)
     if not js:
@@ -295,12 +378,15 @@ def run(as_of: str) -> dict:
         "單邊採證": check_one_sided(b, js),
         "新聞覆蓋": check_news_coverage(b, js, as_of),
         "事件視窗": check_event_window(b, js),
+        "結構": check_structure(b, js),
+        "分散度": check_dispersion(b, js),
+        "反轉": check_reversal(b, js),
     }
     print(f"═══ 判斷品質查核（{as_of}）═══")
     total = 0
     for name, items in groups.items():
         warn = [x for x in items if not x.startswith("[論述] " + x[5:6]) or "！" in x or "[論述]" not in x]
-        real = [x for x in items if "[論述]" not in x or "！" in x]
+        real = [x for x in items if ("[論述]" not in x and "[分散]" not in x) or "！" in x]
         total += len(real)
         print(f"\n── {name}：{len(real) if real else '通過'}"
               f"{' 項待確認' if real else ''}")

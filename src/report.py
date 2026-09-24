@@ -64,7 +64,7 @@ def build() -> Path:
             # 用 .get()：成績單的列有兩種（彙總與分版本），schema 已統一，
             # 但下游不該因為上游多一種列就整份報表掛掉。
             rows = [{"模型": m["model"], "筆數": m["n"],
-                     "準確率": f"{m.get('accuracy', float('nan')):.1%}",
+                     "準確率": ("—" if m.get("accuracy") is None else f"{m['accuracy']:.1%}"),
                      "Brier": m.get("brier"),
                      "技能分數": ("—" if m.get("brier_skill") is None
                                 else f"{m['brier_skill']:+.3f}"),

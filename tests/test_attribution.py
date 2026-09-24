@@ -50,8 +50,33 @@ def test_market_score_uses_the_anchor_not_the_stock_picks():
     # 全漲的日子裡，0.53 的錨點是明顯偏空 → 偏差為負
     assert r["market_bias"] < 0
     assert abs(r["market_bias"] - (0.53 - realized)) < 0.05
-    # 沒有錨點就不臆測
-    assert A.decompose(df).iloc[0]["market_bias"] is None
+    # 沒有錨點時用該批 p 均值當隱含錨，而且要標明來源 —— 不能默默當成有錨點。
+    # （首批 20260916 台股的判斷檔與帳本都沒寫 anchor，實際 p 均值 0.500 而非文件的 0.53；
+    #   不推導的話市場判斷那一半永遠是空的。）
+    r0 = A.decompose(df).iloc[0]
+    implied = float(df["prob_up"].mean())
+    assert abs(r0["market_bias"] - (implied - realized)) < 0.05
+    assert r0["anchor_source"] == {"implied": df["as_of"].nunique()}
+    assert r["anchor_source"] == {"judgment": df["as_of"].nunique()}
+
+
+def test_h5_anchor_is_scaled_from_p20():
+    """判斷檔的 anchor 是 p20 的錨點；h5 的市場判斷要先依 √t 換到 5 日尺度。"""
+    df = _frame(shift=+0.20, horizon=5)
+    anchors = {(d, "TW"): 0.53 for d in df["as_of"].unique()}
+    r = A.decompose(df, anchors).iloc[0]
+    realized = float((df["actual_return"] > 0).mean())
+    a5 = 0.5 + (0.53 - 0.5) * (5 / 20) ** 0.5
+    assert abs(r["market_bias"] - (a5 - realized)) < 0.05
+
+
+def test_neutral_rows_do_not_enter_selection_hit():
+    """p 恰等於錨點的列是中性，不進 sel_hit 的分母。"""
+    df = _frame(n_days=3)
+    anchors = {(d, "TW"): 0.5 for d in df["as_of"].unique()}
+    # 第 10 檔的 p 恰為 0.5（= 錨點）
+    r = A.decompose(df, anchors).iloc[0]
+    assert r["sel_hit"] is not None and 0 <= r["sel_hit"] <= 1
 
 
 def test_effective_days_discount_daily_overlap():

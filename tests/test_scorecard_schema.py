@@ -61,14 +61,32 @@ def test_versions_are_split_and_labelled(tmp_path, monkeypatch):
 
 def test_brier_skill_is_against_climatology_not_always_up(tmp_path, monkeypatch):
     """always_up 固定回答 0.55，那不是基本率。只跟它比 Brier，
-    模型可以只因為 0.55 ≠ 真實基本率而「贏」。"""
+    模型可以只因為 0.55 ≠ 真實基本率而「贏」。
+
+    2026-09-24 起分成兩個數：brier_skill 對**長期基本率**（config.LONGRUN_BASE_RATE，
+    事前常數）；brier_skill_insample 對當批事後上漲比率（舊定義）。
+    後者對任何常數預測必為負（Brier(p) = clim(1−clim) + (p−clim)²），
+    只供對照，不能拿來排序。"""
     monkeypatch.setattr(S, "SETTLEMENTS", _settlements(tmp_path))
     out = S.summary()["by_horizon"]["20"]
     clim = out["base_rate_up"]
     assert abs(out["brier_climatology"] - clim * (1 - clim)) < 1e-9
+    lr = S.LONGRUN_BASE_RATE[("TW", 20)]
     for m in out["models"]:
-        want = 1 - m["brier"] / out["brier_climatology"]
-        assert abs(m["brier_skill"] - want) < 1e-3
+        want_in = 1 - m["brier"] / out["brier_climatology"]
+        assert abs(m["brier_skill_insample"] - want_in) < 1e-3
+        want_lr = 1 - m["brier"] / (lr * (1 - lr))
+        assert abs(m["brier_skill"] - want_lr) < 1e-3
+
+
+def test_per_market_block_has_same_schema(tmp_path, monkeypatch):
+    """分市場的列與混池的列必須同 schema，混池列保留給既有下游。"""
+    monkeypatch.setattr(S, "SETTLEMENTS", _settlements(tmp_path))
+    out = S.summary()
+    assert "TW" in out["by_horizon_market"]["20"]
+    pooled = set(out["by_horizon"]["20"]["models"][0])
+    per = set(out["by_horizon_market"]["20"]["TW"]["models"][0])
+    assert pooled == per, sorted(pooled ^ per)
 
 
 def test_report_survives_a_row_shape_it_did_not_expect(tmp_path, monkeypatch):

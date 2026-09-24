@@ -1,10 +1,13 @@
 name: daily-prediction
 
-# 台股 13:30 收盤，法人買賣超約 15:00 後才完整。
-# 排在台北 18:00（UTC 10:00），確保當日資料已齊。
+# 台股 13:30 收盤，法人買賣超約 15:00 後完整，融資融券餘額要到晚間才公告 ——
+# 原本排台北 18:00，LESSONS 2026-09-21 實測那時融資券整欄是空的，
+# 統計模型會拿 imputer 常數當那三欄。改排台北 23:00（UTC 15:00）。
+# 注意：排程一旦真的跑通，它會先於隔天早上的本機流程把當日基準線與統計模型
+# 寫進 append-only 帳本（pid 先寫者優先），本機隔天只補判斷。這是設計，不是衝突。
 on:
   schedule:
-    - cron: "0 10 * * 1-5"
+    - cron: "0 15 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -20,6 +23,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      # daily.py 在 .venv 不存在時退回 sys.executable；這一步把實際用到的解譯器印出來，
+      # 排程若又靜默退回別的東西，log 上看得到。
+      - run: python -c "import sys; print('runner python =', sys.executable)"
 
       # 刻意直接呼叫 daily.py prepare，而不是在這裡逐步重寫一次。
       #
@@ -61,5 +67,6 @@ jobs:
           git diff --staged --quiet && { echo "沒有變更可提交"; exit 0; }
           git commit -m "daily: $(date -u +%Y-%m-%d)"
           git push
-          # 提交後自驗，不要相信上一行的退出碼。
+          # 提交後自驗，不要相信上一行的退出碼：作者必須是 bot，否則整段其實沒提交。
           git show --stat HEAD | head -30
+          [ "$(git log -1 --format=%an)" = "stock-lab-bot" ] || { echo "提交作者不是 bot，視為失敗"; exit 1; }

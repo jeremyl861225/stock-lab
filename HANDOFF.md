@@ -12,6 +12,33 @@
 
 ---
 
+## 2026-09-24：五面向審查 → Opus 反駁 → 修（先讀這段）
+
+五個審查員各自實跑程式、每條發現兩位反駁者重跑數字（53 個代理），確認 18 條、反駁 6 條。
+方法文件 `ITERATE.md`（自我迭代怎麼做、什麼叫有進步、**為何回測 >90% 是外洩警報**）。
+
+已修（每項有測試）：
+- 計分定義四處：中性判斷記棄權（`settle`／`score`／`accuracy`）；並列 `accuracy_by_prob`；
+  `brier_skill` 對長期基本率（`config.LONGRUN_BASE_RATE`）；p 值改逐日群集 t 折減、有效天數 < 4 不出；
+  `by_horizon_market` 分市場。`tests/test_score_math.py`、`tests/test_settle_math.py`。
+- `accuracy.calib_slope` 拆成市場層／選股層 MZ（單日 −0.746 是雜訊，CI [−6.6, +4.6]）。
+- `attribution`：沒錨點的批次用隱含錨（首批實際押 0.50 不是 0.53）、h5 錨點依 √t 換算、sel_hit 走名次版。
+- 外洩守門 `src/leak_canary.py` ＋ `tests/test_leak_guard.py`；欄位可用日 `tests/test_panel_availability.py`。
+- 查核器新增結構／分散度／反轉三類（對 9/23 的判斷檔立刻命中 4 項）。
+- 每週迭代 `src/iterate.py` → `data/iterations.jsonl`（append-only）＋ `research/iterations/`。
+- 面板：市場判讀改 `<details>` 收合、依期別各顯示自己那份、美股用自己的 as_of；
+  卡片價位以判斷日收盤為基準（美股 21 檔曾偏到 5%）；`charts.json` 改 network-first。
+- Actions：`daily.py` 的 PY 退回 `sys.executable`（排程自 9/19 起每天 FileNotFoundError，6 次 0 提交）；
+  cron 改台北 23:00；提交後斷言作者是 bot。
+
+審查後**刻意不做**的（反駁成立，證據在 `research/iterations/` 與 LESSONS）：
+Platt 校準新模型（比基本率還差的氣候線）、精簡特徵集（退化成猜漲）、相對報酬標籤、
+改錨點規則（單一多頭）、改 √t（分不出對錯）。
+
+**排程跑通後的新風險**：runner 會在 23:00 先把當日基準線與統計模型寫進 append-only 帳本
+（pid 先寫者優先），本機隔天早上只補判斷；runner 的 raw 資料不進版控、每次全量重抓，
+panel 可能與本機不同。第一週要每天對一次 `git log --author=stock-lab-bot` 與 predictions 的 run_id。
+
 ## 狀態（2026-09-19）
 
 - 基準日 **2026-09-18 收盤**。`predictions.jsonl` 5,858 筆、5,572 個邏輯鍵。
@@ -67,12 +94,13 @@
    FinMind 的 EPS 同樣含業外，台股尚未做同一道檢查。
 3. **一年期錨點可能偏低**。`ANCHOR = 0.55` 的依據是「個股長期報酬中位數低於指數」，
    但 13 年資料顯示這批大型股的一年勝率中位數是 66%。要用 PIT universe 重驗後再改。
-4. **`_binom_p` 假設 i.i.d.**，Monte Carlo 實測名目 α=0.05、實際拒絕率 0.299
-   （寬鬆約 6 倍）。`crosssec` 有做重疊調整，`score` 沒有 —— 而 `score` 才是每日成績單入口。
+4. ~~**`_binom_p` 假設 i.i.d.**~~ —— **2026-09-24 已修**：逐日群集 t 折減、有效天數 < 4 不出 p。
 
 ### 二、會讓稽核失效的
 5. `feature_hash` 對 claude 判斷是空的，且 panel 在 .gitignore 內、每日重建會回溯改寫，
-   所以無法事後驗證「當時看到的特徵長什麼樣」。
+   所以無法事後驗證「當時看到的特徵長什麼樣」。2026-09-24 量化：stat_logit 的 hash 對快照重算
+   5 個市場日只有 2 天對得上；美股起點滾動已由 ed08514「只增不減」修掉一部分，台股 0/50 原因未定。
+   對準確度影響 ≤0.8pp，是稽核可信度問題。
 6. 停牌時 horizon 失真（2327 停止買賣期間，「5 日預測」用了 12 個市場日結算）。
 7. 1/n 分割判斷：n≥6 後帶狀重疊，−72%~−90.5% 的跌幅都會被判成分割；
    f>1 側（減資／併股）永遠判不到。
@@ -89,6 +117,10 @@
 ### 四、其他
 11. `expects="turn"` 已在 `checkpoints.py` 實作但尚無判斷使用。
     台股 2454 是典型的轉機型論點，下次重寫時應標上。
+12. **否證條件逐檔寫**（2026-09-24）：目前每個 5／20 日檔仍是整批共用一句；`iterate.py` 的機械判定對首批 49 筆全部「判不了」。
+    下一份 build 檔起改為 (code, p20, skew, conviction, why, falsifier) 六元組。
+13. **零報酬列**（5 日 1.4%）被 settle 記成下跌；停牌股用位置數 horizon（2327 曾用 12 個市場日）。低優先。
+14. **一年期規則的 why** 在 `gm_self_pct` 為 NaN 時應明寫「週期位置修正不適用」（金融與 XOM／LIN 永遠不生效）。
 
 ### 五、2026-09-19 這一輪做完的事（詳見 `data/revisions.jsonl` 最後六筆）
 1. 一年期定價改為單一對數常態（`models/price_1y.py`）—— 原本 P漲、期望值、

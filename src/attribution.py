@@ -72,17 +72,28 @@ def decompose(df: pd.DataFrame, anchors: dict | None = None) -> pd.DataFrame:
         mkt_err, mkt_n = [], 0
         ics, spreads = [], []
         sel_hits, sel_n = 0, 0
+        src_counts = {"ledger": 0, "judgment": 0, "implied": 0}
         for as_of, gd in g.groupby("as_of"):
             if len(gd) < 5:
                 continue
             realized_up = float((gd["actual_return"] > 0).mean())
-            a = anchors.get((str(as_of), mk))
+            a, src = anchors.get((str(as_of), mk)), "judgment"
             if a is None and "anchor" in gd.columns:
                 v = gd["anchor"].dropna()
-                a = float(v.iloc[0]) if len(v) else None
-            if a is not None:
-                mkt_err.append(a - realized_up)
-                mkt_n += 1
+                a, src = (float(v.iloc[0]), "ledger") if len(v) else (None, src)
+            if a is None:
+                # 沒有錨點就用該批 prob_up 的均值當隱含錨（首批 20260916／0917 台股
+                # 的判斷檔與帳本都沒寫 anchor，市場判斷因此一直是空的；
+                # 實際上那批的 p 均值是 0.500，不是文件上的 0.53）。
+                # 只在計分端推導，不寫回帳本或判斷檔（append-only）。
+                a, src = float(gd["prob_up"].mean()), "implied"
+            elif int(h) != 20 and mk in ("TW", "US"):
+                # 判斷檔與帳本的 anchor 是 **p20** 的錨點，h5 的列沒做 √t 換算
+                # （0.53 對 h5 其實是 0.515）。市場判斷要在該期別自己的尺度上比。
+                a = 0.5 + (a - 0.5) * math.sqrt(int(h) / 20.0)
+            src_counts[src] += 1
+            mkt_err.append(a - realized_up)
+            mkt_n += 1
             # 選股：兩邊都去均值，市場整體漲跌因此完全不進來
             p = gd["prob_up"] - gd["prob_up"].mean()
             r = gd["actual_return"] - gd["actual_return"].mean()
@@ -93,8 +104,14 @@ def decompose(df: pd.DataFrame, anchors: dict | None = None) -> pd.DataFrame:
                 k = max(int(len(gd) * 0.2), 3)
                 s = gd.assign(_p=p, _r=r).sort_values("_p", ascending=False)
                 spreads.append(float(s.head(k)["_r"].mean() - s.tail(k)["_r"].mean()))
-            sel_hits += int(((p > 0) == (r > 0)).sum())
-            sel_n += len(gd)
+            # sel_hit 走 rank 版：對「均值」去均值在右偏日會讓多數檔被記成輸給市場
+            # （首批 mean +4.55% vs median +1.56%，只有 17/49 檔高於 mean）。
+            # 改比「名次在中位數之上」是否一致；p 恰等於該批錨點者是中性，不進分母。
+            act = (gd["prob_up"] - a).abs() > 1e-9
+            pr = gd["prob_up"].rank(pct=True) - 0.5
+            rr = gd["actual_return"].rank(pct=True) - 0.5
+            sel_hits += int((((pr > 0) == (rr > 0)) & act).sum())
+            sel_n += int(act.sum())
         if not ics and not mkt_n:
             continue
         # 有效樣本：日頻預測在 h 日尺度上相鄰重疊 (h−1)/h，
@@ -119,6 +136,8 @@ def decompose(df: pd.DataFrame, anchors: dict | None = None) -> pd.DataFrame:
             "market_bias": round(float(np.mean(mkt_err)), 4) if mkt_err else None,
             "market_mae": round(float(np.mean(np.abs(mkt_err))), 4) if mkt_err else None,
             "market_days": mkt_n,
+            # 錨點來源統計：implied 代表那批沒寫錨點、用 p 均值代替
+            "anchor_source": {k: v for k, v in src_counts.items() if v},
             # 選股判斷：全部去均值後計算
             "sel_rank_ic": round(float(ics_a.mean()), 4) if ics else None,
             "sel_ic_t_adj": round(t_adj, 2) if pd.notna(t_adj) else None,
@@ -154,6 +173,7 @@ def report(res: pd.DataFrame) -> str:
                  f"{mb:>10}{ic:>9}{t:>9}{sp:>10}{r['n_eff_days']:>9.1f}  {note}")
     L.append("  " + "-" * 88)
     L.append("  錨點偏差 = 錨點 − 當日實際上漲比率，正值代表當時太樂觀（市場判斷的成績）。")
+    L.append("  沒寫錨點的批次以該批 p 均值當隱含錨（anchor_source=implied）；h5 的錨點已依 √t 換算。")
     L.append("  選股 IC／前後 20% 都已對當日該市場去均值，市場整體漲跌不貢獻分數。")
     L.append("  有效天數 = 名目天數 ÷ 重疊倍數（日頻預測、h 日期間，相鄰重疊 (h−1)/h）。")
     return "\n".join(L)

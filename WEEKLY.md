@@ -23,35 +23,41 @@
 
 ---
 
-## 一、先看系統現況（10 分鐘）
+## 一、產出本週迭代包（一個指令）
 
 ```bash
 cd "/Users/jeremy/Desktop/Claude code/stock-lab"
 git pull --rebase
 ./.venv/bin/python -m pytest tests/ -q
-./.venv/bin/python src/accuracy.py
-./.venv/bin/python src/score.py 2>/dev/null | head -40
-tail -3 data/revisions.jsonl | python3 -m json.tool 2>/dev/null | head -40
+./.venv/bin/python src/iterate.py
 ```
+
+`iterate.py` 把下面第二、三節原本要人工翻檔案的事一次做完（設計理由見 `ITERATE.md`）：
+A 分市場成績單（折減後 t）、B 市場判斷 vs 選股判斷、C 錯最大 12 檔的歸因包（含否證條件機械判定）、
+D 區間、E 查核器警告數、F 外洩守門、G 建議。結果 append 進 `data/iterations.jsonl`，
+可讀版在 `research/iterations/<日期>.md`。
 
 讀 `HANDOFF.md` 的「未修問題」清單。
 
-## 二、錯誤歸因分析（有結算資料後，這是最重要的一節）
+## 二、錯誤歸因分析（C 段，有結算資料後這是最重要的一節）
 
-從 `data/settlements.jsonl` 找**錯得最離譜的 10–15 筆**（`correct=0` 且 `|actual_return|` 最大），
-對每一筆回頭讀 `data/reasoning.jsonl` 裡當時的 `thesis` / `facts` / `inference` / `falsifier`，
-分類成三種：
+對 C 段列出的每一檔，回頭讀 `thesis` / `falsifier`（迭代包已附），分類成三種：
 
 | 錯誤類型 | 判準 | 處置 |
 |---|---|---|
 | **事實錯了** | 當時引用的數字或事件與實際不符 | 加進 `LESSONS.md`；若是資料源問題就修管線 |
-| **推論錯了** | 事實對，但從事實到結論的邏輯站不住 | 加進 `LESSONS.md` 的對應分類 |
-| **推論對但市場不理會** | 事實與邏輯都對，價格就是沒反應 | **這是市場效率，不是錯誤** — 該考慮放棄這個角度 |
+| **推論錯了** | 事實對，但從事實到結論的邏輯站不住 | 加進 `LESSONS.md` 的對應分類；**補一條 `verify_judgment` 規則** |
+| **推論對但市場不理會** | 事實與邏輯都對，價格就是沒反應 | **這是市場效率，不是錯誤** — 連續出現才考慮放棄這個角度 |
 
 **分不清這三種就不會進步。** 第三類最容易被誤當成第二類，然後白白調整一個本來就對的模型。
+首批（2026-09-16）的實例：錯最大的 10 檔零事實錯，5 檔是把「已漲多」當 5 日空方理由
+（反轉在這段樣本 IC 為負），3 檔是中性判斷被舊計分規則當成方向 —— 已改成棄權。
 
-另外檢查 `falsifier`：當初寫的否證條件有沒有被觸發？
+另外看迭代包的否證統計：整批共用同一句的批次比率、被觸發率、判不了的比率。
 若觸發了卻沒改變判斷，代表否證條件只是場面話。
+
+把分類結果與本週決定寫回 `data/iterations.jsonl` 最後一筆的 `decisions`（append 一筆新的，不改舊的），
+**每個決定要寫「預期下週哪個數字會動」**。
 
 ## 二點五、檢視自動查核的覆蓋率
 
@@ -67,7 +73,7 @@ tail -3 data/revisions.jsonl | python3 -m json.tool 2>/dev/null | head -40
 （「融資20日+19.5%」被當成 ret_20、「金融股最強」被當成「全場最強」）。
 **噪音太多的警報等於沒有警報。** 收斂到 0 項誤報花了四輪迭代。
 
-## 三、派審核 agent（每週至少一輪）
+## 三、派審核 agent（每週至少一輪；迭代包 G 段有觸發規則時必派）
 
 依上週改動的範圍挑 2–3 個面向，**同時派出、彼此不重疊**。
 歷史上每一輪都抓到真實錯誤，沒有一次是白跑的。三個已驗證有效的面向：

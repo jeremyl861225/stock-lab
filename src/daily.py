@@ -14,7 +14,11 @@ import subprocess, sys, datetime as dt
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PY = str(ROOT / ".venv/bin/python")
+# 本機用 .venv；GitHub Actions 的 runner 用 setup-python，沒有 .venv ——
+# 寫死路徑讓排程自 2026-09-19 起每天 FileNotFoundError（6 次執行 0 次成功提交，
+# 面板每一版都是本機推的，HANDOFF 卻寫著「Actions 每交易日 18:00 跑」）。
+_VENV = ROOT / ".venv/bin/python"
+PY = str(_VENV) if _VENV.exists() else sys.executable
 
 
 def run(script: str, *args, allow_fail: bool = False) -> bool:
