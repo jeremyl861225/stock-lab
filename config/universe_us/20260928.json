@@ -1,0 +1,380 @@
+{
+  "as_of": "20260928",
+  "built_at_utc": "2026-09-28T05:09:54.706501+00:00",
+  "market": "US",
+  "method": "market_cap_top_n_plus_designated_etfs",
+  "size": 53,
+  "constituents": [
+    {
+      "code": "NVDA",
+      "name": "NVIDIA Corporation",
+      "industry": "Technology",
+      "mcap": 5434765213696.0,
+      "weight": 0.11080822132341174
+    },
+    {
+      "code": "AAPL",
+      "name": "Apple Inc.",
+      "industry": "Technology",
+      "mcap": 4977636933632.0,
+      "weight": 0.10148793431214001
+    },
+    {
+      "code": "GOOGL",
+      "name": "Alphabet Inc.",
+      "industry": "Communication Servic",
+      "mcap": 4206119354368.0,
+      "weight": 0.08575763367973256
+    },
+    {
+      "code": "MSFT",
+      "name": "Microsoft Corporation",
+      "industry": "Technology",
+      "mcap": 3832843862016.0,
+      "weight": 0.07814700254024733
+    },
+    {
+      "code": "AMZN",
+      "name": "Amazon.com, Inc.",
+      "industry": "Consumer Cyclical",
+      "mcap": 2693018681344.0,
+      "weight": 0.05490735999384797
+    },
+    {
+      "code": "TSM",
+      "name": "Taiwan Semiconductor Manufactur",
+      "industry": "Technology",
+      "mcap": 2337076936704.0,
+      "weight": 0.047650142788049354
+    },
+    {
+      "code": "META",
+      "name": "Meta Platforms, Inc.",
+      "industry": "Communication Servic",
+      "mcap": 1914858373120.0,
+      "weight": 0.03904162223548407
+    },
+    {
+      "code": "AVGO",
+      "name": "Broadcom Inc.",
+      "industry": "Technology",
+      "mcap": 1684184367104.0,
+      "weight": 0.0343384611407298
+    },
+    {
+      "code": "TSLA",
+      "name": "Tesla, Inc.",
+      "industry": "Consumer Cyclical",
+      "mcap": 1469666033664.0,
+      "weight": 0.02996469446726875
+    },
+    {
+      "code": "MU",
+      "name": "Micron Technology, Inc.",
+      "industry": "Technology",
+      "mcap": 1222319669248.0,
+      "weight": 0.02492160435866954
+    },
+    {
+      "code": "BRK-B",
+      "name": "Berkshire Hathaway Inc. New",
+      "industry": "Financial Services",
+      "mcap": 1082085998592.0,
+      "weight": 0.02206241118213912
+    },
+    {
+      "code": "LLY",
+      "name": "Eli Lilly and Company",
+      "industry": "Healthcare",
+      "mcap": 1055340232704.0,
+      "weight": 0.02151709769950457
+    },
+    {
+      "code": "AMD",
+      "name": "Advanced Micro Devices, Inc.",
+      "industry": "Technology",
+      "mcap": 1029487722496.0,
+      "weight": 0.02098999660861022
+    },
+    {
+      "code": "JPM",
+      "name": "JP Morgan Chase & Co.",
+      "industry": "Financial Services",
+      "mcap": 911917383680.0,
+      "weight": 0.018592881073285727
+    },
+    {
+      "code": "WMT",
+      "name": "Walmart Inc.",
+      "industry": "Consumer Defensive",
+      "mcap": 859313405952.0,
+      "weight": 0.01752035025044785
+    },
+    {
+      "code": "V",
+      "name": "Visa Inc.",
+      "industry": "Financial Services",
+      "mcap": 689702764544.0,
+      "weight": 0.01406219653948705
+    },
+    {
+      "code": "XOM",
+      "name": "ExxonMobil Holdings Corporation",
+      "industry": "Energy",
+      "mcap": 660331954176.0,
+      "weight": 0.013463361607758323
+    },
+    {
+      "code": "JNJ",
+      "name": "Johnson & Johnson",
+      "industry": "Healthcare",
+      "mcap": 653612679168.0,
+      "weight": 0.013326363801423836
+    },
+    {
+      "code": "MA",
+      "name": "Mastercard Incorporated",
+      "industry": "Financial Services",
+      "mcap": 497267048448.0,
+      "weight": 0.010138667448302366
+    },
+    {
+      "code": "ABBV",
+      "name": "AbbVie Inc.",
+      "industry": "Healthcare",
+      "mcap": 467119767552.0,
+      "weight": 0.009524001231369102
+    },
+    {
+      "code": "PLTR",
+      "name": "Palantir Technologies Inc.",
+      "industry": "Technology",
+      "mcap": 455788101632.0,
+      "weight": 0.00929296241076614
+    },
+    {
+      "code": "CSCO",
+      "name": "Cisco Systems, Inc.",
+      "industry": "Technology",
+      "mcap": 420674011136.0,
+      "weight": 0.008577029015622288
+    },
+    {
+      "code": "ORCL",
+      "name": "Oracle Corporation",
+      "industry": "Technology",
+      "mcap": 414554226688.0,
+      "weight": 0.008452254089217622
+    },
+    {
+      "code": "COST",
+      "name": "Costco Wholesale Corporation",
+      "industry": "Consumer Defensive",
+      "mcap": 409030328320.0,
+      "weight": 0.008339628551800319
+    },
+    {
+      "code": "CVX",
+      "name": "Chevron Corporation",
+      "industry": "Energy",
+      "mcap": 401049780224.0,
+      "weight": 0.00817691492850061
+    },
+    {
+      "code": "BAC",
+      "name": "Bank of America Corporation",
+      "industry": "Financial Services",
+      "mcap": 396488835072.0,
+      "weight": 0.008083922830410864
+    },
+    {
+      "code": "KO",
+      "name": "Coca-Cola Company (The)",
+      "industry": "Consumer Defensive",
+      "mcap": 377806815232.0,
+      "weight": 0.007703019275647866
+    },
+    {
+      "code": "CAT",
+      "name": "Caterpillar, Inc.",
+      "industry": "Industrials",
+      "mcap": 377659686912.0,
+      "weight": 0.007700019508996601
+    },
+    {
+      "code": "MRK",
+      "name": "Merck & Company, Inc.",
+      "industry": "Healthcare",
+      "mcap": 367065792512.0,
+      "weight": 0.007484022948115964
+    },
+    {
+      "code": "PG",
+      "name": "Procter & Gamble Company (The)",
+      "industry": "Consumer Defensive",
+      "mcap": 339644383232.0,
+      "weight": 0.006924933922367287
+    },
+    {
+      "code": "GE",
+      "name": "GE Aerospace",
+      "industry": "Industrials",
+      "mcap": 339376308224.0,
+      "weight": 0.006919468200546797
+    },
+    {
+      "code": "UNH",
+      "name": "UnitedHealth Group Incorporated",
+      "industry": "Healthcare",
+      "mcap": 338025218048.0,
+      "weight": 0.006891921122915401
+    },
+    {
+      "code": "MS",
+      "name": "Morgan Stanley",
+      "industry": "Financial Services",
+      "mcap": 308317847552.0,
+      "weight": 0.006286224141459471
+    },
+    {
+      "code": "PANW",
+      "name": "Palo Alto Networks, Inc.",
+      "industry": "Technology",
+      "mcap": 306537299968.0,
+      "weight": 0.006249920952083869
+    },
+    {
+      "code": "PM",
+      "name": "Philip Morris International Inc",
+      "industry": "Consumer Defensive",
+      "mcap": 296884666368.0,
+      "weight": 0.006053115548677085
+    },
+    {
+      "code": "NFLX",
+      "name": "Netflix, Inc.",
+      "industry": "Communication Servic",
+      "mcap": 296243462144.0,
+      "weight": 0.006040042178113174
+    },
+    {
+      "code": "HD",
+      "name": "Home Depot, Inc. (The)",
+      "industry": "Consumer Cyclical",
+      "mcap": 292522590208.0,
+      "weight": 0.005964178146312624
+    },
+    {
+      "code": "GS",
+      "name": "Goldman Sachs Group, Inc. (The)",
+      "industry": "Financial Services",
+      "mcap": 272376283136.0,
+      "weight": 0.005553419564275291
+    },
+    {
+      "code": "ANET",
+      "name": "Arista Networks, Inc.",
+      "industry": "Technology",
+      "mcap": 260505960448.0,
+      "weight": 0.005311398190421367
+    },
+    {
+      "code": "RTX",
+      "name": "RTX Corporation",
+      "industry": "Industrials",
+      "mcap": 255265374208.0,
+      "weight": 0.00520454904108131
+    },
+    {
+      "code": "TXN",
+      "name": "Texas Instruments Incorporated",
+      "industry": "Technology",
+      "mcap": 253946789888.0,
+      "weight": 0.005177664718130996
+    },
+    {
+      "code": "WFC",
+      "name": "Wells Fargo & Company",
+      "industry": "Financial Services",
+      "mcap": 250901217280.0,
+      "weight": 0.005115569214400067
+    },
+    {
+      "code": "C",
+      "name": "Citigroup, Inc.",
+      "industry": "Financial Services",
+      "mcap": 225246216192.0,
+      "weight": 0.004592495093102711
+    },
+    {
+      "code": "AMGN",
+      "name": "Amgen Inc.",
+      "industry": "Healthcare",
+      "mcap": 224151420928.0,
+      "weight": 0.00457017355552986
+    },
+    {
+      "code": "LIN",
+      "name": "Linde plc",
+      "industry": "Basic Materials",
+      "mcap": 216609980416.0,
+      "weight": 0.004416412799270302
+    },
+    {
+      "code": "QCOM",
+      "name": "QUALCOMM Incorporated",
+      "industry": "Technology",
+      "mcap": 215716184064.0,
+      "weight": 0.0043981893838887344
+    },
+    {
+      "code": "IBM",
+      "name": "International Business Machines",
+      "industry": "Technology",
+      "mcap": 212460716032.0,
+      "weight": 0.004331814368958545
+    },
+    {
+      "code": "AXP",
+      "name": "American Express Company",
+      "industry": "Financial Services",
+      "mcap": 208596467712.0,
+      "weight": 0.0042530270678968335
+    },
+    {
+      "code": "VZ",
+      "name": "Verizon Communications Inc.",
+      "industry": "Communication Servic",
+      "mcap": 195606822912.0,
+      "weight": 0.003988184084011602
+    },
+    {
+      "code": "CRM",
+      "name": "Salesforce, Inc.",
+      "industry": "Technology",
+      "mcap": 192598458368.0,
+      "weight": 0.003926847207236689
+    },
+    {
+      "code": "BTCO",
+      "name": "Invesco Galaxy Bitcoin ETF",
+      "industry": "ETF",
+      "mcap": 407250976.0,
+      "weight": 8.303349732397043e-06
+    },
+    {
+      "code": "QQQ",
+      "name": "Invesco QQQ Trust, Series 1",
+      "industry": "ETF",
+      "mcap": 488981004288.0,
+      "weight": 0.00996972513357955
+    },
+    {
+      "code": "VOO",
+      "name": "Vanguard S&P 500 ETF",
+      "industry": "ETF",
+      "mcap": 1756880437248.0,
+      "weight": 0.03582064517502048
+    }
+  ]
+}
