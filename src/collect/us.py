@@ -112,6 +112,23 @@ def codes_ever() -> set[str]:
 THROTTLE = 0.8
 
 
+def drop_unfinished(h: pd.DataFrame, now_ny: dt.datetime | None = None) -> pd.DataFrame:
+    """丟掉紐約今天尚未收盤的那根 K 棒。
+
+    **2026-09-29 查出**：盤中呼叫時 yfinance 給的今天那根 Close 不是 NaN，
+    而是即時價（22:05 台北時間抓到 AAPL 成交量只有前一日的 15%）。
+    原本以為 dropna 會濾掉它，結果盤中價被當成 9/29 收盤：
+    結算了 126 筆 9/22 的 5 日預測、寫了 636 筆預測、一年期也拿它重新定價。
+    收盤後 16:30 前仍可能有盤後修正，所以門檻放在 16:30；
+    半日市 13:00 收盤也被這條涵蓋（只是晚一點才收）。
+    """
+    now_ny = now_ny or dt.datetime.now(ZoneInfo("America/New_York"))
+    if now_ny.time() >= dt.time(16, 30) or not len(h):
+        return h
+    days = pd.Index([pd.Timestamp(i).date() for i in h.index])
+    return h[days < now_ny.date()]
+
+
 def _history(code: str, start: str | None = None, period: str | None = None,
              tries: int = 2) -> pd.DataFrame | None:
     """逐檔取 K 棒，失敗重試。回傳 None 代表這一檔真的拿不到。"""
@@ -120,8 +137,9 @@ def _history(code: str, start: str | None = None, period: str | None = None,
     for _ in range(tries):
         try:
             h = yf.Ticker(code).history(auto_adjust=True, **kw)
+            h = drop_unfinished(h.dropna(subset=["Close"])) if len(h) else h
             if len(h):
-                return h.dropna(subset=["Close"])
+                return h
         except Exception:  # noqa: BLE001
             pass
         time.sleep(1.0)
