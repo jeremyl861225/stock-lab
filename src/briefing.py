@@ -151,7 +151,11 @@ def build_briefing(as_of: str | None = None) -> pd.DataFrame:
     # 放進統計模型的訓練集就是前視偏差。人做的是今天這一筆判斷，不回測。
     try:
         import events as EV
-        ev = EV.upcoming(f["code"], f["market"], as_of_ts)
+        # 事件視窗要用「該列自己的」as_of 起算。台北下午跑時台股已是今天、
+        # 美股還是昨天；共用台股的日期會把美股「今天」的財報判成已過去
+        # （2026-09-30：美光 9/30 財報因此從 5 日視窗消失）。
+        ev = pd.concat([EV.upcoming(g["code"], g["market"], d)
+                        for d, g in f.groupby("as_of")], ignore_index=True)
         f = f.merge(ev, on="code", how="left")
     except Exception as e:  # noqa: BLE001
         print(f"  事件日曆未併入（{type(e).__name__}: {e}）")
